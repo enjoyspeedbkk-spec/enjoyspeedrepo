@@ -2,7 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BIKE_RENTAL_PRICES, RIDE_PACKAGES } from "@/lib/constants";
+import { BIKE_RENTAL_PRICES, RIDE_PACKAGES, TIME_SLOTS } from "@/lib/constants";
+import { notifyBookingConfirmation } from "@/lib/notifications";
 import type { RiderInfo, GroupType, TimeSlotId } from "@/types";
 
 export interface CreateBookingInput {
@@ -261,6 +262,27 @@ export async function createBooking(
 
     if (paymentError) {
       console.error("Payment creation error:", paymentError);
+    }
+
+    // 10. Send booking confirmation notification (LINE → Email cascade)
+    const slot = TIME_SLOTS.find((s) => s.id === input.timeSlotId);
+    try {
+      await notifyBookingConfirmation(resolvedUserId, {
+        bookingId: booking.id,
+        contactName: input.contactName,
+        contactEmail: input.contactEmail,
+        date: input.date,
+        timeSlot: slot?.label || input.timeSlotId,
+        timeRange: slot ? `${slot.startTime} – ${slot.endTime}` : "",
+        groupType: pkg.name,
+        riderCount: input.riderCount,
+        rideTotal,
+        rentalTotal,
+        totalPrice,
+      });
+    } catch (notifyErr) {
+      // Notification failure should never block the booking
+      console.error("Booking notification error:", notifyErr);
     }
 
     return {

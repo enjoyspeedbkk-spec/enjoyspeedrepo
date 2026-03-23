@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { AccountDashboard } from "@/components/account/AccountDashboard";
 
@@ -19,17 +18,15 @@ export default async function AccountPage() {
     return <AuthForm />;
   }
 
-  // Signed in — fetch profile and recent bookings
-  const admin = createAdminClient();
-
-  const { data: profile } = await admin
+  // Signed in — fetch profile and recent bookings (using RLS-scoped client)
+  const { data: profile } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
 
   // Get recent bookings with session info
-  const { data: bookings } = await admin
+  const { data: bookings } = await supabase
     .from("bookings")
     .select(`
       id, status, group_type, rider_count, ride_total, total_price, created_at, contact_name,

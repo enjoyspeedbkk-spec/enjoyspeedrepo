@@ -12,11 +12,11 @@ import { expireStalePendingBookings } from "@/lib/actions/booking";
  * Protected by a shared secret to prevent unauthorized calls.
  */
 export async function GET(request: NextRequest) {
-  // Verify cron secret
+  // Verify cron secret — fail-closed: reject if secret not configured
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
