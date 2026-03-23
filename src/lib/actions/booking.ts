@@ -308,3 +308,15 @@ export async function getAvailableSlots(startDate: string, endDate: string) {
     })) || [],
   };
 }
+
+export async function expireStalePendingBookings(): Promise<{ expired: number }> {
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("expire_stale_bookings");
+
+  if (error) {
+    console.error("Expire stale bookings error:", error);
+    return { expired: 0 };
+  }
+
+  return { expired: data as number };
+}
