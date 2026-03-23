@@ -466,10 +466,10 @@ export function Hero() {
                       </div>
                       <div className="flex flex-col items-end">
                         <span className="text-xs font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full">
-                          3 spots left
+                          Small groups
                         </span>
                         <span className="text-lg font-bold text-navy mt-1">
-                          2,100
+                          From 2,000
                           <span className="text-xs font-normal text-ink-muted">
                             {" "}THB
                           </span>
@@ -489,7 +489,7 @@ export function Hero() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: 1 }}
-                  className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 bg-accent text-white rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-lg max-w-[120px] sm:max-w-none"
+                  className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-accent text-white rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-lg max-w-[120px] sm:max-w-none z-[2]"
                 >
                   <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider opacity-80">
                     From

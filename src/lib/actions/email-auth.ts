@@ -130,9 +130,9 @@ export async function sendEmailOtp(
     });
 
     if (!emailSent) {
-      // Email delivery failed — Resend may be in test mode (onboarding@resend.dev only sends to account holder)
+      // Email delivery failed — check Brevo dashboard for errors
       // Log the code so admin can retrieve it from Vercel logs if needed
-      console.warn(`📧 OTP for ${cleanEmail}: ${code} (email delivery FAILED — verify a domain in Resend to fix)`);
+      console.warn(`📧 OTP for ${cleanEmail}: ${code} (email delivery FAILED — check Brevo dashboard)`);
       return {
         success: false,
         error: "Email delivery failed. Please check your email address or try again. If this persists, contact us on LINE @EnjoySpeed.",

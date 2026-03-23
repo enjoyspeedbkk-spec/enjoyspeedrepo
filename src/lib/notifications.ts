@@ -2,17 +2,15 @@
 
 // ========================================
 // Notification Dispatcher
-// Sends via LINE → Email → SMS cascade
+// Sends via LINE → Email cascade
 // ========================================
 //
 // Priority order:
 // 1. LINE push (instant, free for push messages, highest open rate in Thailand)
-// 2. Email via Resend (permanent record, works worldwide)
-// 3. SMS via Twilio (most expensive, last resort — mainly for OTP)
+// 2. Email via Brevo (permanent record, works worldwide, 300/day free tier)
 //
 // Each notification type has LINE + email templates.
 // The dispatcher tries LINE first, falls back to email.
-// SMS is only used for time-critical OTP, not lifecycle notifications.
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import {

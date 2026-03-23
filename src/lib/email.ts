@@ -1,10 +1,11 @@
 // ========================================
-// Email Service — Resend integration
+// Email Service — Brevo (formerly Sendinblue) integration
 // Handles all transactional emails
+// Free tier: 300 emails/day, ~9,000/month
 // ========================================
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-const FROM_EMAIL = process.env.FROM_EMAIL || "onboarding@resend.dev";
+const BREVO_API_KEY = process.env.BREVO_API_KEY || "";
+const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@enjoyspeedbkk.com";
 const FROM_NAME = "En-Joy Speed";
 
 interface SendEmailOptions {
@@ -15,30 +16,30 @@ interface SendEmailOptions {
 }
 
 /**
- * Send an email via Resend API
+ * Send an email via Brevo API
  * Falls back gracefully if API key is not set (dev/staging)
  */
 export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
-  if (!RESEND_API_KEY) {
-    console.log("[EMAIL] Skipping — no RESEND_API_KEY set");
+  if (!BREVO_API_KEY) {
+    console.log("[EMAIL] Skipping — no BREVO_API_KEY set");
     console.log(`[EMAIL] Would send to: ${options.to}`);
     console.log(`[EMAIL] Subject: ${options.subject}`);
     return false;
   }
 
   try {
-    const res = await fetch("https://api.resend.com/emails", {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "api-key": BREVO_API_KEY,
       },
       body: JSON.stringify({
-        from: `${FROM_NAME} <${FROM_EMAIL}>`,
-        to: [options.to],
+        sender: { name: FROM_NAME, email: FROM_EMAIL },
+        to: [{ email: options.to }],
         subject: options.subject,
-        html: options.html,
-        reply_to: options.replyTo || "enjoyspeed.bkk@gmail.com",
+        htmlContent: options.html,
+        replyTo: { email: options.replyTo || "enjoyspeed.bkk@gmail.com" },
       }),
     });
 

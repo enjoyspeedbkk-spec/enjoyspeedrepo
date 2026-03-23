@@ -94,7 +94,7 @@ export async function createBooking(
     const rideTotal = pricePerPerson * input.riderCount;
     const rentalTotal = input.riders
       .slice(0, input.riderCount)
-      .reduce((sum, r) => sum + BIKE_RENTAL_PRICES[r.bikePreference], 0);
+      .reduce((sum, r) => sum + (r.bikePreference ? BIKE_RENTAL_PRICES[r.bikePreference] : 0), 0);
     const totalPrice = rideTotal + rentalTotal;
 
     // Amount to pay now (ride cost only — rental paid at track)
@@ -233,7 +233,7 @@ export async function createBooking(
       nickname: r.nickname || null,
       height_cm: r.heightCm || null,
       bike_preference: r.bikePreference,
-      bike_rental_price: BIKE_RENTAL_PRICES[r.bikePreference],
+      bike_rental_price: r.bikePreference ? BIKE_RENTAL_PRICES[r.bikePreference] : 0,
       clothing_size: r.clothingSize || null,
       cycling_experience: r.cyclingExperience,
       emergency_contact_name: r.emergencyContactName || null,
