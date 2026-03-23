@@ -47,10 +47,11 @@ export interface RidePackage {
 export interface RiderInfo {
   name: string;
   nickname?: string;
-  bikePreference: BikePreference;
+  bikePreference?: BikePreference;
   clothingSize?: ClothingSize;
   heightCm?: number;
-  cyclingExperience: CyclingExperience;
+  gender?: "male" | "female";
+  cyclingExperience?: CyclingExperience;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
 }

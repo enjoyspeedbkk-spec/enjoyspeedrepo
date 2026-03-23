@@ -1,91 +1,133 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/admin";
-import { linePush } from "@/lib/line";
-import { sendEmail, bookingConfirmationEmail } from "@/lib/email";
-
 // ========================================
 // Notification Dispatcher
-// Cascade: LINE → Email
+// Sends via LINE → Email → SMS cascade
 // ========================================
+//
+// Priority order:
+// 1. LINE push (instant, free for push messages, highest open rate in Thailand)
+// 2. Email via Resend (permanent record, works worldwide)
+// 3. SMS via Twilio (most expensive, last resort — mainly for OTP)
+//
+// Each notification type has LINE + email templates.
+// The dispatcher tries LINE first, falls back to email.
+// SMS is only used for time-critical OTP, not lifecycle notifications.
 
-interface UserContact {
-  lineUserId?: string;
-  email?: string;
-  phone?: string;
-  preferredNotification?: "line" | "email";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  sendBookingConfirmation as lineBookingConfirmation,
+  sendPreRideReminder as linePreRideReminder,
+  sendWeatherCancellation as lineWeatherCancellation,
+  sendPostRideThankYou as linePostRideThankYou,
+} from "@/lib/line";
+import {
+  sendEmail,
+  bookingConfirmationEmail,
+  paymentPendingEmail,
+  preRideReminderEmail,
+  postRideEmail,
+  weatherCancellationEmail,
+} from "@/lib/email";
+
+// ── Types ─────────────────────────────────────
+
+interface NotifyResult {
+  channel: "line" | "email" | "sms" | "none";
+  success: boolean;
+  error?: string;
 }
 
-/**
- * Look up a user's contact methods from profiles + line_users tables.
- */
+interface UserContact {
+  lineUserId?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  preferredNotification?: "line" | "email" | "sms" | null;
+}
+
+// ── Resolve user's contact info ────────────────
+
 async function resolveUserContact(userId: string): Promise<UserContact> {
   const admin = createAdminClient();
 
-  // Get profile
   const { data: profile } = await admin
     .from("profiles")
-    .select("phone, preferred_notification")
+    .select("full_name, phone, line_user_id, preferred_notification")
     .eq("id", userId)
     .single();
 
-  // Get email from auth
-  const { data: authUser } = await admin.auth.admin.getUserById(userId);
+  // Also check line_users table for linked LINE account
+  let lineUserId = profile?.line_user_id || null;
 
-  // Get LINE user ID if linked
-  const { data: lineUser } = await admin
-    .from("line_users")
-    .select("line_user_id, is_following")
-    .eq("supabase_user_id", userId)
-    .eq("is_following", true)
-    .single();
+  if (!lineUserId) {
+    const { data: lineUser } = await admin
+      .from("line_users")
+      .select("line_user_id, is_following")
+      .eq("user_id", userId)
+      .eq("is_following", true)
+      .single();
+
+    if (lineUser) {
+      lineUserId = lineUser.line_user_id;
+    }
+  }
 
   return {
-    lineUserId: lineUser?.line_user_id || undefined,
-    email: authUser?.user?.email || undefined,
-    phone: profile?.phone || undefined,
-    preferredNotification: profile?.preferred_notification || undefined,
+    lineUserId,
+    email: null, // We'll get email from booking contact info
+    phone: profile?.phone || null,
+    preferredNotification: profile?.preferred_notification || null,
   };
 }
 
-/**
- * Send a notification using the cascade: LINE → Email.
- * Respects user's preferred_notification if set.
- */
+// ── Send notification with cascade ─────────────
+
 async function sendWithCascade(
-  contact: UserContact,
-  lineMessage: string,
-  emailOpts?: { to: string; subject: string; html: string },
-): Promise<{ sent: boolean; via: string }> {
+  contact: UserContact & { contactEmail?: string },
+  lineSend: (() => Promise<void>) | null,
+  emailSend: (() => Promise<boolean>) | null,
+): Promise<NotifyResult> {
+  const hasLine = !!contact.lineUserId && !!process.env.LINE_CHANNEL_ACCESS_TOKEN;
+  const hasEmail = !!(contact.contactEmail || contact.email);
+
+  // Determine priority order based on preference
   const preferred = contact.preferredNotification;
+  const tryOrder: ("line" | "email")[] =
+    preferred === "email" ? ["email", "line"] : ["line", "email"];
 
-  // Try LINE first (or if preferred)
-  if (contact.lineUserId && (!preferred || preferred === "line")) {
-    try {
-      await linePush(contact.lineUserId, [{ type: "text", text: lineMessage }]);
-      return { sent: true, via: "line" };
-    } catch (err) {
-      console.error("[Notify] LINE failed, falling back:", err);
+  for (const channel of tryOrder) {
+    if (channel === "line" && hasLine && lineSend) {
+      try {
+        await lineSend();
+        return { channel: "line", success: true };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "LINE push failed";
+        console.warn(`[Notify] LINE failed: ${msg} — trying next channel`);
+        // If user blocked us, don't try LINE again
+        if (msg === "LINE_USER_BLOCKED") continue;
+      }
+    }
+
+    if (channel === "email" && hasEmail && emailSend) {
+      try {
+        const sent = await emailSend();
+        if (sent) return { channel: "email", success: true };
+      } catch (err) {
+        console.warn(`[Notify] Email failed: ${err} — trying next channel`);
+      }
     }
   }
 
-  // Try email as fallback (or if preferred)
-  if (emailOpts && contact.email && (!preferred || preferred === "email")) {
-    try {
-      const sent = await sendEmail({ ...emailOpts, to: contact.email });
-      if (sent) return { sent: true, via: "email" };
-    } catch (err) {
-      console.error("[Notify] Email failed:", err);
-    }
-  }
-
-  return { sent: false, via: "none" };
+  return { channel: "none", success: false, error: "No notification channel available" };
 }
 
-// ========================================
+// ═══════════════════════════════════════════════
 // Public notification functions
-// ========================================
+// ═══════════════════════════════════════════════
 
+/**
+ * Notify user of a confirmed booking
+ */
 export async function notifyBookingConfirmation(
   userId: string,
   booking: {
@@ -101,69 +143,161 @@ export async function notifyBookingConfirmation(
     rentalTotal: number;
     totalPrice: number;
   }
-) {
+): Promise<NotifyResult> {
   const contact = await resolveUserContact(userId);
 
-  // Override email if provided in booking
-  if (booking.contactEmail) contact.email = booking.contactEmail;
-
-  const lineMsg = `✅ Booking Confirmed!\n\nHi ${booking.contactName}!\n\n📅 ${booking.date}\n🕐 ${booking.timeSlot} (${booking.timeRange})\n👥 ${booking.groupType} (${booking.riderCount} riders)\n💰 ฿${booking.totalPrice.toLocaleString()}\n\nBooking #${booking.bookingId.slice(0, 8).toUpperCase()}\n\nView: https://enjoyspeedbkk.com/bookings`;
-
-  const emailData = bookingConfirmationEmail(booking);
-
-  const result = await sendWithCascade(
-    contact,
-    lineMsg,
-    contact.email ? { to: contact.email, subject: emailData.subject, html: emailData.html } : undefined,
+  return sendWithCascade(
+    { ...contact, contactEmail: booking.contactEmail },
+    // LINE
+    contact.lineUserId
+      ? () =>
+          lineBookingConfirmation(contact.lineUserId!, {
+            bookingId: booking.bookingId,
+            contactName: booking.contactName,
+            date: booking.date,
+            timeSlot: booking.timeSlot,
+            groupType: booking.groupType,
+            riderCount: booking.riderCount,
+            amount: booking.totalPrice,
+          })
+      : null,
+    // Email
+    booking.contactEmail
+      ? () => {
+          const { subject, html } = bookingConfirmationEmail(booking);
+          return sendEmail({ to: booking.contactEmail!, subject, html });
+        }
+      : null
   );
-
-  console.log(`[Notify] Booking confirmation for ${booking.contactName} — sent via ${result.via}`);
-  return result;
 }
 
+/**
+ * Notify user of pending payment
+ */
+export async function notifyPaymentPending(
+  userId: string,
+  booking: {
+    bookingId: string;
+    contactName: string;
+    contactEmail?: string;
+    amount: number;
+  }
+): Promise<NotifyResult> {
+  const contact = await resolveUserContact(userId);
+
+  // Payment pending — only email (LINE would be too aggressive for a 30-min window)
+  if (booking.contactEmail) {
+    const { subject, html } = paymentPendingEmail(booking);
+    const sent = await sendEmail({ to: booking.contactEmail, subject, html });
+    return { channel: sent ? "email" : "none", success: sent };
+  }
+
+  return { channel: "none", success: false, error: "No email for payment reminder" };
+}
+
+/**
+ * Notify user of pre-ride reminder (24h before)
+ */
 export async function notifyPreRideReminder(
   userId: string,
   booking: {
     contactName: string;
+    contactEmail?: string;
     date: string;
     timeSlot: string;
     timeRange: string;
     meetingPoint: string;
   }
-) {
+): Promise<NotifyResult> {
   const contact = await resolveUserContact(userId);
 
-  const lineMsg = `🚴 Ride Tomorrow!\n\nHi ${booking.contactName}!\n\n📅 ${booking.date}\n🕐 ${booking.timeSlot} (${booking.timeRange})\n📍 ${booking.meetingPoint}\n\n✅ Checklist:\n• Sport shoes (closed-toe)\n• Athletic socks & top\n• Sunscreen + sunglasses\n• Water bottle\n\nSee you there! 🌅`;
-
-  return sendWithCascade(contact, lineMsg);
+  return sendWithCascade(
+    { ...contact, contactEmail: booking.contactEmail },
+    // LINE
+    contact.lineUserId
+      ? () =>
+          linePreRideReminder(contact.lineUserId!, {
+            contactName: booking.contactName,
+            date: booking.date,
+            timeSlot: booking.timeSlot,
+            meetingPoint: booking.meetingPoint,
+          })
+      : null,
+    // Email
+    booking.contactEmail
+      ? () => {
+          const { subject, html } = preRideReminderEmail(booking);
+          return sendEmail({ to: booking.contactEmail!, subject, html });
+        }
+      : null
+  );
 }
 
+/**
+ * Notify user of weather cancellation
+ */
 export async function notifyWeatherCancellation(
   userId: string,
   booking: {
+    bookingId: string;
     contactName: string;
+    contactEmail?: string;
     date: string;
     timeSlot: string;
-    bookingId: string;
   }
-) {
+): Promise<NotifyResult> {
   const contact = await resolveUserContact(userId);
 
-  const lineMsg = `🌧️ Weather Update\n\nHi ${booking.contactName},\n\nYour ride on ${booking.date} (${booking.timeSlot}) has been cancelled for safety.\n\nYour options:\n• Reschedule (free)\n• Rain credit (90 days)\n• Refund\n\nReply here or visit:\nhttps://enjoyspeedbkk.com/bookings`;
-
-  return sendWithCascade(contact, lineMsg);
+  return sendWithCascade(
+    { ...contact, contactEmail: booking.contactEmail },
+    // LINE — send both for cancellations (important!)
+    contact.lineUserId
+      ? () =>
+          lineWeatherCancellation(contact.lineUserId!, {
+            contactName: booking.contactName,
+            date: booking.date,
+            timeSlot: booking.timeSlot,
+          })
+      : null,
+    // Email
+    booking.contactEmail
+      ? () => {
+          const { subject, html } = weatherCancellationEmail(booking);
+          return sendEmail({ to: booking.contactEmail!, subject, html });
+        }
+      : null
+  );
 }
 
+/**
+ * Notify user with post-ride thank you + review request
+ */
 export async function notifyPostRide(
   userId: string,
   booking: {
-    contactName: string;
     bookingId: string;
+    contactName: string;
+    contactEmail?: string;
   }
-) {
+): Promise<NotifyResult> {
   const contact = await resolveUserContact(userId);
 
-  const lineMsg = `🎉 Great Ride!\n\nThanks for riding with us, ${booking.contactName}!\n\nWe'd love your feedback:\n👉 https://enjoyspeedbkk.com/bookings\n\nSee you on the next ride! 🚴‍♂️`;
-
-  return sendWithCascade(contact, lineMsg);
+  return sendWithCascade(
+    { ...contact, contactEmail: booking.contactEmail },
+    // LINE
+    contact.lineUserId
+      ? () =>
+          linePostRideThankYou(contact.lineUserId!, {
+            contactName: booking.contactName,
+            bookingId: booking.bookingId,
+          })
+      : null,
+    // Email
+    booking.contactEmail
+      ? () => {
+          const { subject, html } = postRideEmail(booking);
+          return sendEmail({ to: booking.contactEmail!, subject, html });
+        }
+      : null
+  );
 }
