@@ -65,7 +65,41 @@ export async function sendEmailOtp(
 
     if (insertError) {
       console.error("OTP insert error:", insertError);
-      return { success: false, error: "Failed to generate code. Please try again." };
+
+      // If the table doesn't exist or column is too narrow, try to create/fix it
+      if (insertError.code === "42P01" || insertError.message?.includes("value too long")) {
+        try {
+          await admin.rpc("exec_sql", {
+            query: `
+              CREATE TABLE IF NOT EXISTS public.phone_otp_codes (
+                id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+                phone text NOT NULL,
+                code varchar(6) NOT NULL,
+                expires_at timestamptz NOT NULL,
+                verified boolean DEFAULT false,
+                attempts int DEFAULT 0,
+                created_at timestamptz DEFAULT now()
+              );
+              ALTER TABLE public.phone_otp_codes ALTER COLUMN phone TYPE text;
+              ALTER TABLE public.phone_otp_codes ENABLE ROW LEVEL SECURITY;
+            `,
+          });
+          // Retry the insert
+          const { error: retryError } = await admin.from("phone_otp_codes").insert({
+            phone: cleanEmail,
+            code,
+            expires_at: expiresAt.toISOString(),
+          });
+          if (retryError) {
+            console.error("OTP retry insert error:", retryError);
+            return { success: false, error: "Database setup required. Please run migration 011_email_otp_support.sql in Supabase." };
+          }
+        } catch {
+          return { success: false, error: "Database setup required. Please run migration 011_email_otp_support.sql in Supabase." };
+        }
+      } else {
+        return { success: false, error: "Failed to generate code. Please try again." };
+      }
     }
 
     // Send OTP via email
