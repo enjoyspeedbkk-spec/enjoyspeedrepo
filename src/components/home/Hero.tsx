@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Play, Shield, Camera, Users, Volume2, VolumeX, SkipForward } from "lucide-react";
 
@@ -315,18 +316,29 @@ export function Hero() {
             <div className="relative aspect-[4/5] lg:aspect-[3/4] rounded-3xl overflow-hidden shadow-xl">
               {/* All video elements — first video is always visible as the "poster" (paused at frame 0) */}
               {/* When play is pressed, it simply starts playing — seamless transition */}
+              {/* Static poster image — shown when video is NOT playing */}
+              {!videoPlaying && (
+                <Image
+                  src="/images/hero-golden-hour-still.jpg"
+                  alt="Cyclists riding at golden hour on Bangkok Skylane"
+                  fill
+                  className="object-cover z-[1]"
+                  priority
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              )}
+
+              {/* Video elements — only visible during playback */}
               {HERO_VIDEOS.map((clip, i) => {
                 const isActive = videoPlaying && i === activeIndex;
                 const isPrev = videoPlaying && i === prevIndex;
-                // First video is always visible (acts as poster when paused)
-                const isFirstVideoPoster = i === 0 && !videoPlaying;
                 return (
                   <video
                     key={clip.src}
                     ref={(el) => { videoRefs.current[i] = el; }}
                     src={clip.src}
                     className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-                      isActive || isFirstVideoPoster
+                      isActive
                         ? "opacity-100 z-20"
                         : isPrev
                         ? "opacity-100 z-10"
@@ -335,7 +347,7 @@ export function Hero() {
                     playsInline
                     controls={false}
                     muted={muted}
-                    preload={i === 0 ? "auto" : "metadata"}
+                    preload="metadata"
                   />
                 );
               })}
