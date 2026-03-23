@@ -281,23 +281,33 @@ export function BookingDetailSheet({
 
               {/* Payment status */}
               {booking.payment && (
-                <div className="flex items-center gap-2 pt-2 border-t border-sand/60">
-                  {isPaid ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4 text-success" />
-                      <span className="text-sm text-success font-medium">
-                        Payment verified
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle className="h-4 w-4 text-warning" />
-                      <span className="text-sm text-warning font-medium">
-                        {booking.payment.status === "pending"
-                          ? "Awaiting payment"
-                          : `Payment ${booking.payment.status}`}
-                      </span>
-                    </>
+                <div className="flex items-center justify-between pt-2 border-t border-sand/60">
+                  <div className="flex items-center gap-2">
+                    {isPaid ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 text-success" />
+                        <span className="text-sm text-success font-medium">
+                          Payment verified
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="h-4 w-4 text-warning" />
+                        <span className="text-sm text-warning font-medium">
+                          {booking.payment.status === "pending"
+                            ? "Awaiting payment"
+                            : `Payment ${booking.payment.status}`}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  {!isPaid && booking.status === "pending" && (
+                    <a
+                      href={`/bookings/${booking.id}/pay`}
+                      className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-dark transition-colors"
+                    >
+                      Pay Now
+                    </a>
                   )}
                 </div>
               )}

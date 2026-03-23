@@ -389,9 +389,11 @@ function BookingCard({
           {/* Actions */}
           <div className="flex items-center gap-2 mt-3">
             {isPending && (
-              <Button variant="secondary" size="sm">
-                Complete Payment
-              </Button>
+              <a href={`/bookings/${booking.id}/pay`}>
+                <Button variant="secondary" size="sm">
+                  Complete Payment
+                </Button>
+              </a>
             )}
             {isCompleted && (
               <button
