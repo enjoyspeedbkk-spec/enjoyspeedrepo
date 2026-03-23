@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,9 +12,32 @@ const stats = [
   { icon: Users, label: "Small Groups Only" },
 ];
 
+const SLOTS = [
+  { id: "A1", label: "Early Bird", start: "06:15", end: "08:15", hour: 6, min: 15 },
+  { id: "A2", label: "Energy Booster", start: "06:30", end: "08:30", hour: 6, min: 30 },
+  { id: "B", label: "Light Chaser", start: "16:15", end: "18:15", hour: 16, min: 15 },
+  { id: "C", label: "Golden Hour", start: "16:45", end: "18:45", hour: 16, min: 45 },
+  { id: "D", label: "Twilight Finish", start: "17:15", end: "19:15", hour: 17, min: 15 },
+];
+
+function getNextSlot() {
+  const now = new Date();
+  // Bangkok is UTC+7
+  const bangkokHour = (now.getUTCHours() + 7) % 24;
+  const bangkokMin = now.getUTCMinutes();
+  const nowMins = bangkokHour * 60 + bangkokMin;
+
+  // Find next slot that hasn't started yet
+  const upcoming = SLOTS.find((s) => s.hour * 60 + s.min > nowMins);
+  // If all today's slots passed, show tomorrow's first slot
+  return upcoming || SLOTS[0];
+}
+
 export function Hero() {
+  const nextSlot = useMemo(() => getNextSlot(), []);
+
   return (
-    <section className="relative min-h-[100svh] flex items-center overflow-hidden">
+    <section className="relative min-h-[100svh] flex items-center overflow-x-clip">
       {/* Background gradient — fresh, airy, with a hint of sky blue */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-gradient-to-br from-cream via-cream-dark/50 to-sky-light/15" />
@@ -106,7 +130,7 @@ export function Hero() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="relative"
+            className="relative pt-6 pr-6"
           >
             {/* Main image — real sunset ride photo */}
             <div className="relative aspect-[4/5] lg:aspect-[3/4] rounded-3xl overflow-hidden shadow-xl">
@@ -134,10 +158,10 @@ export function Hero() {
                       Next Available
                     </p>
                     <p className="text-base font-bold text-navy mt-0.5">
-                      Golden Hour Ride
+                      {nextSlot.label} Ride
                     </p>
                     <p className="text-sm text-ink-muted">
-                      16:45 — 18:45 &middot; Staff Pick
+                      {nextSlot.start} — {nextSlot.end} &middot; Staff Pick
                     </p>
                   </div>
                   <div className="flex flex-col items-end">
