@@ -47,7 +47,7 @@ import type {
 } from "@/types";
 import { createBooking } from "@/lib/actions/booking";
 import { PaymentPromptPay } from "@/components/booking/PaymentPromptPay";
-import { PhoneVerification } from "@/components/booking/PhoneVerification";
+import { EmailVerification } from "@/components/booking/EmailVerification";
 
 // ------ Step definitions ------
 const STEPS = [
@@ -117,10 +117,10 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
     paymentAmount: number;
   } | null>(null);
 
-  // Phone verification state (book-first flow)
+  // Email verification state (book-first flow)
   const [verifiedUserId, setVerifiedUserId] = useState<string | undefined>(userId);
-  const [phoneVerified, setPhoneVerified] = useState(!!userId); // Already verified if logged in
-  const [showPhoneVerification, setShowPhoneVerification] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(!!userId); // Already verified if logged in
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
 
   const activePackage = RIDE_PACKAGES.find((p) => p.type === selectedPackage);
   const activeSlot = TIME_SLOTS.find((s) => s.id === selectedSlot);
@@ -180,7 +180,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
         return activeRiders.every((r) => r.name.trim().length > 0);
       }
       case "waiver":
-        return waiverAccepted && contactName.trim().length > 0 && contactPhone.replace(/\D/g, "").length >= 9;
+        return waiverAccepted && contactName.trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail);
       case "review":
         return true;
       default:
@@ -228,21 +228,21 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
     }
   };
 
-  // Handle phone verification callback
-  const handlePhoneVerified = (phone: string, newUserId: string) => {
-    setContactPhone(phone);
+  // Handle email verification callback
+  const handleEmailVerified = (verifiedEmail: string, newUserId: string) => {
+    setContactEmail(verifiedEmail);
     setVerifiedUserId(newUserId);
-    setPhoneVerified(true);
-    setShowPhoneVerification(false);
+    setEmailVerified(true);
+    setShowEmailVerification(false);
     // Now proceed to actually create the booking
     submitBookingWithUser(newUserId);
   };
 
-  // Called when user clicks "Confirm & Pay" — either goes to phone verification or straight to booking
+  // Called when user clicks "Confirm & Pay" — either goes to email verification or straight to booking
   const handleSubmitBooking = async () => {
-    // If not verified yet, show phone verification first
-    if (!phoneVerified && !verifiedUserId) {
-      setShowPhoneVerification(true);
+    // If not verified yet, show email verification first
+    if (!emailVerified && !verifiedUserId) {
+      setShowEmailVerification(true);
       return;
     }
     // Already verified — submit directly
@@ -1056,25 +1056,25 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-ink mb-1.5">
-                          Phone <span className="text-error">*</span>
-                        </label>
-                        <input
-                          type="tel"
-                          value={contactPhone}
-                          onChange={(e) => setContactPhone(e.target.value)}
-                          placeholder="08X-XXX-XXXX"
-                          className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/50 focus:border-ink focus:outline-none transition-colors"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-ink mb-1.5">
-                          Email
+                          Email <span className="text-error">*</span>
                         </label>
                         <input
                           type="email"
                           value={contactEmail}
                           onChange={(e) => setContactEmail(e.target.value)}
                           placeholder="your@email.com"
+                          className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/50 focus:border-ink focus:outline-none transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-ink mb-1.5">
+                          Phone <span className="text-ink-muted text-xs font-normal">(optional)</span>
+                        </label>
+                        <input
+                          type="tel"
+                          value={contactPhone}
+                          onChange={(e) => setContactPhone(e.target.value)}
+                          placeholder="08X-XXX-XXXX"
                           className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/50 focus:border-ink focus:outline-none transition-colors"
                         />
                       </div>
@@ -1225,13 +1225,13 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                       </div>
                     </div>
 
-                    {/* Phone Verification (for guest users) */}
-                    {showPhoneVerification && !phoneVerified ? (
+                    {/* Email Verification (for guest users) */}
+                    {showEmailVerification && !emailVerified ? (
                       <div className="mb-6">
-                        <PhoneVerification
-                          initialPhone={contactPhone}
+                        <EmailVerification
+                          initialEmail={contactEmail}
                           contactName={contactName}
-                          onVerified={handlePhoneVerified}
+                          onVerified={handleEmailVerified}
                         />
                       </div>
                     ) : (
@@ -1253,14 +1253,14 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         >
                           {isSubmitting
                             ? "Creating booking..."
-                            : phoneVerified
+                            : emailVerified
                             ? `Confirm & Pay ${rideSubtotal.toLocaleString()} THB`
-                            : `Verify Phone & Pay ${rideSubtotal.toLocaleString()} THB`}
+                            : `Verify Email & Pay ${rideSubtotal.toLocaleString()} THB`}
                         </Button>
                         <p className="mt-3 text-xs text-center text-ink-muted">
-                          {phoneVerified
+                          {emailVerified
                             ? `You'll see a PromptPay QR code to scan with your banking app.`
-                            : `We'll verify your phone number, then show you a PromptPay QR code.`}
+                            : `We'll verify your email, then show you a PromptPay QR code.`}
                           {" "}Confirmation sent via LINE {LINE_OA}.
                         </p>
                       </>

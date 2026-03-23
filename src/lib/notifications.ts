@@ -3,18 +3,17 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { linePush } from "@/lib/line";
 import { sendEmail, bookingConfirmationEmail } from "@/lib/email";
-import { sendSMS } from "@/lib/sms";
 
 // ========================================
 // Notification Dispatcher
-// Cascade: LINE → Email → SMS
+// Cascade: LINE → Email
 // ========================================
 
 interface UserContact {
   lineUserId?: string;
   email?: string;
   phone?: string;
-  preferredNotification?: "line" | "email" | "sms";
+  preferredNotification?: "line" | "email";
 }
 
 /**
@@ -50,14 +49,13 @@ async function resolveUserContact(userId: string): Promise<UserContact> {
 }
 
 /**
- * Send a notification using the cascade: LINE → Email → SMS.
+ * Send a notification using the cascade: LINE → Email.
  * Respects user's preferred_notification if set.
  */
 async function sendWithCascade(
   contact: UserContact,
   lineMessage: string,
   emailOpts?: { to: string; subject: string; html: string },
-  smsMessage?: string
 ): Promise<{ sent: boolean; via: string }> {
   const preferred = contact.preferredNotification;
 
@@ -71,23 +69,13 @@ async function sendWithCascade(
     }
   }
 
-  // Try email (or if preferred)
+  // Try email as fallback (or if preferred)
   if (emailOpts && contact.email && (!preferred || preferred === "email")) {
     try {
       const sent = await sendEmail({ ...emailOpts, to: contact.email });
       if (sent) return { sent: true, via: "email" };
     } catch (err) {
-      console.error("[Notify] Email failed, falling back:", err);
-    }
-  }
-
-  // Try SMS as last resort (or if preferred)
-  if (smsMessage && contact.phone && (!preferred || preferred === "sms")) {
-    try {
-      const result = await sendSMS(contact.phone, smsMessage);
-      if (result.success) return { sent: true, via: "sms" };
-    } catch (err) {
-      console.error("[Notify] SMS failed:", err);
+      console.error("[Notify] Email failed:", err);
     }
   }
 
@@ -123,13 +111,10 @@ export async function notifyBookingConfirmation(
 
   const emailData = bookingConfirmationEmail(booking);
 
-  const smsMsg = `En-Joy Speed: Booking confirmed! ${booking.date} ${booking.timeSlot}, ${booking.riderCount} riders. #${booking.bookingId.slice(0, 8).toUpperCase()}. Details: https://enjoyspeedbkk.com/bookings`;
-
   const result = await sendWithCascade(
     contact,
     lineMsg,
     contact.email ? { to: contact.email, subject: emailData.subject, html: emailData.html } : undefined,
-    smsMsg
   );
 
   console.log(`[Notify] Booking confirmation for ${booking.contactName} — sent via ${result.via}`);
@@ -150,9 +135,7 @@ export async function notifyPreRideReminder(
 
   const lineMsg = `🚴 Ride Tomorrow!\n\nHi ${booking.contactName}!\n\n📅 ${booking.date}\n🕐 ${booking.timeSlot} (${booking.timeRange})\n📍 ${booking.meetingPoint}\n\n✅ Checklist:\n• Sport shoes (closed-toe)\n• Athletic socks & top\n• Sunscreen + sunglasses\n• Water bottle\n\nSee you there! 🌅`;
 
-  const smsMsg = `En-Joy Speed: Ride tomorrow! ${booking.timeSlot} at ${booking.meetingPoint}. Bring sport shoes, sunscreen, water. See you there!`;
-
-  return sendWithCascade(contact, lineMsg, undefined, smsMsg);
+  return sendWithCascade(contact, lineMsg);
 }
 
 export async function notifyWeatherCancellation(
@@ -168,9 +151,7 @@ export async function notifyWeatherCancellation(
 
   const lineMsg = `🌧️ Weather Update\n\nHi ${booking.contactName},\n\nYour ride on ${booking.date} (${booking.timeSlot}) has been cancelled for safety.\n\nYour options:\n• Reschedule (free)\n• Rain credit (90 days)\n• Refund\n\nReply here or visit:\nhttps://enjoyspeedbkk.com/bookings`;
 
-  const smsMsg = `En-Joy Speed: Ride cancelled (weather) — ${booking.date}. Free reschedule, rain credit, or refund available. Reply or visit enjoyspeedbkk.com`;
-
-  return sendWithCascade(contact, lineMsg, undefined, smsMsg);
+  return sendWithCascade(contact, lineMsg);
 }
 
 export async function notifyPostRide(

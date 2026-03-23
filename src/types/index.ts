@@ -136,8 +136,8 @@ export interface BookingFormState {
   riderCount: number;
   riders: RiderInfo[];
   contactName: string;
-  contactPhone: string;
+  contactPhone?: string;
   contactEmail: string;
-  contactLineId: string;
-  specialRequests: string;
+  contactLineId?: string;
+  specialRequests?: string;
 }

@@ -12,12 +12,12 @@ export interface CreateBookingInput {
   riderCount: number;
   riders: RiderInfo[];
   contactName: string;
-  contactPhone: string;
+  contactPhone?: string;
   contactEmail: string;
-  contactLineId: string;
-  specialRequests: string;
+  contactLineId?: string;
+  specialRequests?: string;
   waiverAccepted: boolean;
-  userId?: string; // For phone-verified guest bookings
+  userId?: string; // For email-verified guest bookings
 }
 
 export interface BookingResult {
@@ -37,11 +37,11 @@ export async function createBooking(
     let resolvedUserId: string;
 
     if (input.userId) {
-      // Phone-verified guest booking — verify the userId actually exists in our DB
+      // Email-verified guest booking — verify the userId actually exists in our DB
       const admin = createAdminClient();
       const { data: verifiedProfile } = await admin
         .from("profiles")
-        .select("id, phone_verified")
+        .select("id")
         .eq("id", input.userId)
         .single();
 
@@ -59,7 +59,7 @@ export async function createBooking(
       if (authError || !user) {
         return {
           success: false,
-          error: "Please verify your phone number to continue.",
+          error: "Please verify your email to continue.",
         };
       }
       resolvedUserId = user.id;

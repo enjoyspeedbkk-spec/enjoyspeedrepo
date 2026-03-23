@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { ChevronRight, Play, Shield, Camera, Users, Volume2, VolumeX, SkipForward } from "lucide-react";
+import Image from "next/image";
+import { ChevronRight, Play, Shield, Camera, Users, Volume2, VolumeX, SkipForward, X } from "lucide-react";
 
 const stats = [
   { icon: Shield, label: "Athlete-Led & Safe" },
@@ -11,41 +12,24 @@ const stats = [
   { icon: Users, label: "Small Groups Only" },
 ];
 
+/* ─── Video carousel (plays on demand) ─── */
 const SUPABASE_VIDEO_BASE =
   "https://oqldbxkluuoyrmzehkpk.supabase.co/storage/v1/object/public/videos";
-
-const CLIP_DURATION = 3; // seconds per clip
-
-// All videos — each plays for 3 seconds then crossfades to next
+const CLIP_DURATION = 3;
 const HERO_VIDEOS = [
-  {
-    src: `${SUPABASE_VIDEO_BASE}/video%20of%20cycling%20golden%20hour%20morning%20vertical.mp4`,
-    label: "Golden Hour Morning",
-  },
-  {
-    src: `${SUPABASE_VIDEO_BASE}/front%20facing%20golden%20hour%20vertical.mp4`,
-    label: "Front Facing",
-  },
-  {
-    src: `${SUPABASE_VIDEO_BASE}/Side%20view%20of%20sunrise%20golden%20hour%20cycling%20video%20vertical.mp4`,
-    label: "Sunrise Side View",
-  },
-  {
-    src: `${SUPABASE_VIDEO_BASE}/Video%20of%20cycling%20in%20the%20morning%20blue%20hour%20vertical.mp4`,
-    label: "Blue Hour",
-  },
-  {
-    src: `${SUPABASE_VIDEO_BASE}/wide%20angle%20blue%20hour%20morning%20vertical.mp4`,
-    label: "Wide Angle",
-  },
+  { src: `${SUPABASE_VIDEO_BASE}/video%20of%20cycling%20golden%20hour%20morning%20vertical.mp4`, label: "Golden Hour Morning" },
+  { src: `${SUPABASE_VIDEO_BASE}/front%20facing%20golden%20hour%20vertical.mp4`, label: "Front Facing" },
+  { src: `${SUPABASE_VIDEO_BASE}/Side%20view%20of%20sunrise%20golden%20hour%20cycling%20video%20vertical.mp4`, label: "Sunrise Side View" },
+  { src: `${SUPABASE_VIDEO_BASE}/Video%20of%20cycling%20in%20the%20morning%20blue%20hour%20vertical.mp4`, label: "Blue Hour" },
+  { src: `${SUPABASE_VIDEO_BASE}/wide%20angle%20blue%20hour%20morning%20vertical.mp4`, label: "Wide Angle" },
 ];
 
-// Dynamic next-available slot based on Bangkok time
+/* ─── Dynamic next-available slot (Bangkok UTC+7) ─── */
 const SLOTS = [
-  { label: "Early Bird", start: "06:15", end: "08:15", hour: 6, min: 15 },
-  { label: "Energy Booster", start: "06:30", end: "08:30", hour: 6, min: 30 },
-  { label: "Light Chaser", start: "16:15", end: "18:15", hour: 16, min: 15 },
-  { label: "Golden Hour", start: "16:45", end: "18:45", hour: 16, min: 45 },
+  { label: "Early Bird",      start: "06:15", end: "08:15", hour: 6,  min: 15 },
+  { label: "Energy Booster",  start: "06:30", end: "08:30", hour: 6,  min: 30 },
+  { label: "Light Chaser",    start: "16:15", end: "18:15", hour: 16, min: 15 },
+  { label: "Golden Hour",     start: "16:45", end: "18:45", hour: 16, min: 45 },
   { label: "Twilight Finish", start: "17:15", end: "19:15", hour: 17, min: 15 },
 ];
 
@@ -59,27 +43,18 @@ function getNextSlot() {
 
 export function Hero() {
   const nextSlot = useMemo(() => getNextSlot(), []);
+
+  /* ─── Video state ─── */
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [prevIndex, setPrevIndex] = useState<number | null>(null);
-  const [isVisible, setIsVisible] = useState(true);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
   const wasPlayingBeforeHide = useRef(false);
 
-  // Preload all videos once component mounts
-  useEffect(() => {
-    videoRefs.current.forEach((video) => {
-      if (video) {
-        video.load();
-      }
-    });
-  }, []);
-
-  // Preload a video by index (triggers full download)
   const preloadVideo = useCallback((index: number) => {
     const video = videoRefs.current[index];
     if (video && video.preload !== "auto") {
@@ -88,7 +63,7 @@ export function Hero() {
     }
   }, []);
 
-  // Advance to next clip after CLIP_DURATION seconds
+  /* ─── Carousel auto-advance ─── */
   const scheduleNext = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
@@ -96,31 +71,22 @@ export function Hero() {
         const next = (prev + 1) % HERO_VIDEOS.length;
         setPrevIndex(prev);
         const nextVideo = videoRefs.current[next];
-        if (nextVideo) {
-          nextVideo.currentTime = 0;
-          nextVideo.play().catch(() => {});
-        }
+        if (nextVideo) { nextVideo.currentTime = 0; nextVideo.play().catch(() => {}); }
         if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
         fadeTimerRef.current = setTimeout(() => {
           const oldVideo = videoRefs.current[prev];
           if (oldVideo) oldVideo.pause();
           setPrevIndex(null);
         }, 400);
-        const upcoming = (next + 1) % HERO_VIDEOS.length;
-        preloadVideo(upcoming);
+        preloadVideo((next + 1) % HERO_VIDEOS.length);
         return next;
       });
     }, CLIP_DURATION * 1000);
   }, [preloadVideo]);
 
-  // Whenever activeIndex changes while playing, schedule the next transition
   useEffect(() => {
-    if (videoPlaying) {
-      scheduleNext();
-    }
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    if (videoPlaying) scheduleNext();
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [activeIndex, videoPlaying, scheduleNext]);
 
   const handlePlayVideo = () => {
@@ -131,17 +97,8 @@ export function Hero() {
         v.muted = true;
         v.currentTime = 0;
         if (i === 0) {
-          v.play()
-            .then(() => {
-              setVideoPlaying(true);
-              setMuted(true);
-            })
-            .catch(() => {
-              console.warn("Video playback failed");
-            });
-        } else {
-          v.pause();
-        }
+          v.play().then(() => { setVideoPlaying(true); setMuted(true); }).catch(() => {});
+        } else { v.pause(); }
       }
     });
   };
@@ -152,10 +109,7 @@ export function Hero() {
       const next = (prev + 1) % HERO_VIDEOS.length;
       setPrevIndex(prev);
       const nextVideo = videoRefs.current[next];
-      if (nextVideo) {
-        nextVideo.currentTime = 0;
-        nextVideo.play().catch(() => {});
-      }
+      if (nextVideo) { nextVideo.currentTime = 0; nextVideo.play().catch(() => {}); }
       if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
       fadeTimerRef.current = setTimeout(() => {
         const oldVideo = videoRefs.current[prev];
@@ -172,58 +126,47 @@ export function Hero() {
     if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
     setPrevIndex(null);
     setVideoPlaying(false);
-    videoRefs.current.forEach((v) => {
-      if (v) v.pause();
-    });
+    videoRefs.current.forEach((v) => { if (v) v.pause(); });
   }, []);
 
   const toggleMute = useCallback(() => {
     setMuted((prev) => {
       const newMuted = !prev;
-      videoRefs.current.forEach((v) => {
-        if (v) v.muted = newMuted;
-      });
+      videoRefs.current.forEach((v) => { if (v) v.muted = newMuted; });
       return newMuted;
     });
   }, []);
 
-  // Keyboard controls: Esc=close, M=mute, →/N=skip
+  /* ─── Keyboard shortcuts when video is playing ─── */
   useEffect(() => {
     if (!videoPlaying) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { handleCloseVideo(); }
-      else if (e.key === "m" || e.key === "M") { toggleMute(); }
-      else if (e.key === "ArrowRight" || e.key === "n" || e.key === "N") { handleSkipVideo(); }
+      if (e.key === "Escape") handleCloseVideo();
+      else if (e.key.toLowerCase() === "m") toggleMute();
+      else if (e.key === "ArrowRight" || e.key.toLowerCase() === "n") handleSkipVideo();
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [videoPlaying, handleCloseVideo, handleSkipVideo, toggleMute]);
 
-  // Pause video when hero scrolls out of viewport
+  /* ─── Pause when scrolled away ─── */
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
-
     const observer = new IntersectionObserver(
       ([entry]) => {
-        const nowVisible = entry.isIntersecting;
-        setIsVisible(nowVisible);
-
-        if (!nowVisible && videoPlaying) {
+        if (!entry.isIntersecting && videoPlaying) {
           wasPlayingBeforeHide.current = true;
           videoRefs.current.forEach((v) => { if (v) v.pause(); });
           if (timerRef.current) clearTimeout(timerRef.current);
-        } else if (nowVisible && wasPlayingBeforeHide.current) {
+        } else if (entry.isIntersecting && wasPlayingBeforeHide.current) {
           wasPlayingBeforeHide.current = false;
           const activeVideo = videoRefs.current[activeIndex];
-          if (activeVideo) {
-            activeVideo.play().catch(() => {});
-          }
+          if (activeVideo) activeVideo.play().catch(() => {});
         }
       },
       { threshold: 0.15 }
     );
-
     observer.observe(section);
     return () => observer.disconnect();
   }, [videoPlaying, activeIndex]);
@@ -239,35 +182,29 @@ export function Hero() {
 
       <div className="mx-auto max-w-7xl px-6 lg:px-8 pt-24 pb-16 lg:pt-32 lg:pb-24">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left — Copy */}
+          {/* ═══ Left — Copy ═══ */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
+            {/* Eyebrow */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-8"
             >
-              <Link
-                href="/booking"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 mb-8 hover:bg-accent/15 transition-colors group"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-sm font-medium text-accent-dark">
-                  Limited spots available
-                </span>
-                <span className="text-xs text-accent font-semibold group-hover:translate-x-0.5 transition-transform">
-                  Book a ride →
-                </span>
-              </Link>
+              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+              <span className="text-sm font-medium text-accent-dark">
+                Now booking — Skylane 23.5 km, Suvarnabhumi
+              </span>
             </motion.div>
 
             <h1 className="text-balance">
               <span className="block text-navy">Let us handle</span>
               <span className="block text-navy">the speed.</span>
-              <span className="block mt-2 pb-1 bg-gradient-to-r from-accent to-accent-light bg-clip-text text-transparent leading-tight">
+              <span className="block mt-2 pb-1 leading-tight bg-gradient-to-r from-accent to-accent-light bg-clip-text text-transparent">
                 You enjoy the ride.
               </span>
             </h1>
@@ -283,11 +220,12 @@ export function Hero() {
               post-ride recovery all handled for you.
             </motion.p>
 
+            {/* CTAs */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="mt-8"
+              className="mt-8 flex flex-wrap gap-4"
             >
               <Link
                 href="/booking"
@@ -296,8 +234,18 @@ export function Hero() {
                 Book Your Ride
                 <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
+              <button
+                onClick={handlePlayVideo}
+                className="group inline-flex items-center gap-2.5 rounded-full border-2 border-navy/10 bg-surface/60 backdrop-blur-sm px-6 py-3.5 text-base font-semibold text-navy hover:border-navy/20 hover:bg-surface transition-all duration-300"
+              >
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-accent/10 group-hover:bg-accent/20 transition-colors">
+                  <Play className="h-3.5 w-3.5 text-accent ml-0.5" />
+                </span>
+                See It In Action
+              </button>
             </motion.div>
 
+            {/* Trust Row */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -315,7 +263,7 @@ export function Hero() {
             </motion.div>
           </motion.div>
 
-          {/* Right — Video/Image */}
+          {/* ═══ Right — Image + Video overlay ═══ */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -323,56 +271,76 @@ export function Hero() {
             className="relative pt-6 pr-6"
           >
             <div className="relative aspect-[4/5] lg:aspect-[3/4] rounded-3xl overflow-hidden shadow-xl">
-              {/* Video elements — first video visible as poster when paused */}
+              {/* Static hero image — always visible when video is off */}
+              {!videoPlaying && (
+                <Image
+                  src="/images/hero-ride.jpg"
+                  alt="Cyclists riding the Skylane at sunset"
+                  fill
+                  className="object-cover"
+                  priority
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              )}
+
+              {/* Video layers — only rendered during playback */}
               {HERO_VIDEOS.map((clip, i) => {
                 const isActive = videoPlaying && i === activeIndex;
                 const isPrev = videoPlaying && i === prevIndex;
-                const isFirstVideoPoster = i === 0 && !videoPlaying;
                 return (
                   <video
                     key={clip.src}
                     ref={(el) => { videoRefs.current[i] = el; }}
                     src={clip.src}
                     className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-                      isActive || isFirstVideoPoster
-                        ? "opacity-100 z-20"
-                        : isPrev
-                        ? "opacity-100 z-10"
-                        : "opacity-0 z-0"
+                      isActive ? "opacity-100 z-20" : isPrev ? "opacity-100 z-10" : "opacity-0 z-0"
                     }`}
                     playsInline
                     controls={false}
                     muted={muted}
-                    preload={i === 0 ? "auto" : "metadata"}
+                    preload="metadata"
                   />
                 );
               })}
 
               {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-navy/60 via-navy/10 to-transparent z-[3]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-navy/40 via-transparent to-transparent z-[3]" />
 
-              {/* Play button */}
+              {/* Floating card — visible when video is NOT playing */}
               <AnimatePresence>
                 {!videoPlaying && (
-                  <motion.button
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    onClick={handlePlayVideo}
-                    className="absolute inset-0 z-[15] flex items-center justify-center group cursor-pointer"
-                    aria-label="Play video"
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ delay: 0.8 }}
+                    className="absolute bottom-6 left-4 right-4 glass rounded-2xl p-4 border border-white/40 shadow-lg z-[5]"
                   >
-                    <motion.div
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="flex items-center justify-center w-20 h-20 rounded-full bg-white/90 shadow-2xl backdrop-blur-sm group-hover:bg-white transition-all"
-                    >
-                      <Play className="h-8 w-8 text-accent ml-1" />
-                    </motion.div>
-                    <span className="absolute bottom-24 left-1/2 -translate-x-1/2 text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm whitespace-nowrap">
-                      Watch the ride experience
-                    </span>
-                  </motion.button>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-medium text-ink-muted uppercase tracking-wider">
+                          Next Available
+                        </p>
+                        <p className="text-base font-bold text-navy mt-0.5">
+                          {nextSlot.label} Ride
+                        </p>
+                        <p className="text-sm text-ink-muted">
+                          {nextSlot.start} — {nextSlot.end} &middot; Staff Pick
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-xs font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full">
+                          3 spots left
+                        </span>
+                        <span className="text-lg font-bold text-navy mt-1">
+                          2,100
+                          <span className="text-xs font-normal text-ink-muted">
+                            {" "}THB
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
                 )}
               </AnimatePresence>
 
@@ -393,7 +361,7 @@ export function Hero() {
                         exit={{ opacity: 0, y: -4 }}
                         className="text-xs text-white/80 font-medium mb-2 text-center"
                       >
-                        {HERO_VIDEOS[activeIndex].label} · {activeIndex + 1}/{HERO_VIDEOS.length}
+                        {HERO_VIDEOS[activeIndex].label} &middot; {activeIndex + 1}/{HERO_VIDEOS.length}
                       </motion.p>
                     </AnimatePresence>
 
@@ -429,55 +397,18 @@ export function Hero() {
                       </button>
                       <button
                         onClick={handleCloseVideo}
-                        className="px-3 py-1.5 rounded-full bg-black/50 text-white text-xs font-medium hover:bg-black/70 transition-colors backdrop-blur-sm"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/50 text-white text-xs font-medium hover:bg-black/70 transition-colors backdrop-blur-sm"
                       >
+                        <X className="h-3.5 w-3.5" />
                         Close
                       </button>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
-
-              {/* Floating card — hides during video */}
-              <AnimatePresence>
-                {!videoPlaying && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    transition={{ delay: 0.8 }}
-                    className="absolute bottom-6 left-4 right-4 glass rounded-2xl p-4 border border-white/40 shadow-lg z-[25]"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-medium text-ink-muted uppercase tracking-wider">
-                          Next Available
-                        </p>
-                        <p className="text-base font-bold text-navy mt-0.5">
-                          {nextSlot.label} Ride
-                        </p>
-                        <p className="text-sm text-ink-muted">
-                          {nextSlot.start} — {nextSlot.end} &middot; Staff Pick
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-xs font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full">
-                          3 spots left
-                        </span>
-                        <span className="text-lg font-bold text-navy mt-1">
-                          2,100
-                          <span className="text-xs font-normal text-ink-muted">
-                            {" "}THB
-                          </span>
-                        </span>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
 
-            {/* Floating price badge — hides during video */}
+            {/* Floating price badge */}
             <AnimatePresence>
               {!videoPlaying && (
                 <motion.div
@@ -485,7 +416,7 @@ export function Hero() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: 1 }}
-                  className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 bg-accent text-white rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-lg max-w-[120px] sm:max-w-none"
+                  className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 bg-accent text-white rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-lg max-w-[120px] sm:max-w-none z-10"
                 >
                   <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider opacity-80">
                     From
