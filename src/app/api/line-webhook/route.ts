@@ -82,10 +82,26 @@ async function handleEvent(event: LineEvent) {
     // FOLLOW — user adds @EnjoySpeed
     // ========================================
     case "follow": {
+      // Fetch display name from LINE profile API
+      let displayName = "";
+      if (CHANNEL_ACCESS_TOKEN) {
+        try {
+          const profileRes = await fetch(
+            `https://api.line.me/v2/bot/profile/${lineUserId}`,
+            { headers: { Authorization: `Bearer ${CHANNEL_ACCESS_TOKEN}` } }
+          );
+          if (profileRes.ok) {
+            const profile = await profileRes.json();
+            displayName = profile.displayName || "";
+          }
+        } catch { /* ignore profile fetch failure */ }
+      }
+
       // Store the LINE user ID for future push messages
       const { error } = await admin.from("line_users").upsert(
         {
           line_user_id: lineUserId,
+          display_name: displayName || null,
           followed_at: new Date().toISOString(),
           is_following: true,
         },
@@ -137,32 +153,11 @@ async function handleEvent(event: LineEvent) {
             text: `💰 En-Joy Speed Pricing:\n\n🔹 Duo (2 riders): ฿2,500/person\n🔹 The Squad (3-5): ฿2,100/person\n🔹 The Peloton (6-8): ฿2,000/person\n\n🚲 Bike rental:\n• Hybrid: ฿420 (paid at track)\n• Road: ฿700 (paid at track)\n• Own bike: Free\n\n🎁 Every rider gets a Starter Kit (padded liner shorts, energy gel, eco mesh bag)\n\n👉 Book now: https://enjoyspeedbkk.com/booking`,
           },
         ]);
-      } else if (text.includes("where") || text.includes("location") || text.includes("map") || text.includes("ที่ไหน") || text.includes("meeting")) {
-        await replyMessage(event.replyToken, [
-          {
-            type: "text",
-            text: `📍 Meeting Point:\n\nSkylane (Happy and Healthy Bike Lane)\nSuvarnabhumi, Bangkok\n\n🗺️ Google Maps:\nhttps://maps.app.goo.gl/skylane\n\nLook for the En-Joy Speed tent near the entrance. We'll be there 15 minutes before your ride starts.\n\n🚗 Parking is available at the Skylane car park.`,
-          },
-        ]);
-      } else if (text.includes("bring") || text.includes("wear") || text.includes("what to") || text.includes("เอาอะไร")) {
-        await replyMessage(event.replyToken, [
-          {
-            type: "text",
-            text: `🎒 What to Bring:\n\n✅ Must have:\n• Sport shoes (closed-toe — mandatory!)\n• Athletic socks\n• Breathable athletic top\n• Sunscreen + sunglasses\n• Water bottle\n\n🎁 We provide:\n• Helmet\n• Bike (if renting)\n• Padded cycling liner shorts\n• Energy gel\n• Eco mesh bag\n\n⚠️ No sandals, flip-flops, or open-toe shoes allowed for safety.`,
-          },
-        ]);
-      } else if (text.includes("rain") || text.includes("weather") || text.includes("cancel") || text.includes("ฝน")) {
-        await replyMessage(event.replyToken, [
-          {
-            type: "text",
-            text: `🌧️ Rain Policy:\n\nIf we cancel due to weather, you get:\n\n1️⃣ Free reschedule — pick any future date\n2️⃣ Rain credit — valid for 90 days\n3️⃣ Full refund — per our cancellation policy\n\nWe monitor weather closely and will notify you via LINE if your ride is affected.\n\n☀️ Light drizzle? We usually still ride — it's part of the adventure!`,
-          },
-        ]);
       } else if (text.includes("help") || text.includes("ช่วย")) {
         await replyMessage(event.replyToken, [
           {
             type: "text",
-            text: `Hi! Here's what I can help with:\n\n📅 "book" — Start a booking\n💰 "price" — See our packages\n🕐 "time" — Ride schedule\n📍 "location" — Where to meet\n🎒 "bring" — What to bring\n🌧️ "rain" — Weather & cancellation policy\n\n❓ Anything else — Our team will reply shortly!\n\nOr visit: https://enjoyspeedbkk.com`,
+            text: `Hi! Here's what I can help with:\n\n📅 Type "book" — Start a booking\n💰 Type "price" — See our packages\n🕐 Type "time" — Ride schedule\n❓ Anything else — Our team will get back to you!\n\nOr visit: https://enjoyspeedbkk.com`,
           },
         ]);
       } else if (text.includes("time") || text.includes("schedule") || text.includes("เวลา")) {

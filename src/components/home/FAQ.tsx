@@ -9,7 +9,7 @@ const faqs = [
   {
     question: "Do I need to bring my own bike?",
     answer:
-      "You can! But we also offer bike rentals. Hybrid bikes are 420 THB and road bikes are 700 THB per session. Just select your preference when booking.",
+      "You can! But we also offer bike rentals through HHBL (Happy and Healthy Bike Lane). Hybrid bikes are 420 THB and road bikes are 720 THB per session. Helmet is included with every rental. All rental bikes are professionally maintained and ready to ride. Just select your preference when booking.",
   },
   {
     question: "What fitness level do I need?",
@@ -24,7 +24,7 @@ const faqs = [
   {
     question: "Do I need cycling insurance?",
     answer:
-      "Yes, riders must have their own insurance. Our service does not include personal injury or damage insurance. This is part of our safety waiver which you'll complete during onboarding.",
+      "We recommend riders have their own personal accident insurance or travel insurance for peace of mind. All rental bikes include insurance coverage provided by the rental shop. You'll complete a safety waiver during onboarding before your ride.",
   },
   {
     question: "How far in advance should I book?",
@@ -34,7 +34,7 @@ const faqs = [
   {
     question: "What's included in the price?",
     answer:
-      "Every ride includes Athlete Leader guidance, Hero support riders, professional photography, post-ride cold towels, electrolyte drinks, and recovery refreshments. Bike rental is the only additional cost.",
+      "Every ride includes Athlete Leader guidance, Hero support riders, ride photography, a Starter Kit (padded cycling liners, energy gel, eco mesh bag — 640 THB value, included), post-ride electrolyte drinks and recovery refreshments, safety briefing, and weather monitoring. Bike rental is the only additional cost. The Starter Kit does not include a bidon (cycling water bottle) — please bring your own or let us know in advance to arrange one (extra cost).",
   },
   {
     question: "Can I cancel or reschedule?",
@@ -44,7 +44,7 @@ const faqs = [
   {
     question: "What should I bring?",
     answer:
-      "A helmet (required), comfortable cycling clothing, sunscreen, and water. If you're renting a bike, that's all you need. We provide everything else.",
+      "Comfortable cycling clothing, sunscreen, and a cycling bidon (water bottle) — normal bottles won't fit the bike holder. If renting a bike, a helmet is included. If bringing your own bike, you'll need your own helmet (required). We provide everything else in your Starter Kit.",
   },
 ];
 
@@ -63,7 +63,7 @@ function FAQItem({
     <div className="border-b border-sand/60 last:border-0">
       <button
         onClick={onClick}
-        className="flex items-center justify-between w-full py-5 text-left group"
+        className="flex items-center justify-between w-full py-5 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-lg px-2 -mx-2"
       >
         <span className="text-base font-semibold text-ink group-hover:text-accent transition-colors pr-4">
           {question}

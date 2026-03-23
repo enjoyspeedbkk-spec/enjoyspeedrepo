@@ -2,66 +2,22 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import {
-  Shield,
-  Camera,
-  Users,
-  Wind,
-  Droplets,
-  Package,
-  Shirt,
-  HeartPulse,
-} from "lucide-react";
+import Link from "next/link";
+import { Camera, Package, ChevronRight } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
-const included = [
-  {
-    icon: Users,
-    title: "Athlete Leaders",
-    description:
-      "Elite local cyclists who set the pace, guide the route, and ensure the group stays safe. They lead from the front.",
-  },
-  {
-    icon: Shield,
-    title: "Hero Support Riders",
-    description:
-      "Sweep riders at the back of the group, watching over every participant. No one gets left behind.",
-  },
-  {
-    icon: Camera,
-    title: "Professional Photography",
-    description:
-      "Action shots and group photos from your ride, delivered digitally after the session. Capture the moment.",
-  },
+const highlights = [
   {
     icon: Package,
     title: "Starter Kit",
     description:
-      "Padded gel cycling liners (not rental — yours to keep for hygiene), energy gel, and a reusable eco mesh bag.",
+      "Padded cycling liners (yours to keep), energy gel, and a reusable eco mesh bag — ready at check-in.",
   },
   {
-    icon: Droplets,
-    title: "Post-Ride Recovery",
+    icon: Camera,
+    title: "Ride Photography",
     description:
-      "Cold towels, electrolyte drinks, and a healthy recovery snack. Finish your ride feeling taken care of.",
-  },
-  {
-    icon: HeartPulse,
-    title: "Safety Briefing & Protocols",
-    description:
-      "15-minute orientation covering hand signals, lane rules, pacing, and SOS procedures before every ride.",
-  },
-  {
-    icon: Wind,
-    title: "Weather Monitoring",
-    description:
-      "We track conditions for your ride window and proactively communicate via LINE if plans need to change.",
-  },
-  {
-    icon: Shirt,
-    title: "Ready-to-Ride Guidance",
-    description:
-      "Pre-ride checklist shared in advance: closed-toe shoes, athletic socks, sun protection, and helmet required.",
+      "We capture action shots and group moments during your ride — delivered digitally after the session. Candid, fun memories of your experience.",
   },
 ];
 
@@ -72,15 +28,41 @@ export function WhatsIncluded() {
         <SectionHeading
           badge="What's Included"
           title="Everything you need, nothing you don't"
-          subtitle="Every ride comes fully supported. Leaders, safety, photography, starter kit, and recovery — all built in."
+          subtitle="Every ride includes Leaders, safety support, photography, starter kit, and post-ride recovery."
         />
+
+        {/* Two primary highlights */}
+        <div className="grid sm:grid-cols-2 gap-6 lg:gap-8 mb-10">
+          {highlights.map((item, i) => (
+            <motion.div
+              key={item.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1, duration: 0.5 }}
+              className="flex gap-5 items-start p-6 rounded-2xl bg-white border border-sand/40"
+            >
+              <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl bg-accent/8 border border-accent/10">
+                <item.icon className="h-5 w-5 text-accent" />
+              </div>
+              <div>
+                <h4 className="text-base font-bold text-ink mb-1">
+                  {item.title}
+                </h4>
+                <p className="text-sm text-ink-muted leading-relaxed">
+                  {item.description}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
 
         {/* Photo row — real equipment */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mb-16 grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4"
+          className="mb-10 grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4"
         >
           {[
             { src: "/images/team-uniform.jpg", alt: "LKB team uniform" },
@@ -107,42 +89,26 @@ export function WhatsIncluded() {
           ))}
         </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-          {included.map((item, i) => (
-            <motion.div
-              key={item.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.06, duration: 0.5 }}
-              className="group"
-            >
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-accent/8 border border-accent/10 mb-4 transition-colors group-hover:bg-accent/15">
-                <item.icon className="h-5 w-5 text-accent" />
-              </div>
-              <h4 className="text-base font-bold text-ink mb-1.5">
-                {item.title}
-              </h4>
-              <p className="text-sm text-ink-muted leading-relaxed">
-                {item.description}
-              </p>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Bike rental note */}
+        {/* Secondary info — compact strip */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="mt-12 text-center p-6 rounded-2xl bg-cream border border-sand/60"
+          className="text-center space-y-3"
         >
-          <p className="text-sm font-semibold text-ink mb-1">
-            Bike rental available separately
+          <p className="text-sm text-ink-muted">
+            Also included: Athlete Leaders, Hero support riders, safety briefing, post-ride electrolyte drinks, and weather monitoring.
           </p>
           <p className="text-sm text-ink-muted">
-            Hybrid 420 THB &middot; Road 700 THB &middot; Or bring your own at no extra cost
+            Bike rental available separately — Hybrid 420 THB · Road 720 THB · Or bring your own.
           </p>
+          <Link
+            href="/about"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:text-accent-dark transition-colors"
+          >
+            See full ride details
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
         </motion.div>
       </div>
     </section>

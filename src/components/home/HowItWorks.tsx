@@ -66,7 +66,7 @@ export function HowItWorks() {
           subtitle="Six steps. Zero stress. Every detail curated so you can focus on what matters: the ride."
         />
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {steps.map((step, i) => (
             <motion.div
               key={step.number}
@@ -74,20 +74,20 @@ export function HowItWorks() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.08, duration: 0.5 }}
-              className="relative"
+              className="relative rounded-2xl border border-sand/40 bg-white p-6 hover:border-accent/20 hover:shadow-sm transition-all duration-300"
             >
-              {/* Step number */}
-              <span className="text-5xl font-bold text-sand/60 font-heading select-none">
-                {step.number}
-              </span>
-
-              {/* Icon */}
-              <div className="mt-3 inline-flex items-center justify-center w-11 h-11 rounded-xl bg-accent/8 border border-accent/10">
-                <step.icon className="h-5 w-5 text-accent" />
+              {/* Top row: icon + step number */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-accent/8 border border-accent/10">
+                  <step.icon className="h-5 w-5 text-accent" />
+                </div>
+                <span className="text-3xl font-bold text-sand/50 font-heading select-none">
+                  {step.number}
+                </span>
               </div>
 
               {/* Content */}
-              <h3 className="mt-4 text-lg font-bold text-ink">{step.title}</h3>
+              <h3 className="text-lg font-bold text-ink">{step.title}</h3>
               <p className="mt-2 text-sm text-ink-muted leading-relaxed">
                 {step.description}
               </p>

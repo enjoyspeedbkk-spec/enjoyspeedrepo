@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, bookingConfirmationEmail } from "@/lib/email";
@@ -398,6 +399,10 @@ export async function updatePackage(
     .from("ride_packages_config")
     .update(updates)
     .eq("id", id);
+  if (!error) {
+    revalidatePath("/admin/settings");
+    revalidatePath("/booking");
+  }
   return { success: !error };
 }
 
@@ -500,6 +505,10 @@ export async function updateBikeRental(
     .from("bike_rentals_config")
     .update(updates)
     .eq("id", id);
+  if (!error) {
+    revalidatePath("/admin/settings");
+    revalidatePath("/booking");
+  }
   return { success: !error };
 }
 
@@ -696,11 +705,24 @@ export async function bulkWeatherCancel(
         .not("status", "in", '("cancelled","no_show","completed")');
 
       if (activeBookings && activeBookings.length > 0) {
-        // Mark all as cancelled
+        const bookingIds = activeBookings.map((b) => b.id);
+
+        // Mark all as cancelled with reason and timestamp
         await admin
           .from("bookings")
-          .update({ status: "cancelled" })
-          .in("id", activeBookings.map((b) => b.id));
+          .update({
+            status: "cancelled",
+            cancelled_at: new Date().toISOString(),
+            cancellation_reason: `Weather cancellation: ${reason}`,
+          })
+          .in("id", bookingIds);
+
+        // Also mark any pending payments as failed (prevents stale payment records)
+        await admin
+          .from("payments")
+          .update({ status: "failed", notes: `Weather cancellation: ${reason}` })
+          .in("booking_id", bookingIds)
+          .eq("status", "pending");
 
         cancelledCount += activeBookings.length;
 
@@ -759,11 +781,22 @@ export async function adminCancelBooking(
     return { success: false, error: "Booking is already cancelled" };
   }
 
-  // Cancel booking
+  // Cancel booking with metadata
   await admin
     .from("bookings")
-    .update({ status: "cancelled" })
+    .update({
+      status: "cancelled",
+      cancelled_at: new Date().toISOString(),
+      cancellation_reason: reason,
+    })
     .eq("id", bookingId);
+
+  // Mark any pending payments as failed
+  await admin
+    .from("payments")
+    .update({ status: "failed", notes: `Admin cancelled: ${reason}` })
+    .eq("booking_id", bookingId)
+    .eq("status", "pending");
 
   // Notify customer
   if (notifyCustomer) {
@@ -834,4 +867,54 @@ export async function bulkCheckInBooking(
   }
 
   return { success: !error };
+}
+
+// ========================================
+// ADMIN ACCESS MANAGEMENT
+// ========================================
+export async function listAdmins() {
+  const { admin } = await requireAdmin();
+
+  const { data, error } = await admin.rpc("list_admins");
+
+  if (error) {
+    console.error("Error listing admins:", error);
+    return [];
+  }
+
+  return data || [];
+}
+
+export async function grantAdminAccess(email: string) {
+  const { admin } = await requireAdmin();
+
+  const { data, error } = await admin.rpc("grant_admin_by_email", {
+    p_email: email.toLowerCase().trim(),
+  });
+
+  if (error) {
+    return { success: false, message: error.message };
+  }
+
+  return { success: true, message: data };
+}
+
+export async function revokeAdminAccess(email: string) {
+  const { admin, userId } = await requireAdmin();
+
+  // Prevent revoking the owner account
+  const ownerEmail = "enjoyspeed.bkk@gmail.com";
+  if (email.toLowerCase().trim() === ownerEmail) {
+    return { success: false, message: "Cannot revoke the owner account." };
+  }
+
+  const { data, error } = await admin.rpc("revoke_admin_by_email", {
+    p_email: email.toLowerCase().trim(),
+  });
+
+  if (error) {
+    return { success: false, message: error.message };
+  }
+
+  return { success: true, message: data };
 }

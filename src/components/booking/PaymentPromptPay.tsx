@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -41,6 +41,30 @@ export function PaymentPromptPay({
   const [copiedAccount, setCopiedAccount] = useState(false);
   const [slipUploaded, setSlipUploaded] = useState(false);
   const [slipUrl, setSlipUrl] = useState<string | null>(null);
+
+  // 30-minute countdown timer
+  const [secondsLeft, setSecondsLeft] = useState(30 * 60);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  const timerMinutes = Math.floor(secondsLeft / 60);
+  const timerSeconds = secondsLeft % 60;
+  const timerExpired = secondsLeft === 0;
+  const timerUrgent = secondsLeft < 5 * 60; // last 5 min
 
   const payload = useMemo(
     () =>
@@ -156,22 +180,38 @@ export function PaymentPromptPay({
           </div>
         </Card>
 
-        {/* Payment timer */}
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-warning/5 border border-warning/20 mb-6">
-          <Clock className="h-5 w-5 text-warning flex-shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-ink">
-              Pay within 30 minutes
+        {/* Payment countdown timer */}
+        <div className={`flex items-center gap-3 p-3 rounded-xl border mb-6 ${
+          timerExpired ? "bg-error/5 border-error/20" : timerUrgent ? "bg-warning/10 border-warning/30" : "bg-warning/5 border-warning/20"
+        }`}>
+          <Clock className={`h-5 w-5 flex-shrink-0 ${timerExpired ? "text-error" : "text-warning"}`} />
+          <div className="flex-1">
+            <p className={`text-sm font-medium ${timerExpired ? "text-error" : "text-ink"}`}>
+              {timerExpired ? "Time expired" : "Complete payment"}
             </p>
             <p className="text-xs text-ink-muted">
-              Your booking will be held for 30 minutes. After that, the slot may
-              be released.
+              {timerExpired
+                ? "Your slot may have been released. Please try booking again."
+                : "Your booking is held while you complete payment."}
             </p>
           </div>
+          {!timerExpired && (
+            <span className={`font-mono text-lg font-bold tabular-nums ${timerUrgent ? "text-warning" : "text-ink"}`}>
+              {timerMinutes}:{timerSeconds.toString().padStart(2, "0")}
+            </span>
+          )}
         </div>
 
-        {/* Upload slip */}
+        {/* Upload slip (optional) */}
         <Card padding="md" className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Upload className="h-4 w-4 text-ink-muted" />
+              <span className="text-sm font-semibold text-ink">Upload payment slip</span>
+            </div>
+            <span className="text-[10px] font-medium text-ink-muted/70 bg-sand/30 px-2 py-0.5 rounded-full">Optional</span>
+          </div>
+          <p className="text-xs text-ink-muted mb-3">Speeds up confirmation — not required.</p>
           <SlipUpload
             bookingId={bookingId}
             onUploaded={handleSlipUploaded}
@@ -219,7 +259,7 @@ export function PaymentPromptPay({
               },
               {
                 step: "2",
-                text: `You'll get a confirmation via LINE (${LINE_OA})`,
+                text: `You'll get a confirmation via LINE (${LINE_OA}). Don't have LINE? We'll email you too.`,
               },
               {
                 step: "3",
@@ -240,18 +280,29 @@ export function PaymentPromptPay({
           </div>
         </Card>
 
-        {/* LINE contact */}
-        <div className="mt-6 text-center">
-          <a
-            href={`https://line.me/R/ti/p/${LINE_OA}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm font-medium text-success hover:text-success/80 transition-colors"
-          >
-            <MessageCircle className="h-4 w-4" />
-            Questions? Chat with us on LINE
-          </a>
-        </div>
+        {/* LINE follow CTA */}
+        <Card padding="md" className="mt-6 bg-[#06C755]/5 border-[#06C755]/20">
+          <div className="flex items-start gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#06C755] flex-shrink-0">
+              <MessageCircle className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-ink">Get updates on LINE</p>
+              <p className="text-xs text-ink-muted mt-0.5">
+                Follow @EnjoySpeed for booking confirmations, ride-day reminders, weather alerts, and instant support.
+              </p>
+              <a
+                href={`https://line.me/R/ti/p/${LINE_OA}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 mt-2 px-4 py-2 rounded-lg bg-[#06C755] text-white text-xs font-semibold hover:bg-[#05b34e] transition-colors"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                Add @EnjoySpeed on LINE
+              </a>
+            </div>
+          </div>
+        </Card>
       </div>
     </section>
   );

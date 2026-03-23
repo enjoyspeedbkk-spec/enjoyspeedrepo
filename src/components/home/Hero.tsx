@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { ChevronRight, Play, Shield, Camera, Users, Volume2, VolumeX, SkipForward } from "lucide-react";
@@ -40,25 +40,7 @@ const HERO_VIDEOS = [
   },
 ];
 
-// Dynamic next-available slot based on Bangkok time
-const SLOTS = [
-  { label: "Early Bird", start: "06:15", end: "08:15", hour: 6, min: 15 },
-  { label: "Energy Booster", start: "06:30", end: "08:30", hour: 6, min: 30 },
-  { label: "Light Chaser", start: "16:15", end: "18:15", hour: 16, min: 15 },
-  { label: "Golden Hour", start: "16:45", end: "18:45", hour: 16, min: 45 },
-  { label: "Twilight Finish", start: "17:15", end: "19:15", hour: 17, min: 15 },
-];
-
-function getNextSlot() {
-  const now = new Date();
-  const bangkokHour = (now.getUTCHours() + 7) % 24;
-  const bangkokMin = now.getUTCMinutes();
-  const nowMins = bangkokHour * 60 + bangkokMin;
-  return SLOTS.find((s) => s.hour * 60 + s.min > nowMins) || SLOTS[0];
-}
-
 export function Hero() {
-  const nextSlot = useMemo(() => getNextSlot(), []);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -94,18 +76,22 @@ export function Hero() {
     timerRef.current = setTimeout(() => {
       setActiveIndex((prev) => {
         const next = (prev + 1) % HERO_VIDEOS.length;
+        // Keep previous video visible during crossfade
         setPrevIndex(prev);
+        // Play next video
         const nextVideo = videoRefs.current[next];
         if (nextVideo) {
           nextVideo.currentTime = 0;
           nextVideo.play().catch(() => {});
         }
+        // After fade completes (400ms), pause old video and clear prevIndex
         if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
         fadeTimerRef.current = setTimeout(() => {
           const oldVideo = videoRefs.current[prev];
           if (oldVideo) oldVideo.pause();
           setPrevIndex(null);
         }, 400);
+        // Preload the one after next so it's ready
         const upcoming = (next + 1) % HERO_VIDEOS.length;
         preloadVideo(upcoming);
         return next;
@@ -124,11 +110,13 @@ export function Hero() {
   }, [activeIndex, videoPlaying, scheduleNext]);
 
   const handlePlayVideo = () => {
+    // Start from clip 0
     setActiveIndex(0);
+    // Preload clip 1 so it's ready when clip 0 ends
     preloadVideo(1);
     videoRefs.current.forEach((v, i) => {
       if (v) {
-        v.muted = true;
+        v.muted = true; // Start muted for autoplay
         v.currentTime = 0;
         if (i === 0) {
           v.play()
@@ -187,7 +175,7 @@ export function Hero() {
     });
   }, []);
 
-  // Keyboard controls: Esc=close, M=mute, →/N=skip
+  // Keyboard controls for video: Space=play/pause, M=mute, N/→=skip, Esc=close
   useEffect(() => {
     if (!videoPlaying) return;
     const handleKey = (e: KeyboardEvent) => {
@@ -199,7 +187,7 @@ export function Hero() {
     return () => window.removeEventListener("keydown", handleKey);
   }, [videoPlaying, handleCloseVideo, handleSkipVideo, toggleMute]);
 
-  // Pause video when hero scrolls out of viewport
+  // Pause video when hero scrolls out of viewport — saves bandwidth
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -210,10 +198,12 @@ export function Hero() {
         setIsVisible(nowVisible);
 
         if (!nowVisible && videoPlaying) {
+          // Scrolled away — pause all videos
           wasPlayingBeforeHide.current = true;
           videoRefs.current.forEach((v) => { if (v) v.pause(); });
           if (timerRef.current) clearTimeout(timerRef.current);
         } else if (nowVisible && wasPlayingBeforeHide.current) {
+          // Scrolled back — resume active video
           wasPlayingBeforeHide.current = false;
           const activeVideo = videoRefs.current[activeIndex];
           if (activeVideo) {
@@ -221,7 +211,7 @@ export function Hero() {
           }
         }
       },
-      { threshold: 0.15 }
+      { threshold: 0.15 } // triggers when <15% visible
     );
 
     observer.observe(section);
@@ -267,7 +257,7 @@ export function Hero() {
             <h1 className="text-balance">
               <span className="block text-navy">Let us handle</span>
               <span className="block text-navy">the speed.</span>
-              <span className="block mt-2 pb-1 bg-gradient-to-r from-accent to-accent-light bg-clip-text text-transparent leading-tight">
+              <span className="block mt-2 bg-gradient-to-r from-accent to-accent-light bg-clip-text text-transparent">
                 You enjoy the ride.
               </span>
             </h1>
@@ -320,13 +310,15 @@ export function Hero() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="relative pt-6 pr-6"
+            className="relative"
           >
             <div className="relative aspect-[4/5] lg:aspect-[3/4] rounded-3xl overflow-hidden shadow-xl">
-              {/* Video elements — first video visible as poster when paused */}
+              {/* All video elements — first video is always visible as the "poster" (paused at frame 0) */}
+              {/* When play is pressed, it simply starts playing — seamless transition */}
               {HERO_VIDEOS.map((clip, i) => {
                 const isActive = videoPlaying && i === activeIndex;
                 const isPrev = videoPlaying && i === prevIndex;
+                // First video is always visible (acts as poster when paused)
                 const isFirstVideoPoster = i === 0 && !videoPlaying;
                 return (
                   <video
@@ -348,7 +340,7 @@ export function Hero() {
                 );
               })}
 
-              {/* Gradient overlay */}
+              {/* Gradient overlay — must be below play button (z-15) and floating card (z-25) */}
               <div className="absolute inset-0 bg-gradient-to-t from-navy/60 via-navy/10 to-transparent z-[3]" />
 
               {/* Play button */}
@@ -438,7 +430,7 @@ export function Hero() {
                 )}
               </AnimatePresence>
 
-              {/* Floating card — hides during video */}
+              {/* Floating card */}
               <AnimatePresence>
                 {!videoPlaying && (
                   <motion.div
@@ -454,10 +446,10 @@ export function Hero() {
                           Next Available
                         </p>
                         <p className="text-base font-bold text-navy mt-0.5">
-                          {nextSlot.label} Ride
+                          Golden Hour Ride
                         </p>
                         <p className="text-sm text-ink-muted">
-                          {nextSlot.start} — {nextSlot.end} &middot; Staff Pick
+                          16:45 — 18:45 &middot; Staff Pick
                         </p>
                       </div>
                       <div className="flex flex-col items-end">
@@ -477,7 +469,7 @@ export function Hero() {
               </AnimatePresence>
             </div>
 
-            {/* Floating price badge — hides during video */}
+            {/* Floating price badge */}
             <AnimatePresence>
               {!videoPlaying && (
                 <motion.div

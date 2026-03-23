@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Settings,
   Package,
@@ -34,7 +35,11 @@ import {
   createStaffMember,
   updatePromoCode,
   createPromoCode,
+  listAdmins,
+  grantAdminAccess,
+  revokeAdminAccess,
 } from "@/lib/actions/admin";
+import { Shield } from "lucide-react";
 
 interface SectionProps {
   id: string;
@@ -49,6 +54,7 @@ const SECTIONS: SectionProps[] = [
   { id: "kit", label: "Starter Kit", icon: Gift },
   { id: "staff", label: "Staff Members", icon: UserCog },
   { id: "promos", label: "Promo Codes", icon: Tag },
+  { id: "access", label: "Admin Access", icon: Shield },
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -69,10 +75,21 @@ export function AdminSettings({
   staff: any[];
   promos: any[];
 }) {
-  const [activeSection, setActiveSection] = useState("packages");
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [activeSection, setActiveSection] = useState(
+    tabParam && SECTIONS.some((s) => s.id === tabParam) ? tabParam : "packages"
+  );
   const [saving, setSaving] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync with URL tab param when it changes
+  useEffect(() => {
+    if (tabParam && SECTIONS.some((s) => s.id === tabParam)) {
+      setActiveSection(tabParam);
+    }
+  }, [tabParam]);
 
   // Local state for each section
   const [localPackages, setLocalPackages] = useState(packages);
@@ -302,53 +319,95 @@ export function AdminSettings({
   );
 
   // =============================================
-  // BIKE RENTALS
+  // BIKE RENTALS — each bike editable independently
   // =============================================
-  const BikeRentalsSection = () => (
-    <div className="space-y-3">
-      {localBikes.map((bike) => (
-        <Card key={bike.id} padding="sm">
-          <div className="p-3 flex items-center gap-4">
-            <Bike className="h-5 w-5 text-ink-muted flex-shrink-0" />
-            <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <Field
-                label="Type"
-                value={bike.type}
-                onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, type: v } : b))}
-              />
-              <Field
-                label="Name"
-                value={bike.name}
-                onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, name: v } : b))}
-              />
-              <Field
-                label="Price (THB)"
-                type="number"
-                value={bike.price}
-                onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, price: Number(v) } : b))}
-              />
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Button
-                size="sm"
-                onClick={async () => {
-                  setSaving(bike.id);
-                  await updateBikeRental(bike.id, { type: bike.type, name: bike.name, price: bike.price });
-                  setSaving(null);
-                  showSaved(bike.id);
-                }}
-                disabled={saving === bike.id}
-              >
-                <Save className="h-3 w-3" />
-                {saving === bike.id ? "..." : "Save"}
-              </Button>
-              {saved === bike.id && <CheckCircle2 className="h-4 w-4 text-success" />}
-            </div>
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
+  const BikeRentalsSection = () => {
+    const [editingBikeId, setEditingBikeId] = useState<string | null>(null);
+
+    return (
+      <div className="space-y-3">
+        {localBikes.map((bike) => {
+          const isEditing = editingBikeId === bike.id;
+          return (
+            <Card key={bike.id} padding="sm">
+              <div className="p-3">
+                {isEditing ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Bike className="h-5 w-5 text-ink-muted" />
+                      <span className="font-semibold text-sm">Editing: {bike.name}</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <Field
+                        label="Type"
+                        value={bike.type}
+                        onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, type: v } : b))}
+                      />
+                      <Field
+                        label="Name"
+                        value={bike.name}
+                        onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, name: v } : b))}
+                      />
+                      <Field
+                        label="Price (THB)"
+                        type="number"
+                        value={bike.price}
+                        onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, price: Number(v) } : b))}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          setSaving(bike.id);
+                          setError(null);
+                          const result = await updateBikeRental(bike.id, { type: bike.type, name: bike.name, price: bike.price });
+                          setSaving(null);
+                          if (result.success) {
+                            showSaved(bike.id);
+                            setEditingBikeId(null);
+                          } else {
+                            setError("Failed to save bike rental");
+                          }
+                        }}
+                        disabled={saving === bike.id}
+                      >
+                        <Save className="h-3 w-3" />
+                        {saving === bike.id ? "Saving..." : "Save"}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => { setEditingBikeId(null); setLocalBikes(bikeRentals); }}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Bike className="h-5 w-5 text-ink-muted flex-shrink-0" />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm">{bike.name}</span>
+                          <span className="text-xs text-ink-muted">({bike.type})</span>
+                          {saved === bike.id && <CheckCircle2 className="h-4 w-4 text-success" />}
+                        </div>
+                        <p className="text-xs text-ink-muted mt-0.5">{bike.price?.toLocaleString()} THB</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setEditingBikeId(bike.id)}
+                      className="p-2 rounded-lg hover:bg-sand/30 transition-colors"
+                    >
+                      <Edit3 className="h-4 w-4 text-ink-muted" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  };
 
   // =============================================
   // STARTER KIT
@@ -731,6 +790,126 @@ export function AdminSettings({
   };
 
   // =============================================
+  // ADMIN ACCESS MANAGEMENT
+  // =============================================
+  const [admins, setAdmins] = useState<
+    { user_id: string; email: string; full_name: string; role: string; created_at: string }[]
+  >([]);
+  const [adminsLoaded, setAdminsLoaded] = useState(false);
+  const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [adminActionLoading, setAdminActionLoading] = useState(false);
+
+  const loadAdmins = async () => {
+    const data = await listAdmins();
+    setAdmins(data);
+    setAdminsLoaded(true);
+  };
+
+  const handleGrantAdmin = async () => {
+    if (!newAdminEmail.trim()) return;
+    setAdminActionLoading(true);
+    const result = await grantAdminAccess(newAdminEmail);
+    if (result.success) {
+      setSaved(result.message || "Admin access granted");
+      setNewAdminEmail("");
+      await loadAdmins();
+    } else {
+      setError(result.message || "Failed to grant access");
+    }
+    setAdminActionLoading(false);
+  };
+
+  const handleRevokeAdmin = async (email: string) => {
+    if (!confirm(`Revoke admin access for ${email}?`)) return;
+    setAdminActionLoading(true);
+    const result = await revokeAdminAccess(email);
+    if (result.success) {
+      setSaved(result.message || "Admin access revoked");
+      await loadAdmins();
+    } else {
+      setError(result.message || "Failed to revoke access");
+    }
+    setAdminActionLoading(false);
+  };
+
+  const AdminAccessSection = () => {
+    if (!adminsLoaded) {
+      loadAdmins();
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <Shield className="h-5 w-5 text-accent" />
+            Admin Access
+          </h2>
+        </div>
+
+        {/* Add new admin */}
+        <Card padding="md" className="space-y-3">
+          <p className="text-sm font-semibold">Grant Admin Access</p>
+          <p className="text-xs text-ink-muted">
+            The user must have already signed up. Enter their email to grant admin access.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              value={newAdminEmail}
+              onChange={(e) => setNewAdminEmail(e.target.value)}
+              placeholder="email@example.com"
+              className="flex-1 px-3 py-2 rounded-lg border-2 border-sand/60 text-sm focus:border-ink focus:outline-none transition-colors bg-surface"
+              onKeyDown={(e) => e.key === "Enter" && handleGrantAdmin()}
+            />
+            <Button
+              size="sm"
+              onClick={handleGrantAdmin}
+              disabled={adminActionLoading || !newAdminEmail.trim()}
+            >
+              <Plus className="h-4 w-4 mr-1" /> Grant
+            </Button>
+          </div>
+        </Card>
+
+        {/* Current admins list */}
+        <Card padding="md" className="space-y-3">
+          <p className="text-sm font-semibold">Current Admins</p>
+          {admins.length === 0 ? (
+            <p className="text-xs text-ink-muted">Loading…</p>
+          ) : (
+            <div className="space-y-2">
+              {admins.map((a) => (
+                <div
+                  key={a.user_id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-sand/20 border border-sand/40"
+                >
+                  <div>
+                    <p className="text-sm font-medium">{a.full_name || "No name"}</p>
+                    <p className="text-xs text-ink-muted">{a.email}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {a.email === "enjoyspeed.bkk@gmail.com" ? (
+                      <Badge variant="accent">Owner</Badge>
+                    ) : (
+                      <button
+                        onClick={() => handleRevokeAdmin(a.email)}
+                        disabled={adminActionLoading}
+                        className="text-xs text-warning hover:text-warning/80 font-medium transition-colors"
+                      >
+                        Revoke
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+    );
+  };
+
+  // =============================================
   // RENDER
   // =============================================
   const sectionContent: Record<string, () => React.ReactElement> = {
@@ -740,6 +919,7 @@ export function AdminSettings({
     kit: StarterKitSection,
     staff: StaffSection,
     promos: PromoCodesSection,
+    access: AdminAccessSection,
   };
 
   const ActiveContent = sectionContent[activeSection] || PackagesSection;
@@ -755,21 +935,23 @@ export function AdminSettings({
       </div>
 
       {/* Section tabs */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
-        {SECTIONS.map((section) => (
-          <button
-            key={section.id}
-            onClick={() => setActiveSection(section.id)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-              activeSection === section.id
-                ? "bg-ink text-cream"
-                : "bg-surface border border-sand/60 text-ink-muted hover:bg-sand/20"
-            }`}
-          >
-            <section.icon className="h-3.5 w-3.5" />
-            {section.label}
-          </button>
-        ))}
+      <div className="border-b border-sand/60">
+        <div className="flex gap-0 overflow-x-auto">
+          {SECTIONS.map((section) => (
+            <button
+              key={section.id}
+              onClick={() => setActiveSection(section.id)}
+              className={`flex items-center gap-2 px-4 py-3 font-medium whitespace-nowrap transition-all border-b-2 ${
+                activeSection === section.id
+                  ? "text-ink border-b-ink text-base"
+                  : "text-ink-muted border-b-transparent text-sm hover:text-ink hover:border-b-sand/60"
+              }`}
+            >
+              <section.icon className="h-4 w-4" />
+              {section.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Error */}

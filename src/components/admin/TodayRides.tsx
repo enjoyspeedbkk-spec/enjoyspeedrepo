@@ -197,59 +197,79 @@ export function TodayRides({ slots }: TodayRidesProps) {
         </div>
       )}
 
-      {/* Slot Cards */}
-      {TIME_SLOTS.map((slot) => {
-        const slotData = slots[slot.id];
-        const session = slotData?.session;
-        const bookings = slotData?.bookings || [];
-        const riders = bookings.flatMap((b) => b.riders);
-        const weather = session?.weather_status || "clear";
-        const WeatherIcon = weatherIcons[weather] || Sun;
-        const isExpanded = expandedSlot === slot.id;
-        const hasBookings = bookings.length > 0;
-        const isCancelled = weather === "cancelled" || session?.is_blackout;
+      {/* Slot Cards — only show slots with bookings, or collapsed empty summary */}
+      {(() => {
+        const slotsWithBookings = TIME_SLOTS.filter((slot) => {
+          const slotData = slots[slot.id];
+          return (slotData?.bookings || []).length > 0;
+        });
+        const emptySlots = TIME_SLOTS.filter((slot) => {
+          const slotData = slots[slot.id];
+          return (slotData?.bookings || []).length === 0;
+        });
 
         return (
-          <Card
-            key={slot.id}
-            padding="md"
-            className={`transition-all ${
-              isCancelled ? "opacity-50" : hasBookings ? "ring-1 ring-ink/10" : ""
-            }`}
-          >
-            {/* Slot header */}
-            <button
-              onClick={() => setExpandedSlot(isExpanded ? null : slot.id)}
-              className="w-full flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <div className="text-center leading-none">
-                  <p className="text-lg font-bold">{slot.id}</p>
-                  <p className="text-[10px] text-ink-muted">{slot.startTime}</p>
+          <>
+            {slotsWithBookings.length === 0 && (
+              <Card padding="md" className="bg-sand/10 border border-sand/40">
+                <div className="flex items-center gap-3 text-ink-muted">
+                  <Clock className="h-5 w-5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-ink">No rides scheduled today</p>
+                    <p className="text-sm mt-0.5">All {TIME_SLOTS.length} time slots are open and available for bookings.</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className="text-sm font-semibold">{slot.label}</p>
-                  <p className="text-xs text-ink-muted">
-                    {slot.startTime} — {slot.endTime}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <WeatherIcon className={`h-4 w-4 ${weatherColors[weather]}`} />
-                {hasBookings ? (
-                  <Badge variant="accent">
-                    {riders.length} rider{riders.length !== 1 ? "s" : ""}
-                  </Badge>
-                ) : (
-                  <span className="text-xs text-ink-muted">No bookings</span>
-                )}
-                {isExpanded ? (
-                  <ChevronUp className="h-4 w-4 text-ink-muted" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 text-ink-muted" />
-                )}
-              </div>
-            </button>
+              </Card>
+            )}
+
+            {slotsWithBookings.map((slot) => {
+              const slotData = slots[slot.id];
+              const session = slotData?.session;
+              const bookings = slotData?.bookings || [];
+              const riders = bookings.flatMap((b) => b.riders);
+              const weather = session?.weather_status || "clear";
+              const WeatherIcon = weatherIcons[weather] || Sun;
+              const isExpanded = expandedSlot === slot.id;
+              const hasBookings = bookings.length > 0;
+              const isCancelled = weather === "cancelled" || session?.is_blackout;
+
+              return (
+                <Card
+                  key={slot.id}
+                  padding="md"
+                  className={`transition-all ${
+                    isCancelled ? "opacity-50" : hasBookings ? "ring-1 ring-ink/10" : ""
+                  }`}
+                >
+                  {/* Slot header */}
+                  <button
+                    onClick={() => setExpandedSlot(isExpanded ? null : slot.id)}
+                    className="w-full flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="text-center leading-none">
+                        <p className="text-lg font-bold">{slot.id}</p>
+                        <p className="text-[10px] text-ink-muted">{slot.startTime}</p>
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-semibold">{slot.label}</p>
+                        <p className="text-xs text-ink-muted">
+                          {slot.startTime} — {slot.endTime}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <WeatherIcon className={`h-4 w-4 ${weatherColors[weather]}`} />
+                      <Badge variant="accent">
+                        {riders.length} rider{riders.length !== 1 ? "s" : ""}
+                      </Badge>
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4 text-ink-muted" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-ink-muted" />
+                      )}
+                    </div>
+                  </button>
 
             {/* Expanded content */}
             {isExpanded && hasBookings && (
@@ -397,15 +417,24 @@ export function TodayRides({ slots }: TodayRidesProps) {
               </div>
             )}
 
-            {/* No bookings — show empty */}
-            {isExpanded && !hasBookings && !isCancelled && (
-              <div className="mt-4 pt-4 border-t border-sand/60 text-center text-xs text-ink-muted py-4">
-                No bookings for this slot today.
+                </Card>
+              );
+            })}
+
+            {/* Empty slots summary — collapsed at the bottom */}
+            {emptySlots.length > 0 && slotsWithBookings.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 text-sm text-ink-muted pt-1">
+                <span className="font-medium">Open slots:</span>
+                {emptySlots.map((slot) => (
+                  <span key={slot.id} className="px-2 py-0.5 rounded-md bg-sand/30 text-xs font-medium">
+                    {slot.id} · {slot.startTime}
+                  </span>
+                ))}
               </div>
             )}
-          </Card>
+          </>
         );
-      })}
+      })()}
 
       {/* Cancel Modal */}
       {cancelModal && (

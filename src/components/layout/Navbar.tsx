@@ -1,24 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ChevronRight, User, LogOut, Shield } from "lucide-react";
+import { Menu, X, ChevronRight, User, LogOut, CalendarDays, Shield } from "lucide-react";
 import { createBrowserClient } from "@supabase/ssr";
 
-const navLinks = [
+// Base nav links — "Book a Ride" removed (redundant with CTA button)
+const customerLinks = [
   { href: "/", label: "Home" },
   { href: "/packages", label: "Rides" },
-  { href: "/booking", label: "Book a Ride" },
   { href: "/bookings", label: "My Bookings" },
   { href: "/about", label: "About" },
 ];
 
+// Admin sees a different nav — no customer booking items
+const adminLinks = [
+  { href: "/", label: "Home" },
+  { href: "/admin", label: "Dashboard" },
+  { href: "/admin/bookings", label: "Bookings" },
+  { href: "/admin/customers", label: "Customers" },
+  { href: "/admin/settings", label: "Settings" },
+];
+
 export function Navbar() {
+  const pathname = usePathname();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [user, setUser] = useState<{ email?: string; fullName?: string; avatarUrl?: string } | null>(null);
+  const [user, setUser] = useState<{ email?: string; fullName?: string; avatarUrl?: string; isAdmin?: boolean } | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
@@ -27,33 +39,46 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Check auth state on mount
   useEffect(() => {
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
+    const loadUser = async (userId: string, metadata: Record<string, any>) => {
+      // Check profile for admin role
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+
+      setUser({
+        email: metadata.email,
+        fullName: metadata.full_name || metadata.name,
+        avatarUrl: metadata.avatar_url || metadata.picture,
+        isAdmin: profile?.role === "admin",
+      });
+    };
+
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        setUser({
+        await loadUser(session.user.id, {
           email: session.user.email,
-          fullName: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
-          avatarUrl: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture,
+          ...session.user.user_metadata,
         });
       }
+      setAuthLoading(false);
     };
 
     getUser();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        setUser({
+        loadUser(session.user.id, {
           email: session.user.email,
-          fullName: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
-          avatarUrl: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture,
+          ...session.user.user_metadata,
         });
       } else {
         setUser(null);
@@ -63,9 +88,34 @@ export function Navbar() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Sign out — clear user immediately, then redirect
+  const handleSignOut = useCallback(async () => {
+    setShowUserMenu(false);
+    setIsOpen(false);
+    // Clear user state immediately so UI updates
+    setUser(null);
+
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  }, [router]);
+
   const initials = user?.fullName
     ? user.fullName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : user?.email?.[0]?.toUpperCase() || "?";
+
+  // Use admin or customer links depending on user role
+  const navLinks = user?.isAdmin ? adminLinks : customerLinks;
+
+  // Check if a nav link is the current page
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  };
 
   return (
     <>
@@ -81,33 +131,58 @@ export function Navbar() {
       >
         <nav className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="flex h-18 items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="relative z-10 flex items-center gap-1">
-              <Image
-                src="/images/logo.jpg"
-                alt="En-Joy Speed"
-                width={48}
-                height={48}
-                className="rounded-md object-contain"
-                priority
-              />
+            {/* Logo — typographic wordmark */}
+            <Link href="/" className="relative z-10 flex items-center gap-0">
+              <span className="text-xl font-extrabold tracking-tight" style={{ fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)" }}>
+                <span className="text-ink">en</span>
+                <span className="text-accent">-</span>
+                <span className="text-ink">joy</span>
+              </span>
+              <span
+                className="ml-1 text-xl font-extrabold tracking-tight text-accent"
+                style={{ fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)" }}
+              >
+                speed
+              </span>
             </Link>
 
             {/* Desktop Nav */}
-            <div className="hidden md:flex items-center gap-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="relative px-4 py-2 text-sm font-medium text-ink-light hover:text-ink transition-colors duration-200 rounded-full hover:bg-sand/40"
-                >
-                  {link.label}
-                </Link>
-              ))}
+            <div className="hidden md:flex items-center gap-0.5">
+              {navLinks.map((link) => {
+                const active = isActive(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
+                      active
+                        ? "text-accent"
+                        : "text-ink-light hover:text-ink hover:bg-sand/40"
+                    }`}
+                  >
+                    {link.label}
+                    {active && (
+                      <motion.div
+                        layoutId="nav-indicator"
+                        className="absolute inset-x-2 -bottom-0.5 h-0.5 bg-accent rounded-full"
+                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                      />
+                    )}
+                  </Link>
+                );
+              })}
             </div>
 
-            {/* Desktop CTA / User */}
+            {/* Desktop CTA / User — Book Now first, then account (rightmost) */}
             <div className="hidden md:flex items-center gap-3">
+              <Link
+                href={user?.isAdmin ? "/admin" : "/booking"}
+                className="group inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-accent-dark hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+              >
+                {user?.isAdmin ? "Admin" : "Book a Ride"}
+                <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+
               {user ? (
                 <div className="relative">
                   <button
@@ -147,6 +222,11 @@ export function Navbar() {
                           <div className="p-3 border-b border-sand/40">
                             <p className="text-sm font-semibold truncate">{user.fullName || "Rider"}</p>
                             <p className="text-xs text-ink-muted truncate">{user.email}</p>
+                            {user.isAdmin && (
+                              <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-semibold text-accent">
+                                <Shield className="h-2.5 w-2.5" /> Admin
+                              </span>
+                            )}
                           </div>
                           <div className="p-1.5">
                             <Link
@@ -157,35 +237,40 @@ export function Navbar() {
                               <User className="h-4 w-4 text-ink-muted" />
                               My Account
                             </Link>
-                            <Link
-                              href="/bookings"
-                              onClick={() => setShowUserMenu(false)}
-                              className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm hover:bg-sand/30 transition-colors"
-                            >
-                              <ChevronRight className="h-4 w-4 text-ink-muted" />
-                              My Bookings
-                            </Link>
-                            <form action="/api/auth/signout" method="POST">
+                            {user.isAdmin ? (
                               <Link
-                                href="/account"
-                                onClick={async (e) => {
-                                  e.preventDefault();
-                                  setShowUserMenu(false);
-                                  const { signOut } = await import("@/lib/actions/auth");
-                                  await signOut();
-                                }}
-                                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-ink-muted hover:bg-sand/30 hover:text-ink transition-colors w-full"
+                                href="/admin"
+                                onClick={() => setShowUserMenu(false)}
+                                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm hover:bg-sand/30 transition-colors"
                               >
-                                <LogOut className="h-4 w-4" />
-                                Sign Out
+                                <Shield className="h-4 w-4 text-ink-muted" />
+                                Admin Dashboard
                               </Link>
-                            </form>
+                            ) : (
+                              <Link
+                                href="/bookings"
+                                onClick={() => setShowUserMenu(false)}
+                                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm hover:bg-sand/30 transition-colors"
+                              >
+                                <CalendarDays className="h-4 w-4 text-ink-muted" />
+                                My Bookings
+                              </Link>
+                            )}
+                            <button
+                              onClick={handleSignOut}
+                              className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-ink-muted hover:bg-sand/30 hover:text-ink transition-colors w-full text-left"
+                            >
+                              <LogOut className="h-4 w-4" />
+                              Sign Out
+                            </button>
                           </div>
                         </motion.div>
                       </>
                     )}
                   </AnimatePresence>
                 </div>
+              ) : authLoading ? (
+                <div className="w-8 h-8 rounded-full bg-sand/40 animate-pulse" />
               ) : (
                 <Link
                   href="/account"
@@ -194,13 +279,6 @@ export function Navbar() {
                   Sign In
                 </Link>
               )}
-              <Link
-                href="/booking"
-                className="group inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-accent-dark hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
-              >
-                Book Now
-                <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-              </Link>
             </div>
 
             {/* Mobile menu button */}
@@ -255,27 +333,42 @@ export function Navbar() {
                     <div className="min-w-0">
                       <p className="text-sm font-semibold truncate">{user.fullName || "Rider"}</p>
                       <p className="text-xs text-ink-muted truncate">{user.email}</p>
+                      {user.isAdmin && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-accent">
+                          <Shield className="h-2.5 w-2.5" /> Admin
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
 
-                {navLinks.map((link, i) => (
-                  <motion.div
-                    key={link.href}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 + 0.1 }}
-                  >
-                    <Link
-                      href={link.href}
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center justify-between py-3 px-4 text-lg font-medium text-ink hover:bg-sand/40 rounded-xl transition-colors"
+                {navLinks.map((link, i) => {
+                  const active = isActive(link.href);
+                  return (
+                    <motion.div
+                      key={link.href}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 + 0.1 }}
                     >
-                      {link.label}
-                      <ChevronRight className="h-4 w-4 text-ink-muted" />
-                    </Link>
-                  </motion.div>
-                ))}
+                      <Link
+                        href={link.href}
+                        onClick={() => setIsOpen(false)}
+                        className={`flex items-center justify-between py-3 px-4 text-lg font-medium rounded-xl transition-colors ${
+                          active
+                            ? "text-accent bg-accent/5"
+                            : "text-ink hover:bg-sand/40"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2.5">
+                          {active && <div className="w-1.5 h-1.5 rounded-full bg-accent" />}
+                          {link.label}
+                        </span>
+                        <ChevronRight className={`h-4 w-4 ${active ? "text-accent" : "text-ink-muted"}`} />
+                      </Link>
+                    </motion.div>
+                  );
+                })}
 
                 {user && (
                   <motion.div
@@ -300,15 +393,17 @@ export function Navbar() {
                   transition={{ delay: 0.3 }}
                   className="mt-6 pt-6 border-t border-sand"
                 >
-                  <Link
-                    href="/booking"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-center gap-2 w-full rounded-full bg-accent px-6 py-3.5 text-base font-semibold text-white hover:bg-accent-dark transition-colors"
-                  >
-                    Book a Ride
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                  {!user && (
+                  {!user?.isAdmin && (
+                    <Link
+                      href="/booking"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center justify-center gap-2 w-full rounded-full bg-accent px-6 py-3.5 text-base font-semibold text-white hover:bg-accent-dark transition-colors"
+                    >
+                      Book a Ride
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  )}
+                  {!user && !authLoading && (
                     <Link
                       href="/account"
                       onClick={() => setIsOpen(false)}
@@ -319,12 +414,8 @@ export function Navbar() {
                   )}
                   {user && (
                     <button
-                      onClick={async () => {
-                        setIsOpen(false);
-                        const { signOut } = await import("@/lib/actions/auth");
-                        await signOut();
-                      }}
-                      className="flex items-center justify-center gap-2 mt-3 text-sm font-medium text-ink-muted hover:text-ink transition-colors w-full"
+                      onClick={handleSignOut}
+                      className={`flex items-center justify-center gap-2 ${!user.isAdmin ? "mt-3" : ""} text-sm font-medium text-ink-muted hover:text-ink transition-colors w-full`}
                     >
                       <LogOut className="h-3.5 w-3.5" />
                       Sign Out

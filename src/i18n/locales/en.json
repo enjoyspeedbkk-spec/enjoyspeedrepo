@@ -1,0 +1,705 @@
+{
+  "common": {
+    "appName": "En-Joy Speed",
+    "heroTitle": "Let us handle the speed. You enjoy the ride.",
+    "closeModal": "Close",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "yes": "Yes",
+    "no": "No",
+    "continue": "Continue",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "bookmark": "Bookmark",
+    "share": "Share",
+    "learn_more": "Learn more"
+  },
+  "nav": {
+    "home": "Home",
+    "rides": "Rides",
+    "about": "About",
+    "packages": "Ride Formats",
+    "contact": "Contact",
+    "bookings": "My Bookings",
+    "account": "Account",
+    "booking": "Book a Ride",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "myAccount": "My Account",
+    "adminDashboard": "Admin Dashboard",
+    "myBookings": "My Bookings"
+  },
+  "hero": {
+    "tagline": "Limited spots available",
+    "ctaMain": "Book Your Ride",
+    "description": "Premium guided cycling on Bangkok's Skylane. Led by Athlete Leaders, supported by Hero riders, with photography, safety, and post-ride recovery all handled for you.",
+    "athleteLed": "Athlete-Led & Safe",
+    "photographyIncluded": "Photography Included",
+    "smallGroupsOnly": "Small Groups Only",
+    "watchVideoPrompt": "Watch the ride experience",
+    "videoClose": "Close",
+    "videoNext": "Next clip",
+    "goldenHourRide": "Golden Hour Ride",
+    "staffPick": "Staff Pick",
+    "spotsLeft": "spots left",
+    "from": "From",
+    "perPerson": "per person",
+    "nextAvailable": "Next Available"
+  },
+  "packages": {
+    "rideFormats": "Ride Formats",
+    "chooseYourRide": "Choose your ride style",
+    "formatDescription": "Three curated formats designed for different group sizes. Every ride includes an Athlete Leader, Hero support riders, and photography.",
+    "duo": {
+      "name": "Duo",
+      "tagline": "The perfect pair",
+      "riders": "2 riders",
+      "description": "An intimate ride for two. Perfect for couples, friends, or anyone who wants a more personal guided experience.",
+      "support": "1 Athlete Leader",
+      "pricePerPerson": 2500,
+      "total": "5,000 THB total"
+    },
+    "squad": {
+      "name": "The Squad",
+      "tagline": "Ride with your crew",
+      "riders": "3–5 riders",
+      "description": "Bring your friends for the perfect group ride. Our most popular format, with a Leader up front and a Hero rider keeping everyone safe.",
+      "support": "1 Leader + 1 Hero",
+      "pricePerPerson": 2100,
+      "total": "6,300–10,500 THB",
+      "popular": "Most Popular"
+    },
+    "peloton": {
+      "name": "The Peloton",
+      "tagline": "Maximum energy",
+      "riders": "6–8 riders",
+      "description": "The full experience. A larger group ride with maximum support, energy, and an unforgettable atmosphere.",
+      "support": "2 Leaders + 2 Heroes",
+      "pricePerPerson": 2000,
+      "total": "12,000–16,000 THB"
+    },
+    "bikeRental": "Bike rental available separately",
+    "hybrid": "Hybrid 420 THB",
+    "road": "Road 700 THB",
+    "bringYourOwn": "Or bring your own at no extra cost",
+    "photographyIncluded": "Photography included",
+    "bookNow": "Book {name}"
+  },
+  "howItWorks": {
+    "theExperience": "The Experience",
+    "fromBookingToRecovery": "From booking to recovery, we handle everything",
+    "subtitle": "Six steps. Zero stress. Every detail curated so you can focus on what matters: the ride.",
+    "step1": {
+      "title": "Pick your ride",
+      "description": "Choose your date, time slot, and group size. See pricing instantly. Book at least 24 hours ahead."
+    },
+    "step2": {
+      "title": "Pay seamlessly",
+      "description": "Scan the PromptPay QR with your amount auto-calculated. No manual inputs, no friction."
+    },
+    "step3": {
+      "title": "Get prepped via LINE",
+      "description": "Receive your meetup location, ride details, and preparation tips. Complete your rider profile."
+    },
+    "step4": {
+      "title": "Ride with confidence",
+      "description": "Your Athlete Leader guides the pace. Hero riders keep you safe. Just pedal and enjoy."
+    },
+    "step5": {
+      "title": "Capture the moment",
+      "description": "Professional photography included. Get your shots from the ride delivered after the session."
+    },
+    "step6": {
+      "title": "Recover & relax",
+      "description": "Cold towels, electrolyte drinks, and recovery refreshments. End the ride feeling taken care of."
+    }
+  },
+  "gallery": {
+    "theExperience": "The Experience",
+    "seeWhatARideLooksLike": "See what a ride looks like",
+    "guidedRidesEveryMorningAndEvening": "Guided rides every morning and evening",
+    "smallGroupsBigExperiences": "Small groups, big experiences",
+    "worldClassInfrastructure": "World-class infrastructure on Bangkok's Skylane",
+    "feelTheRhythm": "Feel the rhythm of the road beneath you",
+    "betterTogether": "Better together — every single time",
+    "yourMoment": "Your moment on the Skylane",
+    "catchTheSunrise": "Catch the sunrise from 23.5 km above the city",
+    "prevImage": "Previous image",
+    "nextImage": "Next image",
+    "goToImage": "Go to image {number}"
+  },
+  "timeSlots": {
+    "sessionTimes": "Session Times",
+    "rideWhenItFeelsRight": "Ride when it feels right",
+    "morningAndEvening": "Mornings for performance and fresh air. Evenings for golden light and vibes. Every session on the Skylane's dedicated 23.5 km track at Suvarnabhumi.",
+    "rideLocation": "Skylane · Happy and Healthy Bike Lane",
+    "routeDetails": "23.5 km · Blue & Purple lanes · Suvarnabhumi",
+    "bangkok": "Bangkok",
+    "morningSessionsHeader": "Morning Sessions",
+    "morningDesc": "Clean air, cool temps, quiet roads",
+    "eveningSessionsHeader": "Evening Sessions",
+    "eveningDesc": "Golden light, sunset views, perfect atmosphere",
+    "earlyBird": {
+      "label": "Early Bird",
+      "time": "06:15 — 08:15",
+      "mood": "Fresh morning air, quiet roads, clean start. Perfect for performance-focused riders.",
+      "vibe": "Performance"
+    },
+    "energyBooster": {
+      "label": "Energy Booster",
+      "time": "06:30 — 08:30",
+      "mood": "An energizing start to your day. Catch the sunrise over the Skylane as Bangkok wakes up.",
+      "vibe": "Energizing"
+    },
+    "lightChaser": {
+      "label": "Light Chaser",
+      "time": "16:15 — 18:15",
+      "mood": "Chase the afternoon light as the heat breaks. Ride into the golden glow.",
+      "vibe": "Scenic"
+    },
+    "goldenHour": {
+      "label": "Golden Hour",
+      "time": "16:45 — 18:45",
+      "mood": "The signature En-Joy Speed experience. Perfect light, perfect vibes, perfect photos.",
+      "vibe": "Staff Pick",
+      "staffPick": true
+    },
+    "twilightFinish": {
+      "label": "Twilight Finish",
+      "time": "17:15 — 19:15",
+      "mood": "End your day with a cool evening breeze and a sunset finish on the Skylane.",
+      "vibe": "Chill"
+    },
+    "slotInfo": "{id}",
+    "bathroomStops": "Bathroom stops at km 5, 11, and 16 · Pre-arranged by your Leader · Blue lane (relaxed) & Purple lane (fast)",
+    "overlap": "Morning slots A1 and A2 overlap — only one can be booked per day."
+  },
+  "whatsIncluded": {
+    "badge": "What's Included",
+    "everythingYouNeed": "Everything you need, nothing you don't",
+    "subtitle": "Every ride includes Leaders, safety support, photography, starter kit, and post-ride recovery.",
+    "starterKit": {
+      "title": "Starter Kit",
+      "description": "Padded cycling liners (yours to keep), energy gel, and a reusable eco mesh bag — ready at check-in."
+    },
+    "photography": {
+      "title": "Professional Photography",
+      "description": "Action shots and group photos from your ride, delivered digitally after the session."
+    },
+    "alsoIncluded": "Also included: Athlete Leaders, Hero support riders, safety briefing, post-ride recovery (cold towels & electrolytes), and weather monitoring.",
+    "rentalNote": "Bike rental available separately — Hybrid 420 THB · Road 700 THB · Or bring your own.",
+    "seeFullDetails": "See full ride details"
+  },
+  "faq": {
+    "faqTitle": "FAQ",
+    "questionsWeveGotAnswers": "Questions? We've got answers",
+    "everythingYouNeedToKnow": "Everything you need to know before your first ride.",
+    "questions": [
+      {
+        "q": "Do I need to bring my own bike?",
+        "a": "You can! But we also offer bike rentals. Hybrid bikes are 420 THB and road bikes are 700 THB per session. Just select your preference when booking."
+      },
+      {
+        "q": "What fitness level do I need?",
+        "a": "Our rides cover approximately 23.5 km on Bangkok's Skylane. You should be comfortable cycling for about 2 hours at a moderate pace. Our Leaders adjust the pace to the group."
+      },
+      {
+        "q": "What happens if it rains?",
+        "a": "We monitor weather conditions closely. If rain is likely, we'll notify you in advance through LINE and offer options including rescheduling or a refund based on our weather policy."
+      },
+      {
+        "q": "Do I need cycling insurance?",
+        "a": "Yes, riders must have their own insurance. Our service does not include personal injury or damage insurance. This is part of our safety waiver which you'll complete during onboarding."
+      },
+      {
+        "q": "How far in advance should I book?",
+        "a": "Bookings must be made at least 24 hours before the session. Sessions often fill up quickly, especially evening golden hour slots, so we recommend booking early."
+      },
+      {
+        "q": "What's included in the price?",
+        "a": "Every ride includes Athlete Leader guidance, Hero support riders, professional photography, post-ride cold towels, electrolyte drinks, and recovery refreshments. Bike rental is the only additional cost."
+      },
+      {
+        "q": "Can I cancel or reschedule?",
+        "a": "Yes, through your account or via LINE. Cancellation and refund terms depend on timing and weather conditions. Full details are provided during booking."
+      },
+      {
+        "q": "What should I bring?",
+        "a": "A helmet (required), comfortable cycling clothing, sunscreen, and water. If you're renting a bike, that's all you need. We provide everything else."
+      }
+    ]
+  },
+  "cta": {
+    "sessionsFillUpFast": "Sessions fill up fast",
+    "readyToRide": "Ready to ride?",
+    "bookingDescription": "Book your premium guided cycling session today. Limited spots per session, guaranteed personal attention.",
+    "bookYourRide": "Book Your Ride",
+    "exploreRideFormats": "Explore Ride Formats",
+    "bookingNote": "Book at least 24 hours in advance. Confirmation and meetup details sent via LINE."
+  },
+  "testimonials": {
+    "ridersLoveUs": "Riders Love Us",
+    "dontJustTakeOurWord": "Don't just take our word for it",
+    "hearFromRiders": "Hear from riders who've experienced the Skylane with us.",
+    "reviews": [
+      {
+        "name": "Nita S.",
+        "role": "First-time cyclist",
+        "quote": "I was nervous about cycling 23 km but the Athlete Leaders made it feel effortless. The golden hour views were absolutely stunning."
+      },
+      {
+        "name": "Marcus L.",
+        "role": "Regular rider",
+        "quote": "Best organized group ride I've ever done. The Hero support riders made sure nobody got dropped. Felt safe the whole time."
+      },
+      {
+        "name": "Ploy & Tong",
+        "role": "Duo ride",
+        "quote": "We booked for our anniversary. The photos they took were incredible — professional quality. The starter kit was a lovely touch."
+      },
+      {
+        "name": "David K.",
+        "role": "Visiting from Singapore",
+        "quote": "Didn't know the Skylane existed until a friend told me about En-Joy Speed. Now it's my must-do every time I visit Bangkok."
+      }
+    ]
+  },
+  "about": {
+    "aboutUs": "About Us",
+    "letUsHandleTheSpeed": "Let us handle the speed. You enjoy the ride.",
+    "aboutDescription": "En-Joy Speed is a premium guided cycling service on Bangkok's Skylane — 23.5 km of elevated track at Suvarnabhumi. Athletic leadership, curated experiences, operational precision.",
+    "valuesHeading": "Core Values",
+    "values": [
+      {
+        "title": "Safety First",
+        "text": "Helmets required, conduct briefings given, and our Leaders have authority to ensure everyone stays safe."
+      },
+      {
+        "title": "Experience Design",
+        "text": "From booking to post-ride recovery, every touchpoint is intentional. We craft experiences, not just rides."
+      },
+      {
+        "title": "Operational Precision",
+        "text": "Structured slots, trained Leaders, weather monitoring, and seamless communication — invisible because it works."
+      },
+      {
+        "title": "Premium Simplicity",
+        "text": "Beautiful doesn't mean complicated. Booking, rides, and recovery all follow the same principle: frictionless."
+      }
+    ],
+    "howWeRide": "How We Ride",
+    "aStructuredSupportedExperience": "A structured, supported experience",
+    "everyRideFollowsSameFormat": "Every ride follows the same proven format — designed so you can focus on pedalling, not logistics.",
+    "beforeTheRide": "Before the ride",
+    "beforeItems": [
+      "Safety briefing: hand signals, lane rules, pacing, SOS procedures (15 min)",
+      "Starter kit distributed: cycling liners, energy gel, mesh bag",
+      "Bike check for those renting"
+    ],
+    "duringTheRide": "During the ride",
+    "duringItems": [
+      "Athlete Leaders set and maintain pace from the front",
+      "Hero Riders sweep the back — nobody gets left behind",
+      "Professional photographer captures the action",
+      "23.5 km on the elevated Skylane at Suvarnabhumi"
+    ],
+    "afterTheRide": "After the ride",
+    "afterItems": [
+      "Cold towels, electrolyte drinks, and recovery snack",
+      "Photos delivered digitally",
+      "Weather updates via LINE if relevant for upcoming sessions"
+    ],
+    "inclusions": "What's Included",
+    "inclusionSubtitle": "Everything in every ride",
+    "noAddOnsNorSurprises": "No add-ons, no surprises. Here's the full list of what comes with every booking.",
+    "athleteLeaders": {
+      "title": "Athlete Leaders",
+      "description": "Elite local cyclists who set the pace, guide the route, and keep the group safe. They lead from the front."
+    },
+    "heroRiders": {
+      "title": "Hero Support Riders",
+      "description": "Sweep riders at the back watching over every participant. No one gets left behind."
+    },
+    "professionalPhotography": {
+      "title": "Professional Photography",
+      "description": "Action shots and group photos from your ride, delivered digitally after the session."
+    },
+    "starterKit": {
+      "title": "Starter Kit",
+      "description": "Padded gel cycling liners (yours to keep), energy gel, and a reusable eco mesh bag."
+    },
+    "postRideRecovery": {
+      "title": "Post-Ride Recovery",
+      "description": "Cold towels, electrolyte drinks, and a healthy recovery snack after every ride."
+    },
+    "safetyBriefing": {
+      "title": "Safety Briefing",
+      "description": "15-minute orientation covering hand signals, lane rules, pacing, and SOS procedures."
+    },
+    "weatherMonitoring": {
+      "title": "Weather Monitoring",
+      "description": "We track conditions for your ride window and communicate proactively via LINE if plans change."
+    },
+    "readyToRideGuidance": {
+      "title": "Ready-to-Ride Guidance",
+      "description": "Pre-ride checklist shared in advance: closed-toe shoes, athletic socks, sun protection, helmet required."
+    },
+    "bikeRental": "Bike rental available separately",
+    "hybrid": "Hybrid 420 THB",
+    "road": "Road 700 THB",
+    "bringYourOwn": "Or bring your own at no extra cost",
+    "yourLeaders": "Your Leaders",
+    "meetThePeople": "Meet the people who make every ride unforgettable",
+    "leadersNotJustGuides": "Our Athlete Leaders aren't just guides — they're experienced cyclists who've dedicated themselves to making this the ride of your life.",
+    "teamSection": "The En-Joy Speed crew",
+    "teamDescription": "Every morning, before the sun rises, the team is already prepping — bikes checked, route confirmed, energy ready.",
+    "credentials": [
+      {
+        "label": "LKB Cycling Club",
+        "sub": "Official cycling club members"
+      },
+      {
+        "label": "Safety Trained",
+        "sub": "Emergency & first aid prepared"
+      },
+      {
+        "label": "Passionate Cyclists",
+        "sub": "Years of riding experience"
+      },
+      {
+        "label": "Small Group Focus",
+        "sub": "Personal attention every ride"
+      }
+    ],
+    "safety": "Safety",
+    "yourSafetyIsNonNegotiable": "Your safety is non-negotiable",
+    "safetyRules": [
+      "Helmets and safety gear are mandatory for all riders.",
+      "Riders must confirm physical readiness for approximately 23.5 km of cycling.",
+      "Personal insurance is required — the service does not include injury or damage coverage.",
+      "All riders must follow instructions from Athlete Leaders at all times.",
+      "Leaders have authority to terminate participation immediately if safety is compromised.",
+      "A full health & safety waiver must be completed during onboarding before your ride."
+    ],
+    "readyToRide": "Ready to ride?",
+    "pickADate": "Pick a date, choose your group size, and we handle the rest.",
+    "bookARide": "Book a Ride"
+  },
+  "contact": {
+    "getInTouch": "Get in Touch",
+    "wedLoveToHearFromYou": "We'd love to hear from you",
+    "whetherYouHaveAQuestion": "Whether you have a question about rides, pricing, or anything else — our team is ready to help.",
+    "lineOfficial": "LINE Official",
+    "lineHandle": "@EnjoySpeed",
+    "lineDesc": "Fastest way to reach us. Typically replies within 30 minutes during business hours.",
+    "email": "Email",
+    "emailAddress": "support@enjoyspeedbkk.com",
+    "emailDesc": "For booking inquiries, partnerships, or general questions. We reply within 24 hours.",
+    "rideLocation": "Ride Location",
+    "location": "Skylane, Suvarnabhumi",
+    "locationDesc": "Bangkok's elevated cycling track near Suvarnabhumi Airport. Meet-up point shared before your ride.",
+    "operatingHours": "Operating Hours",
+    "hours": "Daily 5:00 AM — 8:00 AM",
+    "hoursDesc": "We ride during golden hour and blue hour for the best experience and cooler temperatures.",
+    "lookingForQuickAnswers": "Looking for quick answers?",
+    "checkOurFAQ": "Check out our FAQ — it covers cancellations, weather policies, what to bring, and more.",
+    "viewFAQ": "View FAQ →"
+  },
+  "booking": {
+    "bookARide": "Book a Ride",
+    "bookYourPremiumCyclingSession": "Book your premium guided cycling session on Bangkok's Skylane.",
+    "date": "Date",
+    "time": "Time Slot",
+    "package": "Ride Type",
+    "riders": "Riders",
+    "waiver": "Waiver",
+    "reviewAndPay": "Review & Pay",
+    "selectDate": "Select your date",
+    "selectTimeSlot": "Select a time slot",
+    "selectRideFormat": "Select a ride format",
+    "addRiders": "Add riders",
+    "acceptWaiver": "Accept the waiver",
+    "reviewBooking": "Review your booking",
+    "addRider": "Add Rider",
+    "removeRider": "Remove Rider",
+    "riderName": "Rider Name",
+    "nickname": "Nickname (for photos)",
+    "height": "Height (cm)",
+    "clothingSize": "Clothing Size",
+    "cyclingExperience": "Cycling Experience",
+    "bikePreference": "Bike Preference",
+    "emergencyContact": "Emergency Contact",
+    "emergencyContactName": "Emergency Contact Name",
+    "emergencyContactPhone": "Emergency Contact Phone",
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "experienced": "Experienced",
+    "firstTimeOrVeryFewRides": "First time or very few rides",
+    "rideOccasionally": "Ride occasionally",
+    "regularCyclist": "Regular cyclist",
+    "noRentalNeeded": "No rental needed",
+    "hybrid": "Hybrid (420 THB)",
+    "road": "Road (700 THB)",
+    "bookingCreated": "Booking created!",
+    "completionMessage": "Hi {name}, complete payment to confirm your ride.",
+    "bookingNumber": "Booking #{id}",
+    "scanToPay": "Scan to Pay",
+    "transferTo": "Transfer to",
+    "copyAmount": "Copy amount",
+    "copyAccount": "Copy",
+    "openYourBankingApp": "Open your banking app, scan this QR, and the amount will auto-fill.",
+    "completePayment": "Complete payment",
+    "yourBookingIsHeld": "Your booking is held while you complete payment.",
+    "timeExpired": "Time expired",
+    "yourSlotMayHaveBeenReleased": "Your slot may have been released. Please try booking again.",
+    "uploadPaymentSlip": "Upload payment slip",
+    "optional": "Optional",
+    "speedsUpConfirmation": "Speeds up confirmation — not required.",
+    "bikeRentalPayment": "Bike rental: {amount} THB",
+    "paidSeparatelyAtTrack": "Paid separately at the track to HHBL on ride day. No need to pay now.",
+    "yourStarterKitIsIncluded": "Your Starter Kit is included",
+    "yoursToKeepAfterRide": "Yours to keep after the ride.",
+    "whatHappensNext": "What happens next",
+    "verifyPayment": "We verify your payment (usually within 15 min)",
+    "youllGetConfirmation": "You'll get a confirmation via LINE ({line}). Don't have LINE? We'll email you too.",
+    "sendRidePrep": "We send your ride prep guide 24 hours before",
+    "showUpAndEnjoy": "Show up, ride, and enjoy!",
+    "questionsChat": "Questions? Chat with us on LINE",
+    "phoneVerification": "Verify your phone",
+    "weWillSendCode": "We'll send a 6-digit code to confirm your booking and keep you updated about your ride.",
+    "thaiPhoneNumber": "Thai phone number",
+    "sendVerificationCode": "Send verification code",
+    "sendingCode": "Sending code...",
+    "standardSmsRates": "Standard SMS rates may apply. We'll only use this number for ride-related messages.",
+    "codeSentTo": "Code sent to",
+    "codeExpiresIn10Minutes": "Your code expires in 10 minutes",
+    "changeNumber": "Change number",
+    "resendCode": "Resend code",
+    "resendIn": "Resend in {seconds}s",
+    "verifing": "Verifying..."
+  },
+  "payment": {
+    "scanToPayQR": "Scan to Pay",
+    "qrCodeLabel": "PromptPay QR Code",
+    "amount": "{amount} THB",
+    "transferAccount": "Pailin — KBank (Kasikorn)",
+    "paymentCountdown": "Complete payment",
+    "paymentHeld": "Your booking is held while you complete payment.",
+    "uploadSlip": "Upload payment slip",
+    "uploadDesc": "Speeds up confirmation — not required.",
+    "slipUploaded": "Slip uploaded successfully",
+    "slipVerification": "Our team will verify your payment within 15 minutes. You'll get a confirmation via LINE.",
+    "nextSteps": "What happens next",
+    "step1": "We verify your payment (usually within 15 min)",
+    "step2": "You'll get a confirmation via LINE ({line}). Don't have LINE? We'll email you too.",
+    "step3": "We send your ride prep guide 24 hours before",
+    "step4": "Show up, ride, and enjoy!",
+    "contactUS": "Questions? Chat with us on LINE"
+  },
+  "account": {
+    "myAccount": "My Account",
+    "accountSubtitle": "Manage your account and view your ride history.",
+    "profile": "Profile",
+    "recentBookings": "Recent Bookings",
+    "viewAllBookings": "View all bookings",
+    "editProfile": "Edit Profile",
+    "fullName": "Full Name",
+    "email": "Email",
+    "phone": "Phone",
+    "lineId": "LINE ID",
+    "preferredLanguage": "Preferred Language",
+    "english": "English",
+    "thai": "ไทย",
+    "saveChanges": "Save Changes",
+    "discardChanges": "Discard Changes",
+    "changesSaved": "Changes saved!",
+    "profileUpdated": "Your profile has been updated.",
+    "signOut": "Sign Out",
+    "signOutConfirm": "Are you sure you want to sign out?",
+    "createdAt": "Member since {date}",
+    "upcomingRides": "Upcoming Rides",
+    "pastRides": "Past Rides",
+    "noBookings": "No bookings yet.",
+    "startBooking": "Start your first ride"
+  },
+  "auth": {
+    "welcome": "Welcome",
+    "signInToBook": "Sign in to book",
+    "signInDescription": "Sign in to access booking and manage your rides.",
+    "createYourAccount": "Create your account",
+    "signUpDescription": "Join En-Joy Speed to start booking guided cycling sessions.",
+    "continueWithGoogle": "Continue with Google",
+    "orUseEmail": "or use email",
+    "fullName": "Full Name",
+    "yourName": "Your name",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "At least 6 characters",
+    "signInButton": "Sign In",
+    "signUpButton": "Create Account",
+    "signInError": "Failed to sign in. Please check your email and password.",
+    "signUpError": "Failed to create account. Please try again.",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "toggleMode": "Sign up",
+    "toggleSignIn": "Sign in"
+  },
+  "bookings": {
+    "myBookings": "My Bookings",
+    "upcoming": "Upcoming",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "bookingDetails": "Booking Details",
+    "status": "Status",
+    "date": "Date",
+    "time": "Time",
+    "package": "Package",
+    "riderCount": "Riders",
+    "totalPrice": "Total Price",
+    "paymentStatus": "Payment Status",
+    "confirmed": "Confirmed",
+    "pending": "Payment Pending",
+    "riderInfoNeeded": "Rider Info Needed",
+    "readyToRide": "Ready to Ride",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "noShow": "No Show",
+    "cancel": "Cancel Booking",
+    "cancelConfirm": "Are you sure you want to cancel this booking?",
+    "cancelling": "Cancelling...",
+    "cancelSuccess": "Booking cancelled successfully.",
+    "refundInfo": "Refund information has been sent to your email.",
+    "viewDetails": "View Details",
+    "leaveReview": "Leave Review",
+    "noBookings": "No bookings yet.",
+    "startBooking": "Start your first ride"
+  },
+  "review": {
+    "howWasYourRide": "How was your ride?",
+    "thanks": "Thanks!",
+    "thankYouMessage": "Your feedback helps us make every ride better.",
+    "thankYouMessageWithRecco": "Your feedback helps us make every ride better. We'd love to see you again soon!",
+    "bookAnotherRide": "Book another ride",
+    "rateYourExperience": "Tap a star to rate your overall experience",
+    "notGreat": "Not great",
+    "couldBeBetter": "Could be better",
+    "good": "Good",
+    "reallyEnjoyedIt": "Really enjoyed it",
+    "absolutelyAmazing": "Absolutely amazing!",
+    "didYouEnjoyTheRide": "Did you enjoy the ride?",
+    "didYouGainSkills": "Did you gain new cycling skills?",
+    "willYouReturn": "Will you return for another ride?",
+    "whatWasYourHighlight": "What was your highlight?",
+    "whatCouldBeImproved": "What could be improved?",
+    "wouldYouRecommend": "Would you recommend us to a friend?",
+    "consentToPhotos": "I consent to having my photos shared on social media and marketing materials.",
+    "submitReview": "Submit Review",
+    "submitting": "Submitting..."
+  },
+  "survey": {
+    "howWasYourRide": "How was your ride?",
+    "thankYou": "Thank you!",
+    "thankYouFeedback": "Your feedback helps us make every ride better.",
+    "rateOverallExperience": "Overall Experience",
+    "rateYourGuide": "Your Guide",
+    "rateTheRoute": "The Route",
+    "rateEquipment": "Equipment",
+    "tellUsMore": "Tell us more",
+    "whatWasYourHighlight": "What was your highlight?",
+    "whatCouldImprove": "What could we improve?",
+    "wouldYouRecommendUs": "Would you recommend us to a friend?",
+    "consentToShare": "I consent to En-Joy Speed sharing my photos on social media and in marketing materials.",
+    "submitSurvey": "Submit Survey",
+    "surveySubmitted": "Survey submitted!",
+    "surveyThanks": "Thanks for taking the time to share your feedback!"
+  },
+  "footer": {
+    "slogan": "Let us handle the speed. You enjoy the ride. Premium guided cycling experiences on Bangkok's Skylane.",
+    "rides": "Rides",
+    "company": "Company",
+    "support": "Support",
+    "duoRide": "Duo Ride",
+    "theSquad": "The Squad",
+    "thePeloton": "The Peloton",
+    "bookARide": "Book a Ride",
+    "aboutUs": "About Us",
+    "ourLeaders": "Our Leaders",
+    "safety": "Safety",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "lineOfficialAccount": "LINE @EnjoySpeed",
+    "cancellationPolicy": "Cancellation Policy",
+    "weatherPolicy": "Weather Policy",
+    "copyright": "© {year} En-Joy Speed. All rights reserved.",
+    "privacy": "Privacy",
+    "terms": "Terms"
+  },
+  "privacy": {
+    "privacyPolicy": "Privacy Policy",
+    "lastUpdated": "Last updated: {date}",
+    "whoWeAre": "1. Who We Are",
+    "whoWeAreText": "En-Joy Speed (\"we,\" \"us,\" or \"our\") operates the En-Joy Speed cycling experience booking platform available at enjoyspeed.com and through our LINE Official Account. We are based in Bangkok, Thailand and provide guided cycling experiences on the Skylane, Suvarnabhumi.",
+    "informationWeCollect": "2. Information We Collect",
+    "accountInfo": "Account information: Name, email address, phone number, and LINE user ID when you create an account or verify your phone number.",
+    "bookingInfo": "Booking information: Ride date and time preferences, group size, rider details (name, nickname, height, clothing size, cycling experience), emergency contact information, and special requests.",
+    "paymentInfo": "Payment information: Payment slip images uploaded for PromptPay verification. We do not store credit card numbers or bank account details.",
+    "surveyInfo": "Survey responses: Optional post-ride feedback including ratings, comments, and photo consent preferences.",
+    "technicalData": "Technical data: IP address, browser type, device information, and cookies necessary for site functionality.",
+    "howWeUseYourInfo": "3. How We Use Your Information",
+    "howWeUseYourInfoText": "We use your information to process and manage your ride bookings, verify your identity and payment, communicate ride details and updates (including weather cancellations), provide customer support, assign appropriate equipment for your ride, contact emergency contacts if necessary during a ride, improve our services based on feedback, and send booking confirmations via email and LINE.",
+    "lineIntegration": "4. LINE Integration",
+    "lineIntegrationText": "When you interact with our LINE Official Account, we receive your LINE user ID and display name. We use this to send you booking confirmations, ride reminders, weather updates, and respond to your inquiries. We do not access your LINE contacts, timeline, or any other LINE data beyond what is necessary for our booking service. You can unfollow our LINE account at any time to stop receiving messages.",
+    "dataSharing": "5. Data Sharing",
+    "dataSharingText": "We do not sell your personal information. We share data only with our ride leaders and support staff (rider details needed for your session), payment verification services, email and SMS delivery providers (for sending notifications), and hosting and infrastructure providers (Supabase, Vercel). We may disclose information if required by Thai law or to protect safety.",
+    "dataSecurity": "6. Data Security",
+    "dataSecurityText": "We implement industry-standard security measures including encrypted data transmission (HTTPS/TLS), secure server-side authentication, row-level security on our database, and secure storage for payment slip images. While no system is 100% secure, we take reasonable measures to protect your information.",
+    "dataRetention": "7. Data Retention",
+    "dataRetentionText": "We retain your account information for as long as your account is active. Booking records are retained for 2 years for business and legal purposes. Payment slip images are retained for 90 days after payment verification. You may request deletion of your account and associated data at any time.",
+    "yourRights": "8. Your Rights",
+    "yourRightsText": "Under the Thailand Personal Data Protection Act (PDPA), you have the right to access, correct, delete, or transfer your personal data, withdraw consent for data processing, and file a complaint with the relevant authority. To exercise these rights, contact us at the details below.",
+    "cookies": "9. Cookies",
+    "cookiesText": "We use essential cookies for authentication and session management. We do not use advertising or tracking cookies. Third-party analytics may collect anonymized usage data to help us improve the site.",
+    "changesToThisPolicy": "10. Changes to This Policy",
+    "changesToThisPolicyText": "We may update this privacy policy from time to time. We will notify you of significant changes via email or LINE message. The \"Last updated\" date at the top of this page indicates when it was last revised.",
+    "contactUs": "11. Contact Us",
+    "contactUsText": "If you have questions about this privacy policy or your data, contact us through our LINE Official Account (@enjoyspeed) or by email at support@enjoyspeed.com."
+  },
+  "terms": {
+    "termsOfService": "Terms of Service",
+    "lastUpdated": "Last updated: {date}",
+    "acceptanceOfTerms": "1. Acceptance of Terms",
+    "acceptanceText": "By using the En-Joy Speed platform (\"Service\"), you agree to these Terms of Service. If you do not agree, please do not use the Service. These terms apply to all users of the website, LINE Official Account, and booking system.",
+    "ourService": "2. Our Service",
+    "ourServiceText": "En-Joy Speed provides guided group cycling experiences at the Skylane, Suvarnabhumi. Through our platform, you can book rides, manage rider details, and process payments. All rides are supervised by trained Athlete Leaders and Hero Riders.",
+    "bookingsAndPayments": "3. Bookings & Payments",
+    "bookingsAndPaymentsText": "Bookings must be made at least 24 hours in advance. Upon booking, you will receive a PromptPay QR code for payment. Payment must be completed within 2 hours of booking. Bookings are confirmed only after payment has been verified by our team. Prices displayed at the time of booking are final. Bike rental fees are payable at the track on the day of the ride.",
+    "cancellationsAndRefunds": "4. Cancellations & Refunds",
+    "cancellationsAndRefundsText": "You may cancel a confirmed booking by contacting us via LINE or email at least 48 hours before the ride for a full refund. For cancellations within 48 hours, we offer a rain credit valid for 90 days. Weather cancellations initiated by En-Joy Speed entitle you to a full refund or rain credit at your choice. No-shows are not eligible for refunds.",
+    "waiverAndLiability": "5. Waiver & Liability",
+    "waiverAndLiabilityText": "All riders must accept the liability waiver before participating. Cycling involves inherent risks including falls, injuries, and equipment failure. By accepting the waiver, you acknowledge these risks and agree that En-Joy Speed, its staff, and the circuit are not liable for injuries resulting from the activity, except in cases of gross negligence. Emergency contact information must be provided for all riders.",
+    "riderResponsibilities": "6. Rider Responsibilities",
+    "riderResponsibilitiesText": "Riders must follow all instructions from the Athlete Leader and Hero Riders, wear the provided safety equipment (helmet required), be in reasonable physical condition for cycling, not ride under the influence of alcohol or drugs, and report any equipment concerns before the ride begins.",
+    "photographyAndContent": "7. Photography & Content",
+    "photographyAndContentText": "We may take photographs and videos during rides for promotional purposes. By participating, you consent to being photographed unless you opt out via the post-ride survey or notify staff before the ride. You may request removal of specific photos by contacting us.",
+    "accountSecurity": "8. Account Security",
+    "accountSecurityText": "You are responsible for maintaining the security of your account credentials. Do not share your verification codes with others. We will never ask for your password or OTP codes via LINE or email.",
+    "modifications": "9. Modifications",
+    "modificationsText": "We reserve the right to modify these terms at any time. Continued use of the Service after changes constitutes acceptance. We will notify users of significant changes via email or LINE.",
+    "governingLaw": "10. Governing Law",
+    "governingLawText": "These terms are governed by the laws of the Kingdom of Thailand. Any disputes shall be resolved in the courts of Bangkok, Thailand.",
+    "contact": "11. Contact",
+    "contactText": "For questions about these terms, reach us via LINE (@enjoyspeed) or email at support@enjoyspeed.com."
+  },
+  "errors": {
+    "pageNotFound": "Page not found",
+    "goHome": "Go Home",
+    "invalidBookingLink": "Survey link invalid",
+    "useCorrectLink": "Please use the link we sent you after your ride."
+  }
+}

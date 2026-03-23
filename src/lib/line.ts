@@ -16,7 +16,9 @@ interface LineMessage {
  * Send a push message to a LINE user
  */
 export async function linePush(lineUserId: string, messages: LineMessage[]) {
-  if (!CHANNEL_ACCESS_TOKEN || !lineUserId) return;
+  if (!CHANNEL_ACCESS_TOKEN || !lineUserId) {
+    throw new Error("LINE push: missing token or userId");
+  }
 
   const res = await fetch("https://api.line.me/v2/bot/message/push", {
     method: "POST",
@@ -28,7 +30,13 @@ export async function linePush(lineUserId: string, messages: LineMessage[]) {
   });
 
   if (!res.ok) {
-    console.error("LINE push failed:", await res.text());
+    const errorText = await res.text();
+    console.error("LINE push failed:", errorText);
+    // Detect blocked user — LINE returns 400 with specific error
+    if (errorText.includes("blocked") || res.status === 403) {
+      throw new Error("LINE_USER_BLOCKED");
+    }
+    throw new Error(`LINE push failed: ${res.status} ${errorText}`);
   }
 }
 

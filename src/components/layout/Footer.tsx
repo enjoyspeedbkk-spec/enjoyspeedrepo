@@ -1,7 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 
-const footerLinks = {
+type FooterLink = { label: string; href: string; external?: boolean };
+
+const footerLinks: Record<string, FooterLink[]> = {
   rides: [
     { label: "Duo Ride", href: "/packages#duo" },
     { label: "The Squad", href: "/packages#squad" },
@@ -16,11 +18,27 @@ const footerLinks = {
   ],
   support: [
     { label: "Contact", href: "/contact" },
-    { label: "LINE @EnjoySpeed", href: "https://line.me/ti/p/@EnjoySpeed" },
+    { label: "LINE @EnjoySpeed", href: "https://line.me/ti/p/@EnjoySpeed", external: true },
     { label: "Cancellation Policy", href: "/about#cancellation" },
     { label: "Weather Policy", href: "/about#weather" },
   ],
 };
+
+function FooterLink({ link }: { link: FooterLink }) {
+  const className = "text-sm text-cream/50 hover:text-cream transition-colors duration-200";
+  if (link.external) {
+    return (
+      <a href={link.href} target="_blank" rel="noopener noreferrer" className={className}>
+        {link.label}
+      </a>
+    );
+  }
+  return (
+    <Link href={link.href} className={className}>
+      {link.label}
+    </Link>
+  );
+}
 
 export function Footer() {
   return (
@@ -61,12 +79,7 @@ export function Footer() {
             <ul className="space-y-2.5">
               {footerLinks.rides.map((link) => (
                 <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-cream/50 hover:text-cream transition-colors duration-200"
-                  >
-                    {link.label}
-                  </Link>
+                  <FooterLink link={link} />
                 </li>
               ))}
             </ul>
@@ -80,12 +93,7 @@ export function Footer() {
             <ul className="space-y-2.5">
               {footerLinks.company.map((link) => (
                 <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-cream/50 hover:text-cream transition-colors duration-200"
-                  >
-                    {link.label}
-                  </Link>
+                  <FooterLink link={link} />
                 </li>
               ))}
             </ul>
@@ -99,12 +107,7 @@ export function Footer() {
             <ul className="space-y-2.5">
               {footerLinks.support.map((link) => (
                 <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-cream/50 hover:text-cream transition-colors duration-200"
-                  >
-                    {link.label}
-                  </Link>
+                  <FooterLink link={link} />
                 </li>
               ))}
             </ul>

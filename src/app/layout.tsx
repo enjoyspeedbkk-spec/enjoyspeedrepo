@@ -14,10 +14,15 @@ export const metadata: Metadata = {
     "premium bike tour",
     "En-Joy Speed",
   ],
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-icon.png",
+  },
   openGraph: {
     title: "En-Joy Speed | Premium Guided Cycling Bangkok",
     description: "Let us handle the speed. You enjoy the ride.",
     type: "website",
+    images: ["/opengraph-image.png"],
   },
 };
 

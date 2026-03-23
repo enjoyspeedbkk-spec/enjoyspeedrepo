@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { signOut } from "@/lib/actions/auth";
+import { signOut, updateProfile } from "@/lib/actions/auth";
 import { TIME_SLOTS } from "@/lib/constants";
 import {
   User,
@@ -17,6 +17,12 @@ import {
   Clock,
   Settings,
   ArrowRight,
+  Pencil,
+  Check,
+  X,
+  Phone,
+  MessageCircle,
+  Globe,
 } from "lucide-react";
 
 interface AccountUser {
@@ -24,6 +30,8 @@ interface AccountUser {
   email: string;
   fullName: string;
   phone: string;
+  lineId: string;
+  preferredLanguage: string;
   avatarUrl: string;
   role: string;
   createdAt: string;
@@ -62,6 +70,15 @@ export function AccountDashboard({
   recentBookings: Booking[];
 }) {
   const [signingOut, setSigningOut] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    fullName: user.fullName || "",
+    phone: user.phone || "",
+    lineId: user.lineId || "",
+    preferredLanguage: user.preferredLanguage || "en",
+  });
 
   const upcomingBookings = recentBookings.filter(
     (b) => !["completed", "cancelled", "no_show"].includes(b.status)
@@ -73,6 +90,27 @@ export function AccountDashboard({
   const handleSignOut = async () => {
     setSigningOut(true);
     await signOut();
+  };
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    const result = await updateProfile(profileForm);
+    setSaving(false);
+    if (result.success) {
+      setSaved(true);
+      setEditing(false);
+      setTimeout(() => setSaved(false), 3000);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditing(false);
+    setProfileForm({
+      fullName: user.fullName || "",
+      phone: user.phone || "",
+      lineId: user.lineId || "",
+      preferredLanguage: user.preferredLanguage || "en",
+    });
   };
 
   const initials = user.fullName
@@ -299,35 +337,167 @@ export function AccountDashboard({
           </div>
         )}
 
-        {/* Account info */}
+        {/* Account info — editable */}
         <Card padding="md">
-          <div className="flex items-center gap-2 mb-4">
-            <Settings className="h-4 w-4 text-ink-muted" />
-            <h2 className="text-sm font-bold">Account Details</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Settings className="h-4 w-4 text-ink-muted" />
+              <h2 className="text-sm font-bold">Account Details</h2>
+            </div>
+            {!editing ? (
+              <button
+                onClick={() => setEditing(true)}
+                className="flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-dark transition-colors"
+              >
+                <Pencil className="h-3 w-3" />
+                Edit
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCancelEdit}
+                  className="flex items-center gap-1 text-xs font-medium text-ink-muted hover:text-ink transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={saving}
+                  className="flex items-center gap-1 text-xs font-semibold text-white bg-accent hover:bg-accent-dark px-3 py-1.5 rounded-full transition-colors disabled:opacity-50"
+                >
+                  <Check className="h-3 w-3" />
+                  {saving ? "Saving..." : "Save"}
+                </button>
+              </div>
+            )}
           </div>
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-ink-muted">Name</span>
-              <span className="font-medium">{user.fullName || "Not set"}</span>
+
+          {saved && (
+            <div className="mb-4 p-2.5 rounded-lg bg-success/10 border border-success/20 text-sm text-success font-medium text-center">
+              Profile updated successfully
             </div>
-            <div className="flex justify-between">
-              <span className="text-ink-muted">Email</span>
-              <span className="font-medium">{user.email}</span>
+          )}
+
+          {editing ? (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-ink-muted mb-1.5">
+                  <User className="inline h-3 w-3 mr-1" />
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={profileForm.fullName}
+                  onChange={(e) => setProfileForm((f) => ({ ...f, fullName: e.target.value }))}
+                  placeholder="Your full name"
+                  className="w-full px-3 py-2.5 rounded-xl border border-sand bg-surface text-sm font-medium focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-ink-muted mb-1.5">
+                  <Phone className="inline h-3 w-3 mr-1" />
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={profileForm.phone}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                    const formatted = digits.length > 3
+                      ? digits.length > 6
+                        ? `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
+                        : `${digits.slice(0, 3)}-${digits.slice(3)}`
+                      : digits;
+                    setProfileForm((f) => ({ ...f, phone: formatted }));
+                  }}
+                  placeholder="08X-XXX-XXXX"
+                  className="w-full px-3 py-2.5 rounded-xl border border-sand bg-surface text-sm font-medium focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-colors"
+                />
+                {profileForm.phone && profileForm.phone.replace(/\D/g, "").length > 0 && profileForm.phone.replace(/\D/g, "").length < 10 && (
+                  <p className="mt-1 text-[11px] text-ink-muted">10-digit Thai mobile number</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-ink-muted mb-1.5">
+                  <MessageCircle className="inline h-3 w-3 mr-1" />
+                  LINE ID
+                </label>
+                <input
+                  type="text"
+                  value={profileForm.lineId}
+                  onChange={(e) => setProfileForm((f) => ({ ...f, lineId: e.target.value }))}
+                  placeholder="Your LINE ID (optional)"
+                  className="w-full px-3 py-2.5 rounded-xl border border-sand bg-surface text-sm font-medium focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-ink-muted mb-1.5">
+                  <Globe className="inline h-3 w-3 mr-1" />
+                  Preferred Language
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "en", label: "English" },
+                    { value: "th", label: "ภาษาไทย" },
+                  ].map((lang) => (
+                    <button
+                      key={lang.value}
+                      onClick={() => setProfileForm((f) => ({ ...f, preferredLanguage: lang.value }))}
+                      className={`p-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
+                        profileForm.preferredLanguage === lang.value
+                          ? "border-accent bg-accent/5 text-accent"
+                          : "border-sand bg-surface text-ink-muted hover:border-ink/20"
+                      }`}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="pt-2 border-t border-sand/50">
+                <div className="flex justify-between text-sm">
+                  <span className="text-ink-muted">Email</span>
+                  <span className="font-medium text-ink-muted">{user.email}</span>
+                </div>
+                <p className="text-[11px] text-ink-muted/60 mt-1">
+                  Email is managed through your sign-in provider
+                </p>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-ink-muted">Phone</span>
-              <span className="font-medium">{user.phone || "Not set"}</span>
+          ) : (
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-ink-muted">Name</span>
+                <span className="font-medium">{user.fullName || "Not set"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-ink-muted">Email</span>
+                <span className="font-medium">{user.email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-ink-muted">Phone</span>
+                <span className="font-medium">{user.phone || "Not set"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-ink-muted">LINE ID</span>
+                <span className="font-medium">{user.lineId || "Not set"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-ink-muted">Language</span>
+                <span className="font-medium">{user.preferredLanguage === "th" ? "ภาษาไทย" : "English"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-ink-muted">Member since</span>
+                <span className="font-medium">
+                  {new Date(user.createdAt).toLocaleDateString("en-US", {
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-ink-muted">Member since</span>
-              <span className="font-medium">
-                {new Date(user.createdAt).toLocaleDateString("en-US", {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </span>
-            </div>
-          </div>
+          )}
         </Card>
 
         {/* Sign out */}

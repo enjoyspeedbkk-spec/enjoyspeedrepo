@@ -80,7 +80,7 @@ export const RIDE_PACKAGES: RidePackage[] = [
 
 export const BIKE_RENTAL_PRICES = {
   hybrid: 420,
-  road: 700,
+  road: 720,
   own: 0,
 } as const;
 
@@ -105,8 +105,8 @@ export const READY_TO_RIDE = [
   "Athletic socks",
   "Breathable athletic top",
   "Sun protection (sunscreen + sunglasses)",
-  "Helmet (required — bring your own or rent)",
-  "Water bottle",
+  "Helmet (required — included with bike rental, or bring your own)",
+  "Cycling bidon (water bottle) — normal bottles won't fit the bike holder",
 ] as const;
 
 export const MIN_BOOKING_ADVANCE_HOURS = 24;

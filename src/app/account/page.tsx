@@ -46,6 +46,8 @@ export default async function AccountPage() {
         email: user.email || "",
         fullName: profile?.full_name || user.user_metadata?.full_name || "",
         phone: profile?.phone || "",
+        lineId: profile?.line_id || "",
+        preferredLanguage: profile?.preferred_language || "en",
         avatarUrl: user.user_metadata?.avatar_url || "",
         role: profile?.role || "user",
         createdAt: user.created_at || "",
