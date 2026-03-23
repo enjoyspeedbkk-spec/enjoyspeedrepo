@@ -156,19 +156,22 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
       })
         .then((r) => r.json())
         .then((data) => {
-          if (data.linked && data.profile) {
+          if (data.linked && data.userId) {
             // User is already linked — pre-fill everything
-            if (data.profile.name) setContactName(data.profile.name);
-            if (data.profile.phone) {
-              const digits = data.profile.phone.replace(/\D/g, "");
-              const formatted =
-                digits.length === 10
-                  ? `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
-                  : digits;
-              setContactPhone(formatted);
-              setEmailVerified(data.profile.emailVerified || false);
+            setVerifiedUserId(data.userId);
+            if (data.profile) {
+              if (data.profile.name) setContactName(data.profile.name);
+              if (data.profile.email) setContactEmail(data.profile.email);
+              if (data.profile.emailVerified) setEmailVerified(true);
+              if (data.profile.phone) {
+                const digits = data.profile.phone.replace(/\D/g, "");
+                const formatted =
+                  digits.length === 10
+                    ? `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
+                    : digits;
+                setContactPhone(formatted);
+              }
             }
-            if (data.userId) setVerifiedUserId(data.userId);
           }
         })
         .catch(() => {});

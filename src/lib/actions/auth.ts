@@ -46,44 +46,8 @@ export async function signInWithGoogle() {
   }
 }
 
-export async function signInWithEmail(email: string, password: string) {
-  const supabase = await createClient();
-
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return redirect("/booking");
-}
-
-export async function signUpWithEmail(
-  email: string,
-  password: string,
-  fullName: string
-) {
-  const supabase = await createClient();
-  const siteUrl = getSiteUrl();
-
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { full_name: fullName },
-      emailRedirectTo: `${siteUrl}/auth/callback`,
-    },
-  });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { success: "Check your email for a confirmation link." };
-}
+// Password-based sign-in/sign-up removed — we use email OTP exclusively.
+// See src/lib/actions/email-auth.ts for sendEmailOtp / verifyEmailOtp.
 
 export async function signOut() {
   const supabase = await createClient();

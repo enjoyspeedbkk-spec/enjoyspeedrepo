@@ -76,9 +76,16 @@ export async function POST(request: NextRequest) {
       // Linked — fetch the profile
       const { data: profile } = await admin
         .from("profiles")
-        .select("id, full_name, phone, phone_verified, preferred_notification")
+        .select("id, full_name, phone, email_verified, preferred_notification")
         .eq("id", lineUser.user_id)
         .single();
+
+      // Also get the user's email from auth
+      let email: string | null = null;
+      if (lineUser.user_id) {
+        const { data: authUser } = await admin.auth.admin.getUserById(lineUser.user_id);
+        email = authUser?.user?.email || null;
+      }
 
       return NextResponse.json({
         linked: true,
@@ -87,7 +94,8 @@ export async function POST(request: NextRequest) {
           ? {
               name: profile.full_name,
               phone: profile.phone,
-              phoneVerified: profile.phone_verified,
+              email,
+              emailVerified: profile.email_verified || false,
             }
           : null,
       });
@@ -103,7 +111,7 @@ export async function POST(request: NextRequest) {
 
       if (!user) {
         return NextResponse.json(
-          { error: "Not authenticated. Please verify your phone first." },
+          { error: "Not authenticated. Please verify your email first." },
           { status: 401 }
         );
       }

@@ -40,9 +40,9 @@ export default function PrivacyPolicyPage() {
               services:
             </p>
             <p>
-              <strong className="text-ink">Account information:</strong> Name,
-              email address, phone number, and LINE user ID when you create an
-              account or verify your phone number.
+              <strong className="text-ink">Account information:</strong> Name
+              and email address when you create an account or verify your email.
+              Optionally, phone number and LINE user ID if you choose to provide them.
             </p>
             <p className="mt-2">
               <strong className="text-ink">Booking information:</strong> Ride

@@ -34,7 +34,7 @@ export async function createBooking(
   try {
     const supabase = await createClient();
 
-    // 1. Get the user — either from session or from phone verification
+    // 1. Get the user — either from session or from email verification
     let resolvedUserId: string;
 
     if (input.userId) {
