@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
+import { useLiff } from "@/lib/liff/useLiff";
 import { motion, AnimatePresence } from "framer-motion";
+import { AnimatedNumber, AnimatedPrice } from "@/components/ui/AnimatedNumber";
 import {
   CalendarDays,
   Clock,
@@ -80,10 +83,11 @@ function createEmptyRider(index: number): RiderInfo {
   return {
     name: "",
     nickname: "",
-    bikePreference: "hybrid",
+    bikePreference: undefined,
     clothingSize: undefined,
     heightCm: undefined,
-    cyclingExperience: "beginner",
+    gender: undefined,
+    cyclingExperience: undefined,
     emergencyContactName: "",
     emergencyContactPhone: "",
   };
@@ -119,17 +123,87 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
 
   // Email verification state (book-first flow)
   const [verifiedUserId, setVerifiedUserId] = useState<string | undefined>(userId);
-  const [emailVerified, setEmailVerified] = useState(!!userId); // Already verified if logged in
+  const [emailVerified, setEmailVerified] = useState(!!userId);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSizeChart, setShowSizeChart] = useState(false);
+
+  // LINE LIFF integration — auto-populate if opened from LINE
+  const liff = useLiff();
+  const [liffLineId, setLiffLineId] = useState<string | null>(null);
+  const didLiffPopulate = useRef(false);
+
+  useEffect(() => {
+    if (didLiffPopulate.current || liff.loading) return;
+    if (liff.isInClient && liff.profile) {
+      didLiffPopulate.current = true;
+      // Auto-fill name and LINE ID from LIFF
+      if (!contactName && liff.profile.displayName) {
+        setContactName(liff.profile.displayName);
+      }
+      setLiffLineId(liff.profile.userId);
+
+      // Call the LIFF API to check if this LINE user is already linked
+      fetch("/api/liff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "lookup",
+          lineUserId: liff.profile.userId,
+          displayName: liff.profile.displayName,
+          pictureUrl: liff.profile.pictureUrl,
+        }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.linked && data.profile) {
+            // User is already linked — pre-fill everything
+            if (data.profile.name) setContactName(data.profile.name);
+            if (data.profile.phone) {
+              const digits = data.profile.phone.replace(/\D/g, "");
+              const formatted =
+                digits.length === 10
+                  ? `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
+                  : digits;
+              setContactPhone(formatted);
+              setEmailVerified(data.profile.emailVerified || false);
+            }
+            if (data.userId) setVerifiedUserId(data.userId);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [liff.loading, liff.isInClient, liff.profile, contactName]);
+
+  const searchParams = useSearchParams();
+  const didReadParams = useRef(false);
+
+  // Pre-select package from URL ?package=duo|squad|peloton
+  useEffect(() => {
+    if (didReadParams.current) return;
+    didReadParams.current = true;
+    const pkgParam = searchParams.get("package") as GroupType | null;
+    if (pkgParam && RIDE_PACKAGES.some((p) => p.type === pkgParam)) {
+      setSelectedPackage(pkgParam);
+      const pkg = RIDE_PACKAGES.find((p) => p.type === pkgParam);
+      if (pkg) setRiderCount(pkg.minRiders);
+    }
+  }, [searchParams]);
 
   const activePackage = RIDE_PACKAGES.find((p) => p.type === selectedPackage);
   const activeSlot = TIME_SLOTS.find((s) => s.id === selectedSlot);
 
-  // Generate next 14 days
+  // Update page title with current step
+  useEffect(() => {
+    const stepLabel = STEPS[currentStep]?.label || "";
+    document.title = `${stepLabel} — Book a Ride | En-Joy Speed`;
+  }, [currentStep]);
+
+  // Generate next 30 days
   const availableDates = useMemo(() => {
     const dates = [];
     const now = new Date();
-    for (let i = 1; i <= 14; i++) {
+    for (let i = 1; i <= 30; i++) {
       const d = new Date(now);
       d.setDate(d.getDate() + i);
       dates.push(d);
@@ -142,7 +216,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
     if (!activePackage) return 0;
     const rideTotal = activePackage.pricePerPerson * riderCount;
     const rentalTotal = riders.slice(0, riderCount).reduce((sum, rider) => {
-      return sum + BIKE_RENTAL_PRICES[rider.bikePreference];
+      return sum + BIKE_RENTAL_PRICES[rider.bikePreference || "hybrid"];
     }, 0);
     return rideTotal + rentalTotal;
   }, [activePackage, riderCount, riders]);
@@ -151,7 +225,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
     ? activePackage.pricePerPerson * riderCount
     : 0;
   const rentalSubtotal = riders.slice(0, riderCount).reduce((sum, rider) => {
-    return sum + BIKE_RENTAL_PRICES[rider.bikePreference];
+    return sum + BIKE_RENTAL_PRICES[rider.bikePreference || "hybrid"];
   }, 0);
 
   // Update a specific rider field
@@ -175,9 +249,11 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
       case "package":
         return !!selectedPackage;
       case "riders": {
-        // All riders must have a name and bike preference
+        // All riders must have a name, bike preference, and cycling experience
         const activeRiders = riders.slice(0, riderCount);
-        return activeRiders.every((r) => r.name.trim().length > 0);
+        return activeRiders.every(
+          (r) => r.name.trim().length > 0 && r.bikePreference && r.cyclingExperience
+        );
       }
       case "waiver":
         return waiverAccepted && contactName.trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail);
@@ -229,12 +305,12 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
   };
 
   // Handle email verification callback
-  const handleEmailVerified = (verifiedEmail: string, newUserId: string) => {
-    setContactEmail(verifiedEmail);
+  const handleEmailVerified = (email: string, newUserId: string) => {
+    setContactEmail(email);
     setVerifiedUserId(newUserId);
     setEmailVerified(true);
     setShowEmailVerification(false);
-    // Now proceed to actually create the booking
+    // Now proceed to create the booking — LINE linking happens in submitBookingWithUser
     submitBookingWithUser(newUserId);
   };
 
@@ -262,7 +338,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
       contactName,
       contactPhone,
       contactEmail: contactEmail || userEmail,
-      contactLineId: "",
+      contactLineId: liffLineId || "",
       specialRequests: "",
       waiverAccepted,
       userId: userIdToUse, // Pass verified user ID for guest bookings
@@ -271,6 +347,20 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
     setIsSubmitting(false);
 
     if (result.success && result.bookingId) {
+      // If LIFF user, link their LINE account to the verified Supabase user
+      if (liffLineId && userIdToUse) {
+        fetch("/api/liff", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "link",
+            lineUserId: liffLineId,
+            displayName: liff.profile?.displayName,
+            pictureUrl: liff.profile?.pictureUrl,
+          }),
+        }).catch(() => {}); // Non-blocking — don't fail booking if link fails
+      }
+
       setCompletedBooking({
         bookingId: result.bookingId,
         paymentAmount: result.paymentAmount || rideSubtotal,
@@ -383,17 +473,17 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         >
                           <span
                             className={`text-xs font-medium ${
-                              isSelected ? "text-cream/60" : "text-ink-muted"
+                              isSelected ? "text-cream/90" : "text-ink-muted"
                             }`}
                           >
                             {dayName}
                           </span>
-                          <span className="text-2xl font-bold mt-1">
+                          <span className={`text-2xl font-bold mt-1 ${isSelected ? "text-cream" : "text-ink"}`}>
                             {dayNum}
                           </span>
                           <span
                             className={`text-xs ${
-                              isSelected ? "text-cream/60" : "text-ink-muted"
+                              isSelected ? "text-cream/90" : "text-ink-muted"
                             }`}
                           >
                             {month}
@@ -402,6 +492,9 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                       );
                     })}
                   </div>
+                  <p className="mt-3 text-xs text-ink-muted text-center">
+                    Availability confirmed on the next step. Weekend slots fill up fast.
+                  </p>
                 </div>
               )}
 
@@ -436,11 +529,11 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                               }`}
                             >
                               <div>
-                                <p className="font-semibold">{slot.label}</p>
+                                <p className={`font-semibold ${isSelected ? "text-cream" : "text-ink"}`}>{slot.label}</p>
                                 <p
                                   className={`text-sm ${
                                     isSelected
-                                      ? "text-cream/60"
+                                      ? "text-cream/90"
                                       : "text-ink-muted"
                                   }`}
                                 >
@@ -450,7 +543,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                               <span
                                 className={`text-xs font-medium px-2 py-1 rounded-full ${
                                   isSelected
-                                    ? "bg-cream/15 text-cream"
+                                    ? "bg-cream/25 text-cream"
                                     : "bg-sky/10 text-sky-dark"
                                 }`}
                               >
@@ -461,9 +554,9 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         }
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-warning flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-warning" />
-                      A1 and A2 overlap — only one morning slot per day
+                    <p className="mt-2 text-xs text-sky-dark flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky" />
+                      Note: A1 and A2 overlap — you can book one morning session per day
                     </p>
                   </div>
 
@@ -492,19 +585,19 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                               <span
                                 className={`text-xs font-medium px-2 py-0.5 rounded-full self-start mb-2 ${
                                   isSelected
-                                    ? "bg-cream/15 text-cream"
+                                    ? "bg-cream/25 text-cream"
                                     : slot.id === "C"
                                     ? "bg-accent/10 text-accent-dark"
                                     : "bg-accent/10 text-accent-dark"
                                 }`}
                               >
-                                {slot.id === "C" ? "Staff Pick" : `Slot ${slot.id}`}
+                                {slot.id === "C" ? "Staff Pick" : slot.id === "D" ? "Scenic" : `Slot ${slot.id}`}
                               </span>
-                              <p className="font-semibold">{slot.label}</p>
+                              <p className={`font-semibold ${isSelected ? "text-cream" : "text-ink"}`}>{slot.label}</p>
                               <p
                                 className={`text-sm ${
                                   isSelected
-                                    ? "text-cream/60"
+                                    ? "text-cream/90"
                                     : "text-ink-muted"
                                 }`}
                               >
@@ -515,6 +608,9 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         }
                       )}
                     </div>
+                    <p className="mt-2 text-xs text-ink-muted">
+                      <strong>Staff Pick</strong> = most popular time. <strong>Scenic</strong> = best golden hour light.
+                    </p>
                   </div>
                 </div>
               )}
@@ -537,7 +633,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         <button
                           key={pkg.type}
                           onClick={() => handlePackageSelect(pkg.type)}
-                          className={`relative flex flex-col p-6 rounded-2xl border-2 text-left transition-all duration-200 ${
+                          className={`relative overflow-visible flex flex-col p-6 rounded-2xl border-2 text-left transition-all duration-200 ${
                             isSelected
                               ? "border-ink bg-ink text-cream shadow-lg scale-[1.02]"
                               : "border-sand/60 bg-surface hover:border-ink/20 hover:shadow-sm"
@@ -545,13 +641,13 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         >
                           {pkg.type === "squad" && (
                             <span
-                              className={`absolute -top-2.5 right-4 text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                              className={`absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full whitespace-nowrap z-10 ${
                                 isSelected
-                                  ? "bg-accent text-white"
-                                  : "bg-accent/10 text-accent-dark"
+                                  ? "bg-accent text-white shadow-md"
+                                  : "bg-accent text-white shadow-sm"
                               }`}
                             >
-                              Popular
+                              Most Popular
                             </span>
                           )}
                           <Icon
@@ -559,10 +655,10 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                               isSelected ? "text-cream" : "text-accent"
                             }`}
                           />
-                          <h3 className="text-lg font-bold">{pkg.name}</h3>
+                          <h3 className={`text-lg font-bold ${isSelected ? "text-cream" : "text-ink"}`}>{pkg.name}</h3>
                           <p
                             className={`text-sm mt-1 ${
-                              isSelected ? "text-cream/60" : "text-ink-muted"
+                              isSelected ? "text-cream/90" : "text-ink-muted"
                             }`}
                           >
                             {pkg.minRiders}
@@ -572,12 +668,12 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                             riders
                           </p>
                           <div className="mt-4 pt-4 border-t border-current/10">
-                            <p className="text-2xl font-bold">
+                            <p className={`text-2xl font-bold ${isSelected ? "text-cream" : "text-ink"}`}>
                               {pkg.pricePerPerson.toLocaleString()}
                               <span
                                 className={`text-xs font-normal ml-1 ${
                                   isSelected
-                                    ? "text-cream/50"
+                                    ? "text-cream/90"
                                     : "text-ink-muted"
                                 }`}
                               >
@@ -586,12 +682,12 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                             </p>
                             <p
                               className={`text-xs mt-1 ${
-                                isSelected ? "text-cream/50" : "text-ink-muted"
+                                isSelected ? "text-cream/90" : "text-ink-muted"
                               }`}
                             >
                               {pkg.leadersCount} Leader
                               {pkg.heroesCount > 0
-                                ? ` + ${pkg.heroesCount} Hero`
+                                ? ` + ${pkg.heroesCount} Hero (sweep)`
                                 : ""}
                             </p>
                           </div>
@@ -600,8 +696,12 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     })}
                   </div>
 
+                  <p className="mt-3 text-xs text-ink-muted text-center">
+                    <strong>Leaders</strong> set the pace up front. <strong>Heroes</strong> ride sweep at the back — no one gets left behind.
+                  </p>
+
                   {/* Starter Kit callout */}
-                  <div className="mt-6 p-4 rounded-xl bg-success/5 border border-success/20">
+                  <div className="mt-4 p-4 rounded-xl bg-success/5 border border-success/20">
                     <div className="flex items-start gap-3">
                       <Gift className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
                       <div>
@@ -656,8 +756,19 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                           >
                             <Minus className="h-4 w-4" />
                           </button>
-                          <span className="text-2xl font-bold w-8 text-center">
-                            {riderCount}
+                          <span className="text-2xl font-bold w-8 text-center overflow-hidden">
+                            <AnimatePresence mode="wait">
+                              <motion.span
+                                key={riderCount}
+                                initial={{ y: 12, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                exit={{ y: -12, opacity: 0 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                className="inline-block"
+                              >
+                                {riderCount}
+                              </motion.span>
+                            </AnimatePresence>
                           </span>
                           <button
                             onClick={() =>
@@ -676,7 +787,8 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                   )}
 
                   {/* Rider tabs */}
-                  <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                  <div className="relative">
+                  <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scroll-smooth" style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}>
                     {Array.from({ length: riderCount }).map((_, i) => (
                       <button
                         key={i}
@@ -697,6 +809,10 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                           : `Rider ${i + 1}`}
                       </button>
                     ))}
+                  </div>
+                  {riderCount > 3 && (
+                    <div className="pointer-events-none absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-cream to-transparent sm:hidden" />
+                  )}
                   </div>
 
                   {/* Active rider form */}
@@ -754,7 +870,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                       <p className="text-xs text-ink-muted mb-3">
                         Bike rental is paid separately at the track to HHBL
                         (Happy and Healthy Bike Lane). Each rider can pick their
-                        own bike type.
+                        own bike type. Helmet is included with every rental.
                       </p>
                       <div className="grid grid-cols-3 gap-3">
                         {(
@@ -768,7 +884,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                             {
                               value: "road" as BikePreference,
                               label: "Road Bike",
-                              price: "700 THB",
+                              price: "720 THB",
                               desc: "Faster, sportier feel",
                             },
                             {
@@ -803,14 +919,19 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                                   : "text-ink-muted"
                               }`}
                             />
-                            <span className="text-sm font-semibold">
+                            <span className={`text-sm font-semibold ${
+                                riders[activeRiderIndex]?.bikePreference ===
+                                option.value
+                                  ? "text-cream"
+                                  : "text-ink"
+                              }`}>
                               {option.label}
                             </span>
                             <span
                               className={`text-xs mt-0.5 ${
                                 riders[activeRiderIndex]?.bikePreference ===
                                 option.value
-                                  ? "text-cream/60"
+                                  ? "text-cream/90"
                                   : "text-ink-muted"
                               }`}
                             >
@@ -820,7 +941,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                               className={`text-[10px] mt-1 text-center ${
                                 riders[activeRiderIndex]?.bikePreference ===
                                 option.value
-                                  ? "text-cream/40"
+                                  ? "text-cream/90"
                                   : "text-ink-muted/60"
                               }`}
                             >
@@ -830,6 +951,55 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         ))}
                       </div>
                     </div>
+
+                    {/* Height & Gender for bike setup (only for rental bikes) */}
+                    {riders[activeRiderIndex]?.bikePreference !== "own" && (
+                      <div className="grid sm:grid-cols-2 gap-4 p-4 rounded-xl bg-sky/5 border border-sky/20">
+                        <div>
+                          <label className="block text-sm font-medium text-ink mb-1.5">
+                            Height (cm) <span className="text-xs font-normal text-ink-muted">for bike setup</span>
+                          </label>
+                          <input
+                            type="number"
+                            value={riders[activeRiderIndex]?.heightCm || ""}
+                            onChange={(e) =>
+                              updateRider(
+                                activeRiderIndex,
+                                "heightCm",
+                                e.target.value ? Number(e.target.value) : undefined
+                              )
+                            }
+                            placeholder="e.g. 170"
+                            className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/50 focus:border-ink focus:outline-none transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-ink mb-1.5">
+                            Gender <span className="text-xs font-normal text-ink-muted">for bike setup</span>
+                          </label>
+                          <div className="flex gap-2">
+                            {(["male", "female"] as const).map((g) => (
+                              <button
+                                key={g}
+                                onClick={() =>
+                                  updateRider(activeRiderIndex, "gender", g)
+                                }
+                                className={`flex-1 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                                  riders[activeRiderIndex]?.gender === g
+                                    ? "border-ink bg-ink text-cream"
+                                    : "border-sand/60 bg-surface hover:border-ink/20"
+                                }`}
+                              >
+                                {g === "male" ? "Male" : "Female"}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-ink-muted sm:col-span-2">
+                          Height and gender help the rental shop prepare the right bike size for you.
+                        </p>
+                      </div>
+                    )}
 
                     {/* Experience */}
                     <div>
@@ -867,12 +1037,40 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
 
                     {/* Clothing Size (for padded liner shorts from starter kit) */}
                     <div>
-                      <label className="block text-sm font-medium text-ink mb-2">
-                        Liner Shorts Size
+                      <label className="block text-sm font-medium text-ink mb-1">
+                        Cycling Liner Shorts Size
                         <span className="text-xs font-normal text-ink-muted ml-2">
-                          (from your Starter Kit)
+                          (from your Starter Kit — 640 THB value, included)
                         </span>
                       </label>
+                      <div className="flex items-start gap-3 mb-3 p-3 rounded-lg bg-sand/20 border border-sand/40">
+                        <button
+                          type="button"
+                          onClick={() => setShowSizeChart(true)}
+                          className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 group ring-2 ring-accent/30 hover:ring-accent transition-all"
+                        >
+                          <img
+                            src="/images/pants-sizing.jpg"
+                            alt="Cycling liner shorts sizing reference"
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-ink/40 flex items-center justify-center group-hover:bg-ink/50 transition-colors">
+                            <span className="text-[9px] font-bold text-cream uppercase tracking-wide">Size Guide</span>
+                          </div>
+                        </button>
+                        <div className="flex-1">
+                          <p className="text-[11px] text-ink-muted">
+                            Padded gel cycling liners — worn under your shorts for comfort. Size up if between sizes. Yours to keep.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setShowSizeChart(true)}
+                            className="mt-1.5 text-xs font-semibold text-accent hover:text-accent-dark transition-colors underline underline-offset-2"
+                          >
+                            View full size chart →
+                          </button>
+                        </div>
+                      </div>
                       <div className="flex flex-wrap gap-2">
                         {SIZES.map((size) => (
                           <button
@@ -925,10 +1123,12 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                             <span className="font-medium">
                               {r.nickname || r.name.split(" ")[0] || `Rider ${i + 1}`}
                             </span>
-                            <span className="text-ink-muted">
-                              {r.bikePreference === "own"
-                                ? "own"
-                                : r.bikePreference}
+                            <span className={`${r.bikePreference ? "text-ink-muted" : "text-ink-muted/40 italic"}`}>
+                              {r.bikePreference
+                                ? r.bikePreference === "own"
+                                  ? "own bike"
+                                  : r.bikePreference
+                                : "not set"}
                             </span>
                           </span>
                         ))}
@@ -950,8 +1150,8 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                   </p>
 
                   {/* Waiver text */}
-                  <Card padding="md" className="mb-6">
-                    <div className="max-h-48 overflow-y-auto text-xs text-ink-light leading-relaxed space-y-3 pr-2">
+                  <Card padding="md" className="mb-6 relative">
+                    <div className="max-h-48 overflow-y-auto text-xs text-ink-light leading-relaxed space-y-3 pr-2 scroll-smooth" style={{ scrollbarWidth: "thin" }}>
                       <p className="font-bold text-sm text-ink">
                         Liability & Assumption of Risk Waiver
                       </p>
@@ -1004,6 +1204,8 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         จากความรับผิดชอบต่อการบาดเจ็บหรือความเสียหายใดๆ
                       </p>
                     </div>
+                    {/* Scroll fade hint */}
+                    <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-surface to-transparent rounded-b-2xl" />
                   </Card>
 
                   {/* Waiver acceptance */}
@@ -1063,8 +1265,15 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                           value={contactEmail}
                           onChange={(e) => setContactEmail(e.target.value)}
                           placeholder="your@email.com"
-                          className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/50 focus:border-ink focus:outline-none transition-colors"
+                          className={`w-full px-4 py-3 rounded-xl border-2 bg-surface text-ink placeholder:text-ink-muted/50 focus:outline-none transition-colors ${
+                            contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)
+                              ? "border-error/40 focus:border-error"
+                              : "border-sand/60 focus:border-ink"
+                          }`}
                         />
+                        {contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail) && (
+                          <p className="mt-1 text-xs text-error">Please enter a valid email address</p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-ink mb-1.5">
@@ -1073,7 +1282,15 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         <input
                           type="tel"
                           value={contactPhone}
-                          onChange={(e) => setContactPhone(e.target.value)}
+                          onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                            const formatted = digits.length > 3
+                              ? digits.length > 6
+                                ? `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
+                                : `${digits.slice(0, 3)}-${digits.slice(3)}`
+                              : digits;
+                            setContactPhone(formatted);
+                          }}
                           placeholder="08X-XXX-XXXX"
                           className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/50 focus:border-ink focus:outline-none transition-colors"
                         />
@@ -1144,7 +1361,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                                 <span className="text-ink-muted">
                                   {rider.bikePreference === "own"
                                     ? "Own bike"
-                                    : `${rider.bikePreference === "hybrid" ? "Hybrid" : "Road"} rental — ${BIKE_RENTAL_PRICES[rider.bikePreference]} THB`}
+                                    : `${(rider.bikePreference || "hybrid") === "hybrid" ? "Hybrid" : "Road"} rental — ${BIKE_RENTAL_PRICES[rider.bikePreference || "hybrid"]} THB`}
                                 </span>
                               </div>
                             ))}
@@ -1173,7 +1390,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                               THB)
                             </span>
                             <span className="font-medium">
-                              {rideSubtotal.toLocaleString()} THB
+                              <AnimatedNumber value={rideSubtotal} format="currency" /> THB
                             </span>
                           </div>
                           {rentalSubtotal > 0 && (
@@ -1191,7 +1408,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                               Total
                             </span>
                             <span className="font-bold text-lg text-accent">
-                              {totalPrice.toLocaleString()} THB
+                              <AnimatedNumber value={totalPrice} format="currency" /> THB
                             </span>
                           </div>
                           {rentalSubtotal > 0 && (
@@ -1205,6 +1422,17 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         </div>
                       </div>
                     </Card>
+
+                    {/* Safety trust badge */}
+                    <div className="mb-4 flex items-center gap-3 p-3 rounded-xl bg-success/5 border border-success/20">
+                      <ShieldCheck className="h-5 w-5 text-success flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-ink">Safety first</p>
+                        <p className="text-xs text-ink-muted">
+                          Led by certified athletes. Group insurance included. Full safety briefing before every ride.
+                        </p>
+                      </div>
+                    </div>
 
                     {/* What to bring reminder */}
                     <div className="mb-6 p-4 rounded-xl bg-sky/5 border border-sky/20">
@@ -1237,26 +1465,65 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     ) : (
                       <>
                         {bookingError && (
-                          <div className="mb-4 flex items-center gap-2 p-3 rounded-lg bg-error/5 text-error text-sm">
+                          <div role="alert" aria-live="polite" className="mb-4 flex items-center gap-2 p-3 rounded-lg bg-error/5 text-error text-sm">
                             <AlertCircle className="h-4 w-4 flex-shrink-0" />
                             {bookingError}
                           </div>
                         )}
 
-                        <Button
-                          variant="secondary"
-                          size="lg"
-                          fullWidth
-                          onClick={handleSubmitBooking}
-                          loading={isSubmitting}
-                          className="text-base"
-                        >
-                          {isSubmitting
-                            ? "Creating booking..."
-                            : emailVerified
-                            ? `Confirm & Pay ${rideSubtotal.toLocaleString()} THB`
-                            : `Verify Email & Pay ${rideSubtotal.toLocaleString()} THB`}
-                        </Button>
+                        {/* Confirmation modal */}
+                        <AnimatePresence>
+                          {showConfirmModal && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 8 }}
+                              className="mb-4 p-4 rounded-xl border-2 border-accent/30 bg-accent/5"
+                            >
+                              <p className="font-semibold text-sm text-ink mb-2">Ready to book?</p>
+                              <div className="text-xs text-ink-muted space-y-1 mb-3">
+                                <p>{selectedDate && new Date(selectedDate).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · {activeSlot?.label}</p>
+                                <p>{activePackage?.name} · {riderCount} rider{riderCount > 1 ? "s" : ""}</p>
+                                <p className="font-semibold text-ink">Total: {rideSubtotal.toLocaleString()} THB</p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  fullWidth
+                                  onClick={() => {
+                                    setShowConfirmModal(false);
+                                    handleSubmitBooking();
+                                  }}
+                                  loading={isSubmitting}
+                                >
+                                  {isSubmitting ? "Creating..." : "Yes, proceed to payment"}
+                                </Button>
+                                <button
+                                  onClick={() => setShowConfirmModal(false)}
+                                  className="px-4 py-2 text-sm font-medium text-ink-muted hover:text-ink transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        {!showConfirmModal && (
+                          <Button
+                            variant="secondary"
+                            size="lg"
+                            fullWidth
+                            onClick={() => setShowConfirmModal(true)}
+                            loading={isSubmitting}
+                            className="text-base"
+                          >
+                            {emailVerified
+                              ? `Confirm & Pay ${rideSubtotal.toLocaleString()} THB`
+                              : `Verify Email & Pay ${rideSubtotal.toLocaleString()} THB`}
+                          </Button>
+                        )}
                         <p className="mt-3 text-xs text-center text-ink-muted">
                           {emailVerified
                             ? `You'll see a PromptPay QR code to scan with your banking app.`
@@ -1287,7 +1554,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
             <div className="text-right">
               <p className="text-xs text-ink-muted">Estimated total</p>
               <p className="text-lg font-bold text-ink">
-                {totalPrice.toLocaleString()}{" "}
+                <AnimatedNumber value={totalPrice} format="currency" />{" "}
                 <span className="text-sm font-normal text-ink-muted">THB</span>
               </p>
             </div>
@@ -1300,6 +1567,150 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
           )}
         </div>
       </div>
+
+      {/* Size Chart Modal */}
+      <AnimatePresence>
+        {showSizeChart && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm"
+            onClick={() => setShowSizeChart(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="bg-surface rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto border border-sand/60"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal header */}
+              <div className="sticky top-0 bg-surface/95 backdrop-blur-sm border-b border-sand/60 px-5 py-4 rounded-t-2xl flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-ink">Cycling Liner Shorts — Size Guide</h3>
+                  <p className="text-xs text-ink-muted mt-0.5">All measurements in cm. Size up if between sizes.</p>
+                </div>
+                <button
+                  onClick={() => setShowSizeChart(false)}
+                  className="p-2 -mr-2 rounded-lg hover:bg-sand/30 transition-colors text-ink-muted hover:text-ink"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Size table */}
+              <div className="px-5 py-4">
+                <div className="overflow-x-auto -mx-1">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="bg-ink text-cream">
+                        <th className="text-left px-3 py-2.5 rounded-tl-lg font-semibold text-xs">Measurement</th>
+                        <th className="px-2.5 py-2.5 font-semibold text-xs">S</th>
+                        <th className="px-2.5 py-2.5 font-semibold text-xs">M</th>
+                        <th className="px-2.5 py-2.5 font-semibold text-xs">L</th>
+                        <th className="px-2.5 py-2.5 font-semibold text-xs">XL</th>
+                        <th className="px-2.5 py-2.5 font-semibold text-xs">2XL</th>
+                        <th className="px-2.5 py-2.5 font-semibold text-xs">3XL</th>
+                        <th className="px-2.5 py-2.5 rounded-tr-lg font-semibold text-xs">4XL</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-center text-xs">
+                      <tr className="border-b border-sand/40">
+                        <td className="text-left px-3 py-2.5 font-medium text-ink">½ Waist</td>
+                        <td className="px-2 py-2.5 text-ink-muted">28–30</td>
+                        <td className="px-2 py-2.5 text-ink-muted">30–32</td>
+                        <td className="px-2 py-2.5 text-ink-muted">32–34</td>
+                        <td className="px-2 py-2.5 text-ink-muted">34–36</td>
+                        <td className="px-2 py-2.5 text-ink-muted">36–38</td>
+                        <td className="px-2 py-2.5 text-ink-muted">38–40</td>
+                        <td className="px-2 py-2.5 text-ink-muted">40–42</td>
+                      </tr>
+                      <tr className="border-b border-sand/40 bg-sand/10">
+                        <td className="text-left px-3 py-2.5 font-medium text-ink">½ Hip</td>
+                        <td className="px-2 py-2.5 text-ink-muted">34</td>
+                        <td className="px-2 py-2.5 text-ink-muted">36</td>
+                        <td className="px-2 py-2.5 text-ink-muted">38</td>
+                        <td className="px-2 py-2.5 text-ink-muted">40</td>
+                        <td className="px-2 py-2.5 text-ink-muted">42</td>
+                        <td className="px-2 py-2.5 text-ink-muted">44</td>
+                        <td className="px-2 py-2.5 text-ink-muted">46</td>
+                      </tr>
+                      <tr className="border-b border-sand/40">
+                        <td className="text-left px-3 py-2.5 font-medium text-ink">½ Leg Opening</td>
+                        <td className="px-2 py-2.5 text-ink-muted">17.5</td>
+                        <td className="px-2 py-2.5 text-ink-muted">18.25</td>
+                        <td className="px-2 py-2.5 text-ink-muted">19</td>
+                        <td className="px-2 py-2.5 text-ink-muted">19.75</td>
+                        <td className="px-2 py-2.5 text-ink-muted">20.5</td>
+                        <td className="px-2 py-2.5 text-ink-muted">21.5</td>
+                        <td className="px-2 py-2.5 text-ink-muted">22</td>
+                      </tr>
+                      <tr className="border-b border-sand/40 bg-sand/10">
+                        <td className="text-left px-3 py-2.5 font-medium text-ink">Height (cm)</td>
+                        <td className="px-2 py-2.5 text-ink-muted">165–170</td>
+                        <td className="px-2 py-2.5 text-ink-muted">170–175</td>
+                        <td className="px-2 py-2.5 text-ink-muted">175–180</td>
+                        <td className="px-2 py-2.5 text-ink-muted">180–185</td>
+                        <td className="px-2 py-2.5 text-ink-muted">185–190</td>
+                        <td className="px-2 py-2.5 text-ink-muted">190–195</td>
+                        <td className="px-2 py-2.5 text-ink-muted">190–195</td>
+                      </tr>
+                      <tr>
+                        <td className="text-left px-3 py-2.5 font-medium text-ink">Weight (kg)</td>
+                        <td className="px-2 py-2.5 text-ink-muted">60–65</td>
+                        <td className="px-2 py-2.5 text-ink-muted">65–70</td>
+                        <td className="px-2 py-2.5 text-ink-muted">70–75</td>
+                        <td className="px-2 py-2.5 text-ink-muted">75–80</td>
+                        <td className="px-2 py-2.5 text-ink-muted">80–85</td>
+                        <td className="px-2 py-2.5 text-ink-muted">85–90</td>
+                        <td className="px-2 py-2.5 text-ink-muted">90–95</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Quick tips */}
+                <div className="mt-4 p-3 rounded-lg bg-accent/5 border border-accent/15">
+                  <p className="text-xs font-semibold text-accent mb-1.5">Quick tips</p>
+                  <ul className="text-xs text-ink-muted space-y-1">
+                    <li>• Measure your waist at its narrowest point, divide by 2</li>
+                    <li>• Between sizes? Go one size up for comfort</li>
+                    <li>• These are padded gel liners — worn under your regular shorts</li>
+                  </ul>
+                </div>
+
+                {/* Select size directly from modal */}
+                <div className="mt-4">
+                  <p className="text-xs font-medium text-ink mb-2">Select your size:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {SIZES.map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => {
+                          updateRider(activeRiderIndex, "clothingSize", size);
+                          setShowSizeChart(false);
+                        }}
+                        className={`px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${
+                          riders[activeRiderIndex]?.clothingSize === size
+                            ? "border-ink bg-ink text-cream"
+                            : "border-sand/60 bg-surface hover:border-ink/20"
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

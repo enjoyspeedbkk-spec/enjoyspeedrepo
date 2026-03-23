@@ -130,8 +130,13 @@ export async function sendEmailOtp(
     });
 
     if (!emailSent) {
-      // In dev mode (no RESEND_API_KEY), the code is logged to console
-      console.log(`📧 OTP for ${cleanEmail}: ${code} (email send returned false — check if RESEND_API_KEY is set)`);
+      // Email delivery failed — Resend may be in test mode (onboarding@resend.dev only sends to account holder)
+      // Log the code so admin can retrieve it from Vercel logs if needed
+      console.warn(`📧 OTP for ${cleanEmail}: ${code} (email delivery FAILED — verify a domain in Resend to fix)`);
+      return {
+        success: false,
+        error: "Email delivery failed. Please check your email address or try again. If this persists, contact us on LINE @EnjoySpeed.",
+      };
     }
 
     console.log(`📧 OTP sent to ${cleanEmail} (${contactName || "Guest"}) — expires ${expiresAt.toISOString()}`);
