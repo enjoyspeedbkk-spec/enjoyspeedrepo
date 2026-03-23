@@ -1,55 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { signInWithGoogle } from "@/lib/actions/auth";
-import { sendPhoneOtp, verifyPhoneOtp } from "@/lib/actions/phone-auth";
-import { Phone, AlertCircle, CheckCircle, Info, Loader2 } from "lucide-react";
+import { sendEmailOtp, verifyEmailOtp } from "@/lib/actions/email-auth";
+import { createBrowserClient } from "@supabase/ssr";
+import { Mail, AlertCircle, Info, Loader2, RefreshCw } from "lucide-react";
 
 // =============================================
-// Phone-First Auth Form
-// Primary: Phone OTP → creates/finds Supabase user
-// Secondary: "Link Google" option in account settings
+// Email-First Auth Form
+// Primary: Email OTP → creates/finds Supabase user + session
+// Secondary: "Continue with Google" option
 // =============================================
 
 export function AuthForm() {
-  const [step, setStep] = useState<"phone" | "otp">("phone");
-  const [phone, setPhone] = useState("");
+  const [step, setStep] = useState<"email" | "otp">("email");
+  const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [otpCode, setOtpCode] = useState("");
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
-  const [devHint, setDevHint] = useState("");
   const [loading, setLoading] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Format phone as user types: 0XX-XXX-XXXX
-  const handlePhoneChange = (raw: string) => {
-    const digits = raw.replace(/\D/g, "").slice(0, 10);
-    if (digits.length <= 3) setPhone(digits);
-    else if (digits.length <= 6) setPhone(`${digits.slice(0, 3)}-${digits.slice(3)}`);
-    else setPhone(`${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`);
-  };
+  const cleanEmail = email.trim().toLowerCase();
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail);
 
-  const cleanPhone = phone.replace(/\D/g, "");
-  const isValidPhone = /^0[689]\d{8}$/.test(cleanPhone);
+  // Countdown timer for resend
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = setInterval(() => {
+      setCountdown((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [countdown]);
 
-  const handleRequestOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isValidPhone) return;
+  const handleRequestOtp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!isValidEmail) return;
     setError("");
     setLoading(true);
 
     try {
-      const result = await sendPhoneOtp(cleanPhone, name || undefined);
+      const result = await sendEmailOtp(cleanEmail, name || undefined);
       if (!result.success) {
         setError(result.error || "Failed to send code");
       } else {
-        // In dev/console mode, the code is returned as an "error" hint
-        if (result.error && result.error.includes("[Dev Mode]")) {
-          setDevHint(result.error);
-        }
         setStep("otp");
+        setCountdown(60);
+        // Focus first OTP input after render
+        setTimeout(() => otpRefs.current[0]?.focus(), 100);
       }
     } catch {
       setError("Something went wrong. Please try again.");
@@ -57,24 +59,80 @@ export function AuthForm() {
     setLoading(false);
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  const handleOtpChange = (index: number, value: string) => {
+    const digit = value.replace(/\D/g, "").slice(-1);
+    const newOtp = [...otp];
+    newOtp[index] = digit;
+    setOtp(newOtp);
+
+    // Auto-advance to next input
+    if (digit && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+
+    // Auto-verify when all 6 digits entered
+    const code = newOtp.join("");
+    if (code.length === 6) {
+      handleVerifyOtp(code);
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    if (otpCode.length !== 6) return;
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (pasted.length === 6) {
+      const newOtp = pasted.split("");
+      setOtp(newOtp);
+      handleVerifyOtp(pasted);
+    }
+  };
+
+  const handleVerifyOtp = async (code: string) => {
     setError("");
     setLoading(true);
 
     try {
-      const result = await verifyPhoneOtp(cleanPhone, otpCode, name || undefined);
+      const result = await verifyEmailOtp(cleanEmail, code, name || undefined);
       if (!result.success) {
         setError(result.error || "Invalid code");
+        setOtp(["", "", "", "", "", ""]);
+        otpRefs.current[0]?.focus();
       } else {
-        // Verified — redirect to booking
+        // Establish real Supabase browser session
+        if (result.tokenHash) {
+          try {
+            const supabase = createBrowserClient(
+              process.env.NEXT_PUBLIC_SUPABASE_URL!,
+              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+            );
+            await supabase.auth.verifyOtp({
+              token_hash: result.tokenHash,
+              type: "magiclink",
+            });
+          } catch (err) {
+            console.warn("Session creation failed:", err);
+          }
+        }
+        // Redirect — full page load so middleware picks up the new session
         window.location.href = "/booking";
       }
     } catch {
       setError("Something went wrong. Please try again.");
+      setOtp(["", "", "", "", "", ""]);
+      otpRefs.current[0]?.focus();
     }
     setLoading(false);
+  };
+
+  const handleResend = async () => {
+    if (countdown > 0) return;
+    await handleRequestOtp();
   };
 
   return (
@@ -83,17 +141,17 @@ export function AuthForm() {
         <div className="text-center mb-8">
           <Badge variant="accent">Welcome</Badge>
           <h1 className="mt-4 text-3xl font-bold">
-            {step === "phone" ? "Sign in to book" : "Enter your code"}
+            {step === "email" ? "Sign in to book" : "Enter your code"}
           </h1>
           <p className="mt-2 text-ink-muted text-sm">
-            {step === "phone"
-              ? "We'll send a verification code to your phone."
-              : `We sent a 6-digit code to ${phone}`}
+            {step === "email"
+              ? "We'll send a verification code to your email."
+              : `We sent a 6-digit code to ${cleanEmail}`}
           </p>
         </div>
 
         <Card padding="lg">
-          {step === "phone" ? (
+          {step === "email" ? (
             <form onSubmit={handleRequestOtp} className="space-y-4">
               {/* Name (optional) */}
               <div>
@@ -109,25 +167,22 @@ export function AuthForm() {
                 />
               </div>
 
-              {/* Phone */}
+              {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-ink mb-1.5">
-                  Phone Number
+                  Email Address
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" />
                   <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => handlePhoneChange(e.target.value)}
-                    placeholder="08X-XXX-XXXX"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
                     required
                     className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/50 focus:border-ink focus:outline-none transition-colors"
                   />
                 </div>
-                <p className="text-xs text-ink-muted mt-1">
-                  Thai mobile number starting with 06, 08, or 09
-                </p>
               </div>
 
               {error && (
@@ -143,41 +198,38 @@ export function AuthForm() {
                 size="lg"
                 fullWidth
                 loading={loading}
-                disabled={!isValidPhone}
+                disabled={!isValidEmail}
               >
                 Send Verification Code
               </Button>
             </form>
           ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
-              {/* OTP input */}
+            <div className="space-y-4">
+              {/* 6-digit OTP boxes */}
               <div>
-                <label className="block text-sm font-medium text-ink mb-1.5">
+                <label className="block text-sm font-medium text-ink mb-3 text-center">
                   Verification Code
                 </label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={otpCode}
-                  onChange={(e) =>
-                    setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                  }
-                  placeholder="000000"
-                  autoFocus
-                  className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink text-center text-2xl tracking-[0.3em] font-mono placeholder:text-ink-muted/30 focus:border-ink focus:outline-none transition-colors"
-                />
-                <p className="text-xs text-ink-muted mt-1.5 text-center">
+                <div className="flex justify-center gap-2">
+                  {otp.map((digit, i) => (
+                    <input
+                      key={i}
+                      ref={(el) => { otpRefs.current[i] = el; }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(i, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                      onPaste={i === 0 ? handleOtpPaste : undefined}
+                      className="w-12 h-14 text-center text-xl font-bold rounded-xl border-2 border-sand/60 bg-surface text-ink focus:border-accent focus:outline-none transition-colors"
+                    />
+                  ))}
+                </div>
+                <p className="text-xs text-ink-muted mt-2 text-center">
                   Code is valid for 10 minutes
                 </p>
               </div>
-
-              {devHint && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-sky/10 text-sky-dark text-sm">
-                  <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                  <span>{devHint}</span>
-                </div>
-              )}
 
               {error && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-error/5 text-error text-sm">
@@ -186,49 +238,45 @@ export function AuthForm() {
                 </div>
               )}
 
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                fullWidth
-                loading={loading}
-                disabled={otpCode.length !== 6}
-              >
-                Verify &amp; Continue
-              </Button>
+              {loading && (
+                <div className="flex items-center justify-center gap-2 text-sm text-ink-muted">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Verifying...
+                </div>
+              )}
 
-              {/* Resend / change number */}
+              {/* Resend / change email */}
               <div className="flex items-center justify-between text-sm">
                 <button
                   type="button"
                   onClick={() => {
-                    setStep("phone");
-                    setOtpCode("");
+                    setStep("email");
+                    setOtp(["", "", "", "", "", ""]);
                     setError("");
                   }}
                   className="text-ink-muted hover:text-ink transition-colors"
                 >
-                  Change number
+                  Change email
                 </button>
                 <button
                   type="button"
-                  onClick={async () => {
-                    setError("");
-                    setLoading(true);
-                    const result = await sendPhoneOtp(cleanPhone, name || undefined);
-                    if (!result.success) setError(result.error || "Failed to resend");
-                    setLoading(false);
-                  }}
-                  className="font-semibold text-accent hover:text-accent-dark transition-colors"
+                  onClick={handleResend}
+                  disabled={countdown > 0}
+                  className={`flex items-center gap-1 font-semibold transition-colors ${
+                    countdown > 0
+                      ? "text-ink-muted/50 cursor-not-allowed"
+                      : "text-accent hover:text-accent-dark"
+                  }`}
                 >
-                  Resend code
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  {countdown > 0 ? `Resend in ${countdown}s` : "Resend code"}
                 </button>
               </div>
-            </form>
+            </div>
           )}
 
           {/* Google fallback — secondary */}
-          {step === "phone" && (
+          {step === "email" && (
             <>
               <div className="flex items-center gap-3 my-6">
                 <div className="flex-1 h-px bg-sand/60" />
@@ -266,7 +314,7 @@ export function AuthForm() {
               </form>
 
               <p className="mt-4 text-xs text-ink-muted text-center">
-                Phone verification is our primary sign-in method.
+                Email verification is our primary sign-in method.
                 <br />
                 Google is available as a backup option.
               </p>
