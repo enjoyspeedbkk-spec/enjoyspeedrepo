@@ -6,6 +6,7 @@ import { Mail, ShieldCheck, Loader2, ArrowRight, RefreshCw } from "lucide-react"
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { sendEmailOtp, verifyEmailOtp } from "@/lib/actions/email-auth";
+import { createBrowserClient } from "@supabase/ssr";
 
 interface EmailVerificationProps {
   initialEmail?: string;
@@ -104,11 +105,27 @@ export function EmailVerification({
 
     const result = await verifyEmailOtp(cleanEmail, code, contactName);
 
-    setVerifying(false);
-
     if (result.success && result.userId) {
+      // Establish a real Supabase browser session if we got a token
+      if (result.tokenHash) {
+        try {
+          const supabase = createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+          );
+          await supabase.auth.verifyOtp({
+            token_hash: result.tokenHash,
+            type: "magiclink",
+          });
+        } catch (err) {
+          // Non-blocking — booking still works via userId, session is a bonus
+          console.warn("Session creation failed:", err);
+        }
+      }
+      setVerifying(false);
       onVerified(cleanEmail, result.userId);
     } else {
+      setVerifying(false);
       setError(result.error || "Invalid code. Please try again.");
       setOtp(["", "", "", "", "", ""]);
       otpRefs.current[0]?.focus();

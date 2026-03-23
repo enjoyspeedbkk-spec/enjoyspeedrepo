@@ -168,12 +168,18 @@ export function generatePromptPayPayload(options: PromptPayQROptions): string {
 }
 
 /**
- * Generate a QR code URL using a public API
- * In production, use a library like `qrcode` for client-side generation
+ * Generate a QR code as a data URL (base64 PNG).
+ * Uses the `qrcode` library — no external API dependency.
  */
-export function getPromptPayQRUrl(
+export async function getPromptPayQRDataUrl(
   payload: string,
   size: number = 300
-): string {
-  return `https://chart.googleapis.com/chart?chs=${size}x${size}&cht=qr&chl=${encodeURIComponent(payload)}&choe=UTF-8`;
+): Promise<string> {
+  const QRCode = await import("qrcode");
+  return QRCode.toDataURL(payload, {
+    width: size,
+    margin: 2,
+    color: { dark: "#1B2A4A", light: "#FFFFFF" },
+    errorCorrectionLevel: "M",
+  });
 }

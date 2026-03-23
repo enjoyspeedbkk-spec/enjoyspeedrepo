@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import {
   generatePromptPayPayload,
-  getPromptPayQRUrl,
+  getPromptPayQRDataUrl,
 } from "@/lib/promptpay";
 import {
   QrCode,
@@ -76,10 +76,11 @@ export function PaymentPromptPay({
     [promptPayTarget, amount, promptPayBankCode]
   );
 
-  const qrUrl = useMemo(
-    () => getPromptPayQRUrl(payload, 400),
-    [payload]
-  );
+  const [qrUrl, setQrUrl] = useState<string>("");
+
+  useEffect(() => {
+    getPromptPayQRDataUrl(payload, 400).then(setQrUrl).catch(console.error);
+  }, [payload]);
 
   const handleCopyAmount = () => {
     navigator.clipboard.writeText(amount.toFixed(2));
@@ -121,14 +122,20 @@ export function PaymentPromptPay({
             Scan to Pay
           </Badge>
           <div className="bg-white rounded-2xl p-4 inline-block mx-auto mb-4 shadow-sm">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={qrUrl}
-              alt="PromptPay QR Code"
-              width={280}
-              height={280}
-              className="mx-auto"
-            />
+            {qrUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={qrUrl}
+                alt="PromptPay QR Code"
+                width={280}
+                height={280}
+                className="mx-auto"
+              />
+            ) : (
+              <div className="w-[280px] h-[280px] mx-auto flex items-center justify-center">
+                <QrCode className="h-12 w-12 text-sand animate-pulse" />
+              </div>
+            )}
           </div>
           <div className="space-y-2">
             <p className="text-3xl font-bold text-accent">

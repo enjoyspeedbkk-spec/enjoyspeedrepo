@@ -11,6 +11,7 @@ interface OtpResult {
 interface VerifyResult {
   success: boolean;
   userId?: string;
+  tokenHash?: string;
   error?: string;
 }
 
@@ -213,6 +214,8 @@ export async function verifyEmailOtp(
       (u) => u.email?.toLowerCase() === cleanEmail
     );
 
+    let resolvedUserId: string;
+
     if (existingAuth) {
       // Existing user — ensure profile exists and email_verified
       await admin.from("profiles").upsert({
@@ -221,34 +224,51 @@ export async function verifyEmailOtp(
         email_verified: true,
         email_verified_at: new Date().toISOString(),
       });
-      return { success: true, userId: existingAuth.id };
-    }
-
-    // 4. Create new user
-    const { data: newUser, error: createError } = await admin.auth.admin.createUser({
-      email: cleanEmail,
-      email_confirm: true,
-      user_metadata: {
-        full_name: contactName || "Guest",
+      resolvedUserId = existingAuth.id;
+    } else {
+      // 4. Create new user
+      const { data: newUser, error: createError } = await admin.auth.admin.createUser({
         email: cleanEmail,
-        signup_method: "email_otp",
-      },
-    });
+        email_confirm: true,
+        user_metadata: {
+          full_name: contactName || "Guest",
+          email: cleanEmail,
+          signup_method: "email_otp",
+        },
+      });
 
-    if (createError || !newUser.user) {
-      console.error("User creation error:", createError);
-      return { success: false, error: "Could not create account. Please try again." };
+      if (createError || !newUser.user) {
+        console.error("User creation error:", createError);
+        return { success: false, error: "Could not create account. Please try again." };
+      }
+
+      // 5. Create profile
+      await admin.from("profiles").upsert({
+        id: newUser.user.id,
+        full_name: contactName || "Guest",
+        email_verified: true,
+        email_verified_at: new Date().toISOString(),
+      });
+      resolvedUserId = newUser.user.id;
     }
 
-    // 5. Create profile
-    await admin.from("profiles").upsert({
-      id: newUser.user.id,
-      full_name: contactName || "Guest",
-      email_verified: true,
-      email_verified_at: new Date().toISOString(),
+    // 6. Generate a magic link so the client can establish a real session
+    const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+      type: "magiclink",
+      email: cleanEmail,
     });
 
-    return { success: true, userId: newUser.user.id };
+    if (linkError || !linkData.properties?.hashed_token) {
+      // Session creation failed, but user was still created — return without token
+      console.warn("Magic link generation failed:", linkError);
+      return { success: true, userId: resolvedUserId };
+    }
+
+    return {
+      success: true,
+      userId: resolvedUserId,
+      tokenHash: linkData.properties.hashed_token,
+    };
   } catch (err) {
     console.error("Verify email OTP error:", err);
     return { success: false, error: "Something went wrong. Please try again." };
