@@ -1,7 +1,7 @@
 // ========================================
 // PromptPay QR Code Generation
 // Follows EMVCo QR Code Specification for Thailand PromptPay
-// Supports: phone number, national/tax ID, bank account
+// Supports: phone number, national/tax ID (NOT bank accounts)
 // ========================================
 
 // CRC-16/CCITT-FALSE calculation (required by EMVCo spec)
@@ -43,64 +43,41 @@ function formatTaxId(taxId: string): string {
   return taxId.replace(/\D/g, "");
 }
 
-// Format bank account for PromptPay
-// KBank = 004, SCB = 014, BBL = 002, Krungthai = 006, etc.
-function formatBankAccount(account: string, bankCode: string = "004"): string {
-  const cleaned = account.replace(/\D/g, "");
-  return bankCode + cleaned;
-}
+// NOTE: Bank account numbers are NOT valid PromptPay targets.
+// PromptPay only supports phone numbers and 13-digit national/tax IDs.
+// If a bank account is passed, we fall back to phone-style formatting,
+// but the resulting QR will NOT work. The env var MUST be set to a
+// PromptPay-registered phone number or national ID.
 
 // Detect target type from the string
-type TargetType = "phone" | "tax_id" | "bank_account";
+type TargetType = "phone" | "tax_id";
 
 function detectTargetType(target: string): TargetType {
   const cleaned = target.replace(/\D/g, "");
-
-  // Phone numbers: 9-10 digits (Thai mobile without +66 prefix)
-  if (cleaned.length <= 10 && (cleaned.startsWith("0") || cleaned.length === 9)) {
-    return "phone";
-  }
 
   // National/Tax ID: exactly 13 digits
   if (cleaned.length === 13) {
     return "tax_id";
   }
 
-  // Bank account: typically 10-12 digits (after stripping dashes)
-  return "bank_account";
+  // Everything else treated as phone (9-12 digits typical)
+  // PromptPay only supports phone + national ID. Bank accounts are NOT supported.
+  return "phone";
 }
 
-// PromptPay Application IDs
+// PromptPay Application IDs (Bank of Thailand / EMVCo spec)
+// Only phone and national/tax ID are valid proxies.
 const PROMPTPAY_AID = {
   phone: "A000000677010111",
   tax_id: "A000000677010112",
-  bank_account: "A000000677010114",
 } as const;
 
-// Map bank names to codes
-export const BANK_CODES: Record<string, string> = {
-  kbank: "004",
-  kasikorn: "004",
-  scb: "014",
-  bbl: "002",
-  bangkok: "002",
-  krungthai: "006",
-  ktb: "006",
-  tmb: "011",
-  ttb: "011",
-  krungsri: "025",
-  bay: "025",
-  gsb: "030",
-  cimb: "022",
-};
 
 export interface PromptPayQROptions {
-  /** Phone number, Tax ID (13 digits), or bank account number */
+  /** Phone number or Tax ID (13 digits) registered with PromptPay */
   target: string;
   /** Amount in THB (required for dynamic QR — updates per booking) */
   amount?: number;
-  /** Bank code if target is a bank account (default: "004" for KBank) */
-  bankCode?: string;
 }
 
 /**
@@ -109,13 +86,15 @@ export interface PromptPayQROptions {
  * This follows the BOT (Bank of Thailand) PromptPay specification
  * which is based on EMVCo Merchant-Presented QR Code.
  *
- * Supports three proxy types:
+ * Supports two proxy types (per BOT spec):
  * - Phone number (0812345678)
  * - National/Tax ID (1234567890123)
- * - Bank account (228-1-15365-2 with bankCode "004" for KBank)
+ *
+ * NOTE: Bank account numbers are NOT valid PromptPay proxies.
+ * The env var must contain a phone or national ID registered with PromptPay.
  */
 export function generatePromptPayPayload(options: PromptPayQROptions): string {
-  const { target, amount, bankCode = "004" } = options;
+  const { target, amount } = options;
 
   const targetType = detectTargetType(target);
 
@@ -134,11 +113,6 @@ export function generatePromptPayPayload(options: PromptPayQROptions): string {
       formattedTarget = formatTaxId(target);
       aid = PROMPTPAY_AID.tax_id;
       targetSubTag = "02"; // Sub-tag 02 for tax ID
-      break;
-    case "bank_account":
-      formattedTarget = formatBankAccount(target, bankCode);
-      aid = PROMPTPAY_AID.bank_account;
-      targetSubTag = "01"; // Sub-tag 01 for e-wallet/bank account
       break;
   }
 

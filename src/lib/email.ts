@@ -284,6 +284,47 @@ export function postRideEmail(booking: {
 }
 
 // ========================================
+// Weather Alert (heads-up — ride still on, but rain possible/likely)
+// ========================================
+export function weatherAlertEmail(booking: {
+  contactName: string;
+  date: string;
+  timeSlot: string;
+  severity: "watch" | "warning";
+  weatherMessage: string;
+}) {
+  const isWarning = booking.severity === "warning";
+
+  const content = `
+    <h1>${isWarning ? "⚠️ Weather Warning" : "🌤️ Weather Heads-Up"}</h1>
+    <p>Hi ${booking.contactName},</p>
+    <p>Quick update about your ride on <strong>${booking.date}</strong> (${booking.timeSlot}):</p>
+
+    <div class="highlight">
+      <p>${booking.weatherMessage}</p>
+      ${isWarning
+        ? `<p class="muted" style="margin-bottom: 0;">We're monitoring conditions closely. If things worsen, we'll reach out about rescheduling options.</p>`
+        : `<p class="muted" style="margin-bottom: 0;">Your ride is still on! We'll update you if conditions change.</p>`
+      }
+    </div>
+
+    ${isWarning ? `
+    <div style="text-align: center; margin-top: 24px;">
+      <a href="https://enjoyspeedbkk.com/bookings" class="btn">View Booking</a>
+    </div>
+    ` : ""}
+
+    <div class="divider"></div>
+    <p class="muted">Safety is our top priority. We check weather forecasts daily for upcoming rides.</p>
+  `;
+
+  return {
+    subject: `${isWarning ? "⚠️" : "🌤️"} Weather Update — ${booking.date}`,
+    html: emailWrapper(content),
+  };
+}
+
+// ========================================
 // Weather Cancellation
 // ========================================
 export function weatherCancellationEmail(booking: {

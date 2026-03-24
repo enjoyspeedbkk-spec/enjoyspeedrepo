@@ -672,6 +672,157 @@ export async function getTodayRides() {
 }
 
 // ========================================
+// MANUAL WEATHER CHECK (admin-triggered)
+// ========================================
+export async function checkWeatherNow(): Promise<{
+  success: boolean;
+  alerts: Array<{
+    date: string;
+    slotLabel: string;
+    severity: string;
+    message: string;
+    bookingCount: number;
+    sessionId: string;
+    timeSlotId: string;
+  }>;
+  error?: string;
+}> {
+  const { admin } = await requireAdmin();
+
+  try {
+    const { getWeatherForDate, assessForSlot } = await import("@/lib/weather");
+
+    const dates: string[] = [];
+    for (let i = 0; i <= 1; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      dates.push(d.toISOString().split("T")[0]);
+    }
+
+    const alerts: Array<{
+      date: string;
+      slotLabel: string;
+      severity: string;
+      message: string;
+      bookingCount: number;
+      sessionId: string;
+      timeSlotId: string;
+    }> = [];
+
+    for (const date of dates) {
+      const forecast = await getWeatherForDate(date);
+
+      const { data: sessions } = await admin
+        .from("ride_sessions")
+        .select("id, date, time_slot_id, weather_status")
+        .eq("date", date);
+
+      if (!sessions) continue;
+
+      for (const session of sessions) {
+        const { assessment } = assessForSlot(forecast, session.time_slot_id);
+
+        const slot = TIME_SLOTS.find((s) => s.id === session.time_slot_id);
+        const slotLabel = slot
+          ? `${slot.label} (${slot.startTime}–${slot.endTime})`
+          : session.time_slot_id;
+
+        // Update session weather
+        await admin
+          .from("ride_sessions")
+          .update({
+            weather_status: assessment.severity,
+            weather_note: assessment.message,
+          })
+          .eq("id", session.id);
+
+        // Count affected bookings
+        const { count } = await admin
+          .from("bookings")
+          .select("id", { count: "exact", head: true })
+          .eq("ride_session_id", session.id)
+          .in("status", ["confirmed", "paid"]);
+
+        alerts.push({
+          date,
+          slotLabel,
+          severity: assessment.severity,
+          message: assessment.message,
+          bookingCount: count || 0,
+          sessionId: session.id,
+          timeSlotId: session.time_slot_id,
+        });
+      }
+    }
+
+    revalidatePath("/admin");
+    return { success: true, alerts };
+  } catch (err) {
+    console.error("[checkWeatherNow] Error:", err);
+    return { success: false, alerts: [], error: String(err) };
+  }
+}
+
+// ========================================
+// SEND WEATHER ALERT TO CUSTOMERS (admin-approved)
+// ========================================
+export async function sendWeatherAlertToCustomers(
+  sessionId: string,
+  severity: "watch" | "warning",
+  message: string
+): Promise<{ success: boolean; notified: number; error?: string }> {
+  const { admin } = await requireAdmin();
+
+  // Get session details
+  const { data: session } = await admin
+    .from("ride_sessions")
+    .select("id, date, time_slot_id")
+    .eq("id", sessionId)
+    .single();
+
+  if (!session) return { success: false, notified: 0, error: "Session not found" };
+
+  const slot = TIME_SLOTS.find((s) => s.id === session.time_slot_id);
+  const slotLabel = slot
+    ? `${slot.label} (${slot.startTime}–${slot.endTime})`
+    : session.time_slot_id;
+
+  // Get confirmed bookings
+  const { data: bookings } = await admin
+    .from("bookings")
+    .select("id, user_id, contact_name, contact_email")
+    .eq("ride_session_id", sessionId)
+    .in("status", ["confirmed", "paid"]);
+
+  if (!bookings || bookings.length === 0) {
+    return { success: true, notified: 0 };
+  }
+
+  const { notifyWeatherAlert } = await import("@/lib/notifications");
+  let notified = 0;
+
+  for (const booking of bookings) {
+    try {
+      await notifyWeatherAlert(booking.user_id, {
+        bookingId: booking.id,
+        contactName: booking.contact_name,
+        contactEmail: booking.contact_email || undefined,
+        date: session.date,
+        timeSlot: slotLabel,
+        severity,
+        weatherMessage: message,
+      });
+      notified++;
+    } catch (err) {
+      console.error(`[sendWeatherAlert] Failed for booking ${booking.id}:`, err);
+    }
+  }
+
+  revalidatePath("/admin");
+  return { success: true, notified };
+}
+
+// ========================================
 // BULK WEATHER CANCELLATION
 // ========================================
 export async function bulkWeatherCancel(

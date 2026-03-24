@@ -2,8 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import Link from "next/link";
-import { Camera, Package, ChevronRight } from "lucide-react";
+import { Camera, Package } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
 const highlights = [
@@ -89,27 +88,15 @@ export function WhatsIncluded() {
           ))}
         </motion.div>
 
-        {/* Secondary info — compact strip */}
-        <motion.div
+        {/* Bike rental note */}
+        <motion.p
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="text-center space-y-3"
+          className="text-center text-sm text-ink-muted mt-6"
         >
-          <p className="text-sm text-ink-muted">
-            Also included: Athlete Leaders, Hero support riders, safety briefing, post-ride electrolyte drinks, and weather monitoring.
-          </p>
-          <p className="text-sm text-ink-muted">
-            Bike rental available separately — Hybrid 420 THB · Road 720 THB · Or bring your own.
-          </p>
-          <Link
-            href="/about"
-            className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:text-accent-dark transition-colors"
-          >
-            See full ride details
-            <ChevronRight className="h-3.5 w-3.5" />
-          </Link>
-        </motion.div>
+          Bike rental available separately — Hybrid 420 THB · Road 720 THB · Or bring your own.
+        </motion.p>
       </div>
     </section>
   );

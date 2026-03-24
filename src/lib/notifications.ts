@@ -16,6 +16,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   sendBookingConfirmation as lineBookingConfirmation,
   sendPreRideReminder as linePreRideReminder,
+  sendWeatherAlert as lineWeatherAlert,
   sendWeatherCancellation as lineWeatherCancellation,
   sendPostRideThankYou as linePostRideThankYou,
 } from "@/lib/line";
@@ -25,6 +26,7 @@ import {
   paymentPendingEmail,
   preRideReminderEmail,
   postRideEmail,
+  weatherAlertEmail,
   weatherCancellationEmail,
 } from "@/lib/email";
 
@@ -225,6 +227,46 @@ export async function notifyPreRideReminder(
     booking.contactEmail
       ? () => {
           const { subject, html } = preRideReminderEmail(booking);
+          return sendEmail({ to: booking.contactEmail!, subject, html });
+        }
+      : null
+  );
+}
+
+/**
+ * Notify user of weather alert (heads-up — not a cancellation)
+ */
+export async function notifyWeatherAlert(
+  userId: string,
+  booking: {
+    bookingId: string;
+    contactName: string;
+    contactEmail?: string;
+    date: string;
+    timeSlot: string;
+    severity: "watch" | "warning";
+    weatherMessage: string;
+  }
+): Promise<NotifyResult> {
+  const contact = await resolveUserContact(userId);
+
+  return sendWithCascade(
+    { ...contact, contactEmail: booking.contactEmail },
+    // LINE
+    contact.lineUserId
+      ? () =>
+          lineWeatherAlert(contact.lineUserId!, {
+            contactName: booking.contactName,
+            date: booking.date,
+            timeSlot: booking.timeSlot,
+            severity: booking.severity,
+            weatherMessage: booking.weatherMessage,
+          })
+      : null,
+    // Email
+    booking.contactEmail
+      ? () => {
+          const { subject, html } = weatherAlertEmail(booking);
           return sendEmail({ to: booking.contactEmail!, subject, html });
         }
       : null

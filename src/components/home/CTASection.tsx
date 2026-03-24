@@ -35,19 +35,13 @@ export function CTASection() {
             session, guaranteed personal attention.
           </p>
 
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-10 flex items-center justify-center">
             <Link
               href="/booking"
               className="group inline-flex items-center gap-2 rounded-full bg-accent px-8 py-4 text-base font-bold text-white shadow-lg hover:shadow-xl hover:bg-accent-light transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
             >
               Book Your Ride
               <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Link>
-            <Link
-              href="/packages"
-              className="inline-flex items-center gap-2 rounded-full border border-cream/15 px-6 py-4 text-base font-semibold text-cream/70 hover:text-cream hover:border-cream/30 transition-all duration-300"
-            >
-              Explore Ride Formats
             </Link>
           </div>
 

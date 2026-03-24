@@ -12,7 +12,7 @@ const slots = [
     label: "Early Bird",
     time: "06:15 — 08:15",
     period: "morning" as const,
-    mood: "Fresh morning air, quiet roads, clean start. Perfect for performance-focused riders.",
+    mood: "Fresh air, quiet roads. Performance-focused.",
     vibe: "Performance",
   },
   {
@@ -20,7 +20,7 @@ const slots = [
     label: "Energy Booster",
     time: "06:30 — 08:30",
     period: "morning" as const,
-    mood: "An energizing start to your day. Catch the sunrise over the Skylane as Bangkok wakes up.",
+    mood: "Catch the sunrise as Bangkok wakes up.",
     vibe: "Energizing",
   },
   {
@@ -28,7 +28,7 @@ const slots = [
     label: "Light Chaser",
     time: "16:15 — 18:15",
     period: "evening" as const,
-    mood: "Chase the afternoon light as the heat breaks. Ride into the golden glow.",
+    mood: "Golden light as the heat breaks.",
     vibe: "Scenic",
   },
   {
@@ -36,7 +36,7 @@ const slots = [
     label: "Golden Hour",
     time: "16:45 — 18:45",
     period: "evening" as const,
-    mood: "The signature En-Joy Speed experience. Perfect light, perfect vibes, perfect photos.",
+    mood: "The signature experience. Perfect light, perfect photos.",
     vibe: "Staff Pick",
     staffPick: true,
   },
@@ -45,7 +45,7 @@ const slots = [
     label: "Twilight Finish",
     time: "17:15 — 19:15",
     period: "evening" as const,
-    mood: "End your day with a cool evening breeze and a sunset finish on the Skylane.",
+    mood: "Cool evening breeze, sunset finish.",
     vibe: "Chill",
   },
 ];
@@ -68,7 +68,7 @@ export function TimeSlots() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="mb-12 rounded-2xl overflow-hidden h-48 lg:h-64 relative"
+          className="mb-12 rounded-2xl overflow-hidden h-36 lg:h-48 relative"
         >
           <Image
             src="/images/group-ride.jpg"
@@ -139,10 +139,6 @@ export function TimeSlots() {
               </motion.div>
             ))}
           </div>
-          <p className="mt-3 text-xs text-ink-muted flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-warning" />
-            Morning slots A1 and A2 overlap — only one can be booked per day.
-          </p>
         </div>
 
         {/* Evening */}
@@ -196,18 +192,6 @@ export function TimeSlots() {
           </div>
         </div>
 
-        {/* Bathroom stops info */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="mt-10 text-center text-sm text-ink-muted"
-        >
-          <p>
-            Bathroom stops at km 5, 11, and 16 &middot; Pre-arranged by your
-            Leader &middot; Blue lane (relaxed) &amp; Purple lane (fast)
-          </p>
-        </motion.div>
       </div>
     </section>
   );

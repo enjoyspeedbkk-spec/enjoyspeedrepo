@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Sun, CloudRain, XCircle, Users, Bike, CheckCircle2,
   Phone, AlertTriangle, ChevronDown, ChevronUp,
@@ -12,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { TIME_SLOTS } from "@/lib/constants";
 import {
   checkInRider, bulkCheckInBooking, bulkWeatherCancel, adminCancelBooking, verifyPayment,
+  checkWeatherNow, sendWeatherAlertToCustomers,
 } from "@/lib/actions/admin";
 
 interface RiderData {
@@ -71,17 +73,22 @@ interface TodayRidesProps {
 
 const weatherIcons: Record<string, typeof Sun> = {
   clear: Sun,
+  watch: CloudRain,
   warning: AlertTriangle,
+  severe: XCircle,
   cancelled: XCircle,
 };
 
 const weatherColors: Record<string, string> = {
   clear: "text-success",
+  watch: "text-sky-500",
   warning: "text-warning",
+  severe: "text-error",
   cancelled: "text-error",
 };
 
 export function TodayRides({ slots }: TodayRidesProps) {
+  const router = useRouter();
   const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
   const [cancelModal, setCancelModal] = useState<{ type: "weather" | "booking"; slotId?: string; bookingId?: string } | null>(null);
   const [cancelReason, setCancelReason] = useState("");
@@ -90,6 +97,42 @@ export function TodayRides({ slots }: TodayRidesProps) {
   const [verifying, setVerifying] = useState(false);
   const [localUpdates, setLocalUpdates] = useState<Record<string, boolean>>({});
   const [verifiedPayments, setVerifiedPayments] = useState<Set<string>>(new Set());
+
+  // Weather check state
+  const [checkingWeather, setCheckingWeather] = useState(false);
+  const [weatherAlerts, setWeatherAlerts] = useState<Array<{
+    date: string;
+    slotLabel: string;
+    severity: string;
+    message: string;
+    bookingCount: number;
+    sessionId: string;
+    timeSlotId: string;
+  }>>([]);
+  const [sendingAlert, setSendingAlert] = useState<string | null>(null);
+  const [alertsSent, setAlertsSent] = useState<Set<string>>(new Set());
+
+  const handleCheckWeather = async () => {
+    setCheckingWeather(true);
+    const result = await checkWeatherNow();
+    if (result.success) {
+      setWeatherAlerts(result.alerts.filter((a) => a.severity !== "clear"));
+    }
+    setCheckingWeather(false);
+  };
+
+  const handleSendAlert = async (sessionId: string, severity: string, message: string) => {
+    setSendingAlert(sessionId);
+    const result = await sendWeatherAlertToCustomers(
+      sessionId,
+      severity as "watch" | "warning",
+      message
+    );
+    if (result.success) {
+      setAlertsSent((prev) => new Set(prev).add(sessionId));
+    }
+    setSendingAlert(null);
+  };
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -130,8 +173,7 @@ export function TodayRides({ slots }: TodayRidesProps) {
     setCancelling(false);
     setCancelModal(null);
     setCancelReason("");
-    // Reload page to see updated state
-    window.location.reload();
+    router.refresh();
   };
 
   const handleAdminCancel = async (bookingId: string) => {
@@ -141,7 +183,7 @@ export function TodayRides({ slots }: TodayRidesProps) {
     setCancelling(false);
     setCancelModal(null);
     setCancelReason("");
-    window.location.reload();
+    router.refresh();
   };
 
   const handleVerifyFromSlip = async (paymentId: string, bookingId: string) => {
@@ -175,6 +217,103 @@ export function TodayRides({ slots }: TodayRidesProps) {
           </div>
         )}
       </div>
+
+      {/* Weather Check Button */}
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={handleCheckWeather}
+          disabled={checkingWeather}
+          className="text-sm"
+        >
+          <CloudRain className={`h-4 w-4 mr-1.5 ${checkingWeather ? "animate-pulse" : ""}`} />
+          {checkingWeather ? "Checking..." : "Check Weather"}
+        </Button>
+        {weatherAlerts.length > 0 && (
+          <span className="text-xs text-ink-muted">
+            {weatherAlerts.length} alert{weatherAlerts.length !== 1 ? "s" : ""}
+          </span>
+        )}
+      </div>
+
+      {/* Weather Alerts Panel */}
+      {weatherAlerts.length > 0 && (
+        <div className="space-y-2">
+          {weatherAlerts.map((alert) => {
+            const Icon = weatherIcons[alert.severity] || AlertTriangle;
+            const color = weatherColors[alert.severity] || "text-warning";
+            const isSent = alertsSent.has(alert.sessionId);
+            const isSending = sendingAlert === alert.sessionId;
+            const isSevere = alert.severity === "severe";
+
+            return (
+              <div
+                key={alert.sessionId}
+                className={`p-3 rounded-xl border ${
+                  isSevere
+                    ? "bg-error/5 border-error/20"
+                    : alert.severity === "warning"
+                      ? "bg-warning/5 border-warning/20"
+                      : "bg-sky/5 border-sky/20"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
+                    <Icon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${color}`} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-ink">
+                        {alert.date} — {alert.slotLabel}
+                      </p>
+                      <p className="text-xs text-ink-muted mt-0.5">{alert.message}</p>
+                      <p className="text-xs text-ink-muted mt-1">
+                        {alert.bookingCount} booking{alert.bookingCount !== 1 ? "s" : ""} affected
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 flex gap-2">
+                    {isSevere ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="text-xs text-error border-error/30"
+                        onClick={() =>
+                          setCancelModal({
+                            type: "weather",
+                            slotId: alert.timeSlotId,
+                          })
+                        }
+                      >
+                        Cancel Rides
+                      </Button>
+                    ) : isSent ? (
+                      <span className="text-xs text-success flex items-center gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Sent
+                      </span>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="text-xs"
+                        disabled={isSending || alert.bookingCount === 0}
+                        onClick={() =>
+                          handleSendAlert(
+                            alert.sessionId,
+                            alert.severity,
+                            alert.message
+                          )
+                        }
+                      >
+                        {isSending ? "Sending..." : "Notify Riders"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Bike Prep Summary */}
       {totalRiders > 0 && (

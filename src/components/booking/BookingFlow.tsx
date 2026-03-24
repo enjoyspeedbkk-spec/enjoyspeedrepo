@@ -380,8 +380,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
         bookingId={completedBooking.bookingId}
         amount={completedBooking.paymentAmount}
         rentalAmount={rentalSubtotal}
-        promptPayTarget={process.env.NEXT_PUBLIC_PROMPTPAY_ACCOUNT || "228-1-15365-2"}
-        promptPayBankCode={process.env.NEXT_PUBLIC_PROMPTPAY_BANK_CODE || "004"}
+        promptPayTarget={process.env.NEXT_PUBLIC_PROMPTPAY_ACCOUNT || "0000000000"}
         contactName={contactName || userName}
       />
     );
@@ -1280,7 +1279,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-ink mb-1.5">
-                          Phone <span className="text-ink-muted text-xs font-normal">(optional)</span>
+                          Phone <span className="text-ink-muted text-xs font-normal">(optional — for ride-day contact)</span>
                         </label>
                         <input
                           type="tel"

@@ -18,7 +18,7 @@ const packages = [
     total: "5,000 THB total",
     support: "1 Athlete Leader",
     description:
-      "An intimate ride for two. Perfect for couples, friends, or anyone who wants a more personal guided experience.",
+      "Perfect for couples or friends who want a personal guided experience.",
     color: "sky",
     popular: false,
   },
@@ -33,7 +33,7 @@ const packages = [
     total: "6,300–10,500 THB",
     support: "1 Leader + 1 Hero",
     description:
-      "Bring your friends for the perfect group ride. Our most popular format, with a Leader up front and a Hero rider keeping everyone safe.",
+      "Our most popular format. Leader up front, Hero rider keeping everyone safe.",
     color: "accent",
     popular: true,
   },
@@ -48,7 +48,7 @@ const packages = [
     total: "12,000–16,000 THB",
     support: "2 Leaders + 2 Heroes",
     description:
-      "The full experience. A larger group ride with maximum support, energy, and an unforgettable atmosphere.",
+      "Maximum support, maximum energy. The full experience.",
     color: "leaf",
     popular: false,
   },
@@ -179,17 +179,6 @@ export function RidePackages() {
           })}
         </div>
 
-        {/* Bike Rental Note */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="mt-8 text-center"
-        >
-          <p className="text-sm text-ink-muted">
-            Bike rental available separately — Hybrid 420 THB / Road 700 THB. Bring your own bike at no extra cost.
-          </p>
-        </motion.div>
       </div>
     </section>
   );

@@ -84,6 +84,33 @@ export async function sendPreRideReminder(
 }
 
 /**
+ * Send a weather alert (heads-up — ride still on, but rain possible/likely)
+ */
+export async function sendWeatherAlert(
+  lineUserId: string,
+  booking: {
+    contactName: string;
+    date: string;
+    timeSlot: string;
+    severity: "watch" | "warning";
+    weatherMessage: string;
+  }
+) {
+  const isWarning = booking.severity === "warning";
+  const emoji = isWarning ? "⚠️" : "🌤️";
+  const status = isWarning
+    ? "We're monitoring closely. If it worsens, we'll reach out about rescheduling."
+    : "Your ride is still on! We'll update you if conditions change.";
+
+  await linePush(lineUserId, [
+    {
+      type: "text",
+      text: `${emoji} Weather Update\n\nHi ${booking.contactName},\n\nHeads-up about your ride on ${booking.date} (${booking.timeSlot}):\n\n${booking.weatherMessage}\n\n${status}\n\n📋 View booking: https://enjoyspeedbkk.com/bookings`,
+    },
+  ]);
+}
+
+/**
  * Send a weather cancellation notice
  */
 export async function sendWeatherCancellation(

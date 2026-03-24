@@ -425,10 +425,10 @@ export function AdminSlots({
                         >
                           <div className="flex items-center justify-between mb-1.5">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-[11px]">
+                              <span className="font-bold text-xs">
                                 {slot.id}
                               </span>
-                              <span className="text-ink-muted text-[10px]">
+                              <span className="text-ink-muted text-xs">
                                 {slot.startTime}–{slot.endTime}
                               </span>
                             </div>
@@ -437,7 +437,7 @@ export function AdminSlots({
                                 onClick={() =>
                                   handleWeatherUpdate(
                                     session.id,
-                                    session.weather_status === "clear"
+                                    (!session.weather_status || session.weather_status === "clear")
                                       ? "warning"
                                       : session.weather_status === "warning"
                                       ? "cancelled"

@@ -88,7 +88,7 @@ export function BookingDetailSheet({
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed bottom-0 left-0 right-0 z-50 bg-cream rounded-t-3xl max-h-[90vh] overflow-y-auto shadow-2xl"
+        className="fixed bottom-0 left-0 right-0 z-50 bg-cream rounded-t-3xl min-h-[60vh] max-h-[90vh] overflow-y-auto shadow-2xl"
       >
         {/* Handle + Close */}
         <div className="sticky top-0 bg-cream rounded-t-3xl z-10 pt-3 pb-2 px-6">

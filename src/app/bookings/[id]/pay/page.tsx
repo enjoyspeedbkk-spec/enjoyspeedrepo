@@ -58,8 +58,7 @@ export default async function PayPage({
       bookingId={booking.id}
       amount={booking.ride_total}
       rentalAmount={booking.rental_total}
-      promptPayTarget={process.env.NEXT_PUBLIC_PROMPTPAY_ACCOUNT || "228-1-15365-2"}
-      promptPayBankCode={process.env.NEXT_PUBLIC_PROMPTPAY_BANK_CODE || "004"}
+      promptPayTarget={process.env.NEXT_PUBLIC_PROMPTPAY_ACCOUNT || "0000000000"}
       contactName={booking.contact_name}
     />
   );

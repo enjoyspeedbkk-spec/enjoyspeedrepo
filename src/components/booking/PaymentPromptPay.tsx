@@ -24,8 +24,7 @@ interface PaymentPromptPayProps {
   bookingId: string;
   amount: number;
   rentalAmount: number;
-  promptPayTarget: string; // Phone, Tax ID, or bank account
-  promptPayBankCode?: string; // Bank code (default "004" for KBank)
+  promptPayTarget: string; // Phone number or national ID registered with PromptPay
   contactName: string;
 }
 
@@ -34,7 +33,6 @@ export function PaymentPromptPay({
   amount,
   rentalAmount,
   promptPayTarget,
-  promptPayBankCode = "004",
   contactName,
 }: PaymentPromptPayProps) {
   const [copied, setCopied] = useState(false);
@@ -71,9 +69,8 @@ export function PaymentPromptPay({
       generatePromptPayPayload({
         target: promptPayTarget,
         amount,
-        bankCode: promptPayBankCode,
       }),
-    [promptPayTarget, amount, promptPayBankCode]
+    [promptPayTarget, amount]
   );
 
   const [qrUrl, setQrUrl] = useState<string>("");
@@ -163,7 +160,7 @@ export function PaymentPromptPay({
             <p>Open your banking app, scan this QR, and the amount will auto-fill.</p>
             <div className="bg-sand/20 rounded-lg p-3 text-left">
               <p className="text-[10px] uppercase text-ink-muted/60 tracking-wide mb-1">Transfer to</p>
-              <p className="text-sm font-semibold text-ink">Pailin — KBank (Kasikorn)</p>
+              <p className="text-sm font-semibold text-ink">En-Joy Speed — PromptPay</p>
               <div className="flex items-center justify-between mt-1">
                 <p className="font-mono text-sm text-ink-light">{promptPayTarget}</p>
                 <button
