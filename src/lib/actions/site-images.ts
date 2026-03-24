@@ -31,13 +31,21 @@ async function requireAdmin() {
 }
 
 export async function getSiteImageSettings(): Promise<SiteImageSetting[]> {
-  const admin = createAdminClient();
-  const { data } = await admin
-    .from("site_image_settings")
-    .select("*")
-    .order("category")
-    .order("label");
-  return (data || []) as SiteImageSetting[];
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("site_image_settings")
+      .select("*")
+      .order("category")
+      .order("label");
+    if (error) {
+      console.warn("site_image_settings fetch failed (table may not exist yet):", error.message);
+      return [];
+    }
+    return (data || []) as SiteImageSetting[];
+  } catch {
+    return [];
+  }
 }
 
 export async function getSiteImageSetting(imageKey: string): Promise<SiteImageSetting | null> {
@@ -52,17 +60,25 @@ export async function getSiteImageSetting(imageKey: string): Promise<SiteImageSe
 
 // Get multiple settings by keys (for components that need several images)
 export async function getSiteImageSettingsBatch(imageKeys: string[]): Promise<Record<string, SiteImageSetting>> {
-  const admin = createAdminClient();
-  const { data } = await admin
-    .from("site_image_settings")
-    .select("*")
-    .in("image_key", imageKeys);
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("site_image_settings")
+      .select("*")
+      .in("image_key", imageKeys);
 
-  const result: Record<string, SiteImageSetting> = {};
-  (data || []).forEach((item: SiteImageSetting) => {
-    result[item.image_key] = item;
-  });
-  return result;
+    if (error) {
+      console.warn("site_image_settings batch fetch failed:", error.message);
+      return {};
+    }
+    const result: Record<string, SiteImageSetting> = {};
+    (data || []).forEach((item: SiteImageSetting) => {
+      result[item.image_key] = item;
+    });
+    return result;
+  } catch {
+    return {};
+  }
 }
 
 export async function updateImagePosition(

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Play, Pause, Shield, Camera, Users, Volume2, VolumeX, SkipForward } from "lucide-react";
+import { useSiteImage } from "@/lib/site-images-context";
 
 const stats = [
   { icon: Shield, label: "Athlete-Led & Safe" },
@@ -42,6 +43,7 @@ const HERO_VIDEOS = [
 ];
 
 export function Hero() {
+  const heroStill = useSiteImage("hero-still", "/images/hero-golden-hour-still.jpg");
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -343,7 +345,7 @@ export function Hero() {
               {/* Fallback poster image — shown until first video frame loads */}
               {!posterReady && !videoPlaying && (
                 <Image
-                  src="/images/hero-golden-hour-still.jpg"
+                  src={heroStill}
                   alt="Cyclists riding at golden hour on Bangkok Skylane"
                   fill
                   className="object-cover z-[1]"

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { Camera, Package } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { useSiteImage } from "@/lib/site-images-context";
 
 const highlights = [
   {
@@ -19,6 +20,29 @@ const highlights = [
       "We capture action shots and group moments during your ride — delivered digitally after the session. Candid, fun memories of your experience.",
   },
 ];
+
+const EQUIPMENT_IMAGES = [
+  { key: "equipment-uniform", fallback: "/images/team-uniform.jpg", alt: "LKB team uniform" },
+  { key: "equipment-bag", fallback: "/images/branded-bag.jpg", alt: "En-Joy Speed branded bag" },
+  { key: "equipment-gel", fallback: "/images/energy-gel.jpg", alt: "Energy gel starter kit" },
+  { key: "equipment-gloves", fallback: "/images/cycling-gloves.jpg", alt: "Cycling gear" },
+];
+
+function EquipmentImage({ imageKey, fallback, alt, index }: { imageKey: string; fallback: string; alt: string; index: number }) {
+  const src = useSiteImage(imageKey, fallback);
+  return (
+    <motion.div
+      key={imageKey}
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.1 }}
+      className="relative aspect-square rounded-2xl overflow-hidden"
+    >
+      <Image src={src} alt={alt} fill className="object-cover" sizes="(max-width: 640px) 50vw, 25vw" />
+    </motion.div>
+  );
+}
 
 export function WhatsIncluded() {
   return (
@@ -63,28 +87,8 @@ export function WhatsIncluded() {
           viewport={{ once: true }}
           className="mb-10 grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4"
         >
-          {[
-            { src: "/images/team-uniform.jpg", alt: "LKB team uniform" },
-            { src: "/images/branded-bag.jpg", alt: "En-Joy Speed branded bag" },
-            { src: "/images/energy-gel.jpg", alt: "Energy gel starter kit" },
-            { src: "/images/cycling-gloves.jpg", alt: "Cycling gear" },
-          ].map((img, i) => (
-            <motion.div
-              key={img.src}
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="relative aspect-square rounded-2xl overflow-hidden"
-            >
-              <Image
-                src={img.src}
-                alt={img.alt}
-                fill
-                className="object-cover"
-                sizes="(max-width: 640px) 50vw, 25vw"
-              />
-            </motion.div>
+          {EQUIPMENT_IMAGES.map((img, i) => (
+            <EquipmentImage key={img.key} imageKey={img.key} fallback={img.fallback} alt={img.alt} index={i} />
           ))}
         </motion.div>
 

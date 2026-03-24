@@ -2,18 +2,21 @@ import { Hero } from "@/components/home/Hero";
 import { RidePackages } from "@/components/home/RidePackages";
 import { TimeSlots } from "@/components/home/TimeSlots";
 import { WhatsIncluded } from "@/components/home/WhatsIncluded";
-import { Testimonials } from "@/components/home/Testimonials";
 import { CTASection } from "@/components/home/CTASection";
+import { SiteImagesProvider } from "@/lib/site-images-context";
+import { getSiteImageSettings } from "@/lib/actions/site-images";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const images = await getSiteImageSettings();
+  const imageMap = Object.fromEntries(images.map((img) => [img.image_key, img.current_url]));
+
   return (
-    <>
+    <SiteImagesProvider images={imageMap}>
       <Hero />
       <RidePackages />
       <TimeSlots />
       <WhatsIncluded />
-      <Testimonials />
       <CTASection />
-    </>
+    </SiteImagesProvider>
   );
 }

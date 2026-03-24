@@ -44,7 +44,8 @@ const credentials = [
   },
 ];
 
-export function TeamSection() {
+export function TeamSection({ imageOverrides }: { imageOverrides?: Record<string, string> } = {}) {
+  const getImage = (key: string, fallback: string) => imageOverrides?.[key] || fallback;
   return (
     <section className="py-20 lg:py-28 bg-cream overflow-hidden">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -82,7 +83,7 @@ export function TeamSection() {
               {/* Photo */}
               <div className="relative aspect-[4/3] overflow-hidden">
                 <Image
-                  src={member.image}
+                  src={getImage(member.name === "Coach Pailin" ? "team-pailin-profile" : "team-udorn-profile", member.image)}
                   alt={`${member.name} — ${member.role}`}
                   fill
                   className="object-cover object-top"
@@ -131,7 +132,7 @@ export function TeamSection() {
         >
           <div className="relative aspect-[3/4] sm:aspect-[4/3] max-w-2xl mx-auto rounded-2xl overflow-hidden">
             <Image
-              src="/images/team/team-dawn.jpg"
+              src={getImage("team-group-photo", "/images/team/team-dawn.jpg")}
               alt="The En-Joy Speed team at dawn, ready to ride"
               fill
               className="object-cover object-center"

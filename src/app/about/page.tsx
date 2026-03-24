@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/Badge";
 import { TeamSection } from "@/components/about/TeamSection";
+import { getSiteImageSettingsBatch } from "@/lib/actions/site-images";
 import { FAQ } from "@/components/home/FAQ";
 import { CTASection } from "@/components/home/CTASection";
 import Image from "next/image";
@@ -102,7 +103,12 @@ const inclusions = [
   },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const imageKeys = ["team-pailin-profile", "team-udorn-profile", "team-group-photo", "venue-meeting-point"];
+  const imageBatch = await getSiteImageSettingsBatch(imageKeys);
+  const imageOverrides = Object.fromEntries(
+    Object.entries(imageBatch).map(([key, img]) => [key, img.current_url])
+  );
   return (
     <>
       {/* Hero */}
@@ -247,7 +253,7 @@ export default function AboutPage() {
       </section>
 
       {/* Meet the Team */}
-      <TeamSection />
+      <TeamSection imageOverrides={imageOverrides} />
 
       {/* Safety */}
       <section id="safety" className="py-20 bg-surface">
@@ -290,7 +296,7 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-2 gap-6 items-center">
             <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-sand/40">
               <Image
-                src="/images/venue/meeting-point.jpg"
+                src={imageOverrides["venue-meeting-point"] || "/images/venue/meeting-point.jpg"}
                 alt="Meeting point — Parking sign K and L at Skylane"
                 fill
                 className="object-cover"
