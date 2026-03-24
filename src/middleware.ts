@@ -85,7 +85,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Only match specific protected routes, not everything
+    // Only match specific protected routes, not everything!
     "/bookings/:path*",
     "/account/:path*",
     "/admin/:path*",
