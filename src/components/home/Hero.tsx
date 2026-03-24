@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, Play, Shield, Camera, Users, Volume2, VolumeX, SkipForward } from "lucide-react";
+import { ChevronRight, Play, Pause, Shield, Camera, Users, Volume2, VolumeX, SkipForward } from "lucide-react";
 
 const stats = [
   { icon: Shield, label: "Athlete-Led & Safe" },
@@ -43,23 +43,31 @@ const HERO_VIDEOS = [
 
 export function Hero() {
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [prevIndex, setPrevIndex] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(true);
+  const [posterReady, setPosterReady] = useState(false);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
   const wasPlayingBeforeHide = useRef(false);
 
-  // Preload all videos once component mounts
+  // Load first video to show its first frame as poster
   useEffect(() => {
-    videoRefs.current.forEach((video) => {
-      if (video) {
-        video.load();
-      }
-    });
+    const firstVideo = videoRefs.current[0];
+    if (firstVideo) {
+      firstVideo.preload = "auto";
+      firstVideo.currentTime = 0.001; // Seek to first frame so it renders
+      const onSeeked = () => {
+        setPosterReady(true);
+        firstVideo.removeEventListener("seeked", onSeeked);
+      };
+      firstVideo.addEventListener("seeked", onSeeked);
+      firstVideo.load();
+    }
   }, []);
 
   // Preload a video by index (triggers full download)
@@ -110,6 +118,22 @@ export function Hero() {
     };
   }, [activeIndex, videoPlaying, scheduleNext]);
 
+  const handleTogglePause = useCallback(() => {
+    if (!videoPlaying) return;
+    const activeVideo = videoRefs.current[activeIndex];
+    if (paused) {
+      // Resume
+      if (activeVideo) activeVideo.play().catch(() => {});
+      setPaused(false);
+      scheduleNext();
+    } else {
+      // Pause
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (activeVideo) activeVideo.pause();
+      setPaused(true);
+    }
+  }, [videoPlaying, activeIndex, paused, scheduleNext]);
+
   const handlePlayVideo = () => {
     // Start from clip 0
     setActiveIndex(0);
@@ -123,6 +147,7 @@ export function Hero() {
           v.play()
             .then(() => {
               setVideoPlaying(true);
+              setPaused(false);
               setMuted(true);
             })
             .catch(() => {
@@ -181,12 +206,13 @@ export function Hero() {
     if (!videoPlaying) return;
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") { handleCloseVideo(); }
+      else if (e.key === " ") { e.preventDefault(); handleTogglePause(); }
       else if (e.key === "m" || e.key === "M") { toggleMute(); }
       else if (e.key === "ArrowRight" || e.key === "n" || e.key === "N") { handleSkipVideo(); }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [videoPlaying, handleCloseVideo, handleSkipVideo, toggleMute]);
+  }, [videoPlaying, handleCloseVideo, handleSkipVideo, handleTogglePause, toggleMute]);
 
   // Pause video when hero scrolls out of viewport — saves bandwidth
   useEffect(() => {
@@ -314,10 +340,8 @@ export function Hero() {
             className="relative"
           >
             <div className="relative aspect-[4/5] lg:aspect-[3/4] rounded-3xl overflow-hidden shadow-xl">
-              {/* All video elements — first video is always visible as the "poster" (paused at frame 0) */}
-              {/* When play is pressed, it simply starts playing — seamless transition */}
-              {/* Static poster image — shown when video is NOT playing */}
-              {!videoPlaying && (
+              {/* Fallback poster image — shown until first video frame loads */}
+              {!posterReady && !videoPlaying && (
                 <Image
                   src="/images/hero-golden-hour-still.jpg"
                   alt="Cyclists riding at golden hour on Bangkok Skylane"
@@ -328,32 +352,52 @@ export function Hero() {
                 />
               )}
 
-              {/* Video elements — only visible during playback */}
+              {/* Video elements — first video's frame 0 serves as the poster */}
               {HERO_VIDEOS.map((clip, i) => {
                 const isActive = videoPlaying && i === activeIndex;
                 const isPrev = videoPlaying && i === prevIndex;
+                // First video is always visible (as poster when not playing, as active when playing)
+                const isPoster = !videoPlaying && i === 0 && posterReady;
                 return (
                   <video
                     key={clip.src}
                     ref={(el) => { videoRefs.current[i] = el; }}
                     src={clip.src}
                     className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-                      isActive
-                        ? "opacity-100 z-20"
+                      isActive || isPoster
+                        ? "opacity-100 z-[2]"
                         : isPrev
                         ? "opacity-100 z-10"
                         : "opacity-0 z-0"
-                    }`}
+                    }${isActive ? " z-20" : ""}`}
                     playsInline
                     controls={false}
                     muted={muted}
-                    preload="metadata"
+                    preload={i === 0 ? "auto" : "metadata"}
+                    onClick={videoPlaying ? handleTogglePause : undefined}
                   />
                 );
               })}
 
+              {/* Pause indicator — shown when user taps to pause */}
+              <AnimatePresence>
+                {videoPlaying && paused && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    className="absolute inset-0 z-[21] flex items-center justify-center cursor-pointer"
+                    onClick={handleTogglePause}
+                  >
+                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm">
+                      <Play className="h-7 w-7 text-white ml-0.5" />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               {/* Gradient overlay — must be below play button (z-15) and floating card (z-25) */}
-              <div className="absolute inset-0 bg-gradient-to-t from-navy/60 via-navy/10 to-transparent z-[3]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-navy/60 via-navy/10 to-transparent z-[3] pointer-events-none" />
 
               {/* Play button */}
               <AnimatePresence>
