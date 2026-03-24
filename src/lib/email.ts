@@ -97,7 +97,7 @@ const emailWrapper = (content: string) => `
     </div>
     <div class="footer">
       <p>En-Joy Speed · Skylane (Happy and Healthy Bike Lane), Suvarnabhumi</p>
-      <p>LINE: @EnjoySpeed · enjoyspeed.bkk@gmail.com</p>
+      <p>LINE: @691gsvky · enjoyspeed.bkk@gmail.com</p>
     </div>
   </div>
 </body>
@@ -156,7 +156,7 @@ export function bookingConfirmationEmail(booking: {
     </div>
 
     <div class="divider"></div>
-    <p class="muted">Questions? Reply to this email or message us on LINE (@EnjoySpeed).</p>
+    <p class="muted">Questions? Reply to this email or message us on LINE (@691gsvky).</p>
   `;
 
   return {
@@ -187,7 +187,7 @@ export function paymentPendingEmail(booking: {
     </div>
 
     <div class="divider"></div>
-    <p class="muted">Having trouble? Message us on LINE (@EnjoySpeed) or reply to this email.</p>
+    <p class="muted">Having trouble? Message us on LINE (@691gsvky) or reply to this email.</p>
   `;
 
   return {
@@ -234,7 +234,7 @@ export function preRideReminderEmail(booking: {
     </div>
 
     <div class="divider"></div>
-    <p class="muted">Weather looking uncertain? We'll notify you if there are any changes. Check LINE (@EnjoySpeed) for real-time updates.</p>
+    <p class="muted">Weather looking uncertain? We'll notify you if there are any changes. Check LINE (@691gsvky) for real-time updates.</p>
   `;
 
   return {

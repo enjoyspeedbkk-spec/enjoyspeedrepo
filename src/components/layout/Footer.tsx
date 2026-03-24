@@ -18,7 +18,7 @@ const footerLinks: Record<string, FooterLink[]> = {
   ],
   support: [
     { label: "Contact", href: "/contact" },
-    { label: "LINE @EnjoySpeed", href: "https://line.me/ti/p/@EnjoySpeed", external: true },
+    { label: "LINE @691gsvky", href: "https://line.me/ti/p/@691gsvky", external: true },
     { label: "Cancellation Policy", href: "/about#cancellation" },
     { label: "Weather Policy", href: "/about#weather" },
   ],

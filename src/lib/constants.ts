@@ -121,7 +121,7 @@ export const RAIN_SEASON = {
   endMonth: 10,
 } as const;
 
-export const LINE_OA = "@EnjoySpeed";
+export const LINE_OA = "@691gsvky";
 
 export function calculateTotal(
   pricePerPerson: number,

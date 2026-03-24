@@ -14,8 +14,8 @@ const contactMethods = [
   {
     icon: MessageCircle,
     title: "LINE Official",
-    value: "@EnjoySpeed",
-    href: "https://line.me/ti/p/@EnjoySpeed",
+    value: "@691gsvky",
+    href: "https://line.me/ti/p/@691gsvky",
     desc: "Fastest way to reach us. Typically replies within 30 minutes during business hours.",
     external: true,
   },
