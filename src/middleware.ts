@@ -86,7 +86,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Only match specific protected routes, not everything
-    // /booking is NOT matched — it uses book-first flow with email verification
     "/bookings/:path*",
     "/account/:path*",
     "/admin/:path*",
