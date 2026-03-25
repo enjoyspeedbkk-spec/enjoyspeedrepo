@@ -129,6 +129,9 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
 
+  // Test mode state — set when admin email is verified
+  const [isTestMode, setIsTestMode] = useState(false);
+
   // LINE LIFF integration — auto-populate if opened from LINE
   const liff = useLiff();
   const [liffLineId, setLiffLineId] = useState<string | null>(null);
@@ -314,6 +317,13 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
     setVerifiedUserId(newUserId);
     setEmailVerified(true);
     setShowEmailVerification(false);
+
+    // Check if this is the admin email (test mode)
+    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+    if (adminEmail && email.toLowerCase() === adminEmail.toLowerCase()) {
+      setIsTestMode(true);
+    }
+
     // Now proceed to create the booking — LINE linking happens in submitBookingWithUser
     submitBookingWithUser(newUserId);
   };
@@ -390,6 +400,22 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
   return (
     <section className="min-h-screen pt-24 pb-16 bg-cream">
       <div className="mx-auto max-w-4xl px-6 lg:px-8">
+        {/* Test Mode Banner */}
+        {isTestMode && emailVerified && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-xl bg-warning/10 border-2 border-warning/30 flex items-center gap-3"
+          >
+            <Zap className="h-5 w-5 text-warning flex-shrink-0" />
+            <div className="flex-1">
+              <p className="font-semibold text-warning text-sm">TEST MODE ACTIVE</p>
+              <p className="text-xs text-warning/80 mt-0.5">This booking will expire in 10 minutes</p>
+            </div>
+            <Badge variant="warning">TEST</Badge>
+          </motion.div>
+        )}
+
         {/* Header */}
         <div className="text-center mb-10">
           <Badge variant="accent">Book Your Ride</Badge>
@@ -1183,11 +1209,11 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                       <p className="text-xs font-medium text-ink-muted mb-2">
                         Bike breakdown:
                       </p>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2 overflow-x-auto pb-2 -mb-2">
                         {riders.slice(0, riderCount).map((r, i) => (
                           <span
                             key={i}
-                            className="inline-flex items-center gap-1 text-xs bg-surface px-2.5 py-1 rounded-full border border-sand/60"
+                            className="inline-flex items-center gap-1 text-xs bg-surface px-2.5 py-1 rounded-full border border-sand/60 flex-shrink-0"
                           >
                             <span className="font-medium">
                               {r.nickname || r.name.split(" ")[0] || `Rider ${i + 1}`}
@@ -1629,19 +1655,10 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
         </div>
 
         {/* Navigation + Summary */}
-        <div className="mt-8 flex items-center justify-between">
-          <button
-            onClick={prev}
-            disabled={currentStep === 0}
-            className="flex items-center gap-1 text-sm font-medium text-ink-muted hover:text-ink disabled:opacity-0 transition-all"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back
-          </button>
-
-          {/* Live price summary */}
+        <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-2">
+          {/* Row 1 on mobile: Price info */}
           {activePackage && STEPS[currentStep].id !== "review" && (
-            <div className="text-right">
+            <div className="sm:order-2 text-left sm:text-right">
               {rentalSubtotal > 0 ? (
                 <>
                   <p className="text-xs text-ink-muted">Pay now (PromptPay)</p>
@@ -1649,8 +1666,8 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     <AnimatedNumber value={rideSubtotal} format="currency" />{" "}
                     <span className="text-sm font-normal text-ink-muted">THB</span>
                   </p>
-                  <p className="text-xs text-ink-muted">
-                    +{rentalSubtotal.toLocaleString()} THB bike rental at track
+                  <p className="text-xs text-ink-muted line-clamp-1 sm:line-clamp-none">
+                    +{rentalSubtotal.toLocaleString()} THB bike rental
                   </p>
                 </>
               ) : (
@@ -1665,11 +1682,23 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
             </div>
           )}
 
-          {STEPS[currentStep].id !== "review" && (
-            <Button onClick={next} disabled={!canProceed()} arrow>
-              Continue
-            </Button>
-          )}
+          {/* Row 2 on mobile: Back + Continue buttons */}
+          <div className="flex items-center justify-between sm:order-3 gap-2 w-full sm:w-auto">
+            <button
+              onClick={prev}
+              disabled={currentStep === 0}
+              className="flex items-center gap-1 text-sm font-medium text-ink-muted hover:text-ink disabled:opacity-0 transition-all"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back
+            </button>
+
+            {STEPS[currentStep].id !== "review" && (
+              <Button onClick={next} disabled={!canProceed()} arrow>
+                Continue
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 

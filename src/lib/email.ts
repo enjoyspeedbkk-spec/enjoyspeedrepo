@@ -361,3 +361,53 @@ export function weatherCancellationEmail(booking: {
     html: emailWrapper(content),
   };
 }
+
+// ========================================
+// Payment Rejection Notice
+// ========================================
+export function paymentRejectionEmail(booking: {
+  contactName: string;
+  bookingId: string;
+  date: string;
+  timeSlot: string;
+  amount: number;
+}) {
+  const content = `
+    <h1>Payment Issue — Action Needed</h1>
+    <p>Hi ${booking.contactName},</p>
+    <p>We encountered an issue verifying your payment for your En-Joy Speed booking. Don't worry — your booking is still reserved, and we'd love to help you get back on track.</p>
+
+    <div class="highlight">
+      <p style="margin-bottom: 0;"><strong>Booking #${booking.bookingId.slice(0, 8).toUpperCase()}</strong><br>
+      ${booking.date} • ${booking.timeSlot}<br>
+      Amount: <strong>฿${booking.amount.toLocaleString()}</strong></p>
+    </div>
+
+    <div class="divider"></div>
+
+    <h2>What Happened?</h2>
+    <p>We couldn't verify your payment, which could happen for several reasons:</p>
+    <p>
+      • Bank transfer details didn't match our records<br>
+      • Payment reference was incomplete<br>
+      • An issue with your payment slip image
+    </p>
+
+    <div style="text-align: center; margin-top: 24px;">
+      <a href="https://www.enjoyspeedbkk.com/bookings/${booking.bookingId}/pay" class="btn">Re-Submit Payment</a>
+    </div>
+
+    <div class="divider"></div>
+
+    <h2>Need Help?</h2>
+    <p>Reply to this email or message us on LINE (@691gsvky). We're here to help!</p>
+
+    <div class="divider"></div>
+    <p class="muted">Your booking expires if payment isn't verified within 30 minutes. Please re-submit as soon as possible.</p>
+  `;
+
+  return {
+    subject: `Payment Issue — Action Needed for Your En-Joy Speed Ride`,
+    html: emailWrapper(content),
+  };
+}

@@ -146,3 +146,24 @@ export async function sendPostRideThankYou(
     },
   ]);
 }
+
+/**
+ * Send a payment issue notice with re-payment link
+ */
+export async function sendPaymentIssueNotice(
+  lineUserId: string,
+  booking: {
+    contactName: string;
+    bookingId: string;
+    date: string;
+    timeSlot: string;
+    amount: number;
+  }
+) {
+  await linePush(lineUserId, [
+    {
+      type: "text",
+      text: `⚠️ Payment Issue\n\nHi ${booking.contactName},\n\nWe couldn't verify your payment for your En-Joy Speed booking.\n\n📅 ${booking.date} • ${booking.timeSlot}\nBooking #${booking.bookingId.slice(0, 8).toUpperCase()}\n💰 ฿${booking.amount.toLocaleString()}\n\nYour booking is still reserved! Please re-submit your payment:\n👉 https://www.enjoyspeedbkk.com/bookings/${booking.bookingId}/pay\n\nNeed help? Reply here or message us on LINE. We're here to assist! 🙏`,
+    },
+  ]);
+}

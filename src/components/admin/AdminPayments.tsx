@@ -230,6 +230,9 @@ export function AdminPayments({
                       <span className="font-semibold text-sm truncate">
                         {booking?.contact_name || "Unknown"}
                       </span>
+                      {booking?.is_test && (
+                        <Badge variant="warning">TEST</Badge>
+                      )}
                       <Badge variant={badge.variant}>{badge.label}</Badge>
                     </div>
                     <p className="text-xs text-ink-muted mt-0.5">

@@ -196,7 +196,13 @@ export async function createBooking(
       }
     }
 
-    // 7. Create the booking
+    // 7. Check if this is a test booking (admin email)
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const isTestBooking = adminEmail && input.contactEmail?.toLowerCase() === adminEmail.toLowerCase();
+
+    // 8. Create the booking
+    // NOTE: The 'is_test' column must be added to the bookings table for this to persist:
+    // ALTER TABLE bookings ADD COLUMN is_test BOOLEAN DEFAULT false;
     const { data: booking, error: bookingError } = await admin
       .from("bookings")
       .insert({
@@ -214,6 +220,7 @@ export async function createBooking(
         contact_email: input.contactEmail || null,
         contact_line_id: input.contactLineId || null,
         special_requests: input.specialRequests || null,
+        is_test: isTestBooking ? true : false,
       })
       .select("id")
       .single();
@@ -226,7 +233,7 @@ export async function createBooking(
       };
     }
 
-    // 8. Create rider records
+    // 9. Create rider records
     const riderInserts = input.riders.slice(0, input.riderCount).map((r) => ({
       booking_id: booking.id,
       name: r.name,
@@ -251,7 +258,7 @@ export async function createBooking(
       // Booking exists but riders failed — mark for admin review
     }
 
-    // 9. Create pending payment record
+    // 10. Create pending payment record
     const { error: paymentError } = await admin.from("payments").insert({
       booking_id: booking.id,
       amount: paymentAmount,
@@ -264,7 +271,7 @@ export async function createBooking(
       console.error("Payment creation error:", paymentError);
     }
 
-    // 10. Send booking confirmation notification (LINE → Email cascade)
+    // 11. Send booking confirmation notification (LINE → Email cascade)
     const slot = TIME_SLOTS.find((s) => s.id === input.timeSlotId);
     try {
       await notifyBookingConfirmation(resolvedUserId, {

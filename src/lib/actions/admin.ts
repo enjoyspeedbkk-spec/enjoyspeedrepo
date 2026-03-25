@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendEmail, bookingConfirmationEmail } from "@/lib/email";
-import { sendBookingConfirmation } from "@/lib/line";
+import { sendEmail, bookingConfirmationEmail, paymentRejectionEmail } from "@/lib/email";
+import { sendBookingConfirmation, sendPaymentIssueNotice } from "@/lib/line";
 import { TIME_SLOTS } from "@/lib/constants";
 
 // ========================================
@@ -267,6 +267,65 @@ export async function rejectPayment(
     .from("bookings")
     .update({ status: "pending" })
     .eq("id", bookingId);
+
+  // Send payment issue notification email + LINE message (fire-and-forget, don't block)
+  try {
+    const { data: booking } = await admin
+      .from("bookings")
+      .select(`
+        id, contact_name, contact_email, contact_line_id,
+        total_price,
+        ride_sessions!inner(date, time_slot_id)
+      `)
+      .eq("id", bookingId)
+      .single();
+
+    if (booking) {
+      const session = (booking as any).ride_sessions;
+      const slot = TIME_SLOTS.find((s) => s.id === session?.time_slot_id);
+      const dateStr = new Date(session.date + "T12:00").toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+
+      // Send payment rejection email
+      if (booking.contact_email) {
+        const email = paymentRejectionEmail({
+          contactName: booking.contact_name,
+          bookingId: booking.id,
+          date: dateStr,
+          timeSlot: slot?.label || session.time_slot_id,
+          amount: booking.total_price,
+        });
+        sendEmail({ to: booking.contact_email, ...email }).catch(console.error);
+      }
+
+      // Send LINE payment issue notice if user has LINE linked
+      if (booking.contact_line_id) {
+        // Look up LINE user ID from line_users table
+        const { data: lineUser } = await admin
+          .from("line_users")
+          .select("line_user_id")
+          .eq("user_id", booking.contact_line_id)
+          .single();
+
+        if (lineUser) {
+          sendPaymentIssueNotice(lineUser.line_user_id, {
+            contactName: booking.contact_name,
+            bookingId: booking.id,
+            date: dateStr,
+            timeSlot: slot?.label || session.time_slot_id,
+            amount: booking.total_price,
+          }).catch(console.error);
+        }
+      }
+    }
+  } catch (notifError) {
+    // Don't fail the payment rejection if notifications fail
+    console.error("Notification error (non-blocking):", notifError);
+  }
 
   revalidatePath("/admin/payments");
   return { success: true };

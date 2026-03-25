@@ -48,6 +48,7 @@ interface PendingPayment {
     group_type: string;
     ride_total: number;
     total_price: number;
+    is_test?: boolean;
     ride_sessions: {
       date: string;
       time_slot_id: string;
@@ -215,6 +216,9 @@ export function AdminOverview({
                         <p className="font-semibold text-sm">
                           {booking.contact_name}
                         </p>
+                        {booking?.is_test && (
+                          <Badge variant="warning">TEST</Badge>
+                        )}
                         {isVerified ? (
                           <Badge variant="success">✓ Verified</Badge>
                         ) : (

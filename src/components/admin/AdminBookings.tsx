@@ -173,6 +173,9 @@ export function AdminBookings({ initialBookings }: { initialBookings: any[] }) {
                       <span className="font-semibold text-sm truncate">
                         {booking.contact_name}
                       </span>
+                      {booking.is_test && (
+                        <Badge variant="warning">TEST</Badge>
+                      )}
                       <Badge variant={statusBadge.variant}>
                         {statusBadge.label}
                       </Badge>
