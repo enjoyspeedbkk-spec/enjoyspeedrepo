@@ -167,8 +167,8 @@ function getAutoReply(text: string): string | null {
   }
 
   // Pricing
-  if (text.includes("price") || text.includes("cost") || text.includes("how much") || text.includes("ราคา")) {
-    return `Our rides start at 1,490 THB/person (Duo) 🚴\n\n• Duo (2 riders): 1,490 THB/person\n• Squad (3-5): 1,290 THB/person\n• Peloton (6-10): 1,090 THB/person\n\nEach rider gets a free Starter Kit (padded shorts, energy gel, eco bag)!\n\nBike rental: Hybrid 580 THB, Road 720 THB — or bring your own.\n\nBook: https://enjoyspeedbkk.com/booking`;
+  if (text.includes("price") || text.includes("pricing") || text.includes("package") || text.includes("cost") || text.includes("how much") || text.includes("ราคา") || text.includes("แพ็ค")) {
+    return `Our rides start at 2,000 THB/person 🚴\n\n• Duo (2 riders): 2,500 THB/person\n• Squad (3-5): 2,100 THB/person\n• Peloton (6-8): 2,000 THB/person\n\nEach rider gets a free Starter Kit (padded shorts, energy gel, eco bag)!\n\nBike rental: Hybrid 420 THB, Road 720 THB — or bring your own.\n\nBook: https://enjoyspeedbkk.com/booking`;
   }
 
   // Location / meeting point
@@ -187,7 +187,7 @@ function getAutoReply(text: string): string | null {
   }
 
   // What to bring
-  if (text.includes("bring") || text.includes("wear") || text.includes("what to") || text.includes("เอาอะไร")) {
+  if (text.includes("bring") || text.includes("wear") || text.includes("what to") || text.includes("prepare") || text.includes("need to") || text.includes("เอาอะไร") || text.includes("เตรียม")) {
     return `📋 What to bring:\n\n✅ Sport shoes (closed-toe, mandatory)\n✅ Athletic socks\n✅ Breathable top\n✅ Sunscreen + sunglasses\n✅ Water bottle\n\n🎁 We provide: helmet, bike (if renting), and your Starter Kit (padded shorts, energy gel, eco bag)!`;
   }
 

@@ -118,19 +118,27 @@ export function AdminSettings({
       price_per_person: 2000,
       leaders_count: 1,
       heroes_count: 0,
+      description: "",
+      icon: "star",
+      sort_order: (localPackages.length + 1) * 10,
       is_popular: false,
+      is_active: true,
     });
 
     const handleSave = async (pkg: any) => {
       setSaving(pkg.id);
       setError(null);
       const result = await updatePackage(pkg.id, {
+        type: pkg.type,
         name: pkg.name,
+        description: pkg.description || null,
         price_per_person: pkg.price_per_person,
         min_riders: pkg.min_riders,
         max_riders: pkg.max_riders,
         leaders_count: pkg.leaders_count,
         heroes_count: pkg.heroes_count,
+        icon: pkg.icon || null,
+        sort_order: pkg.sort_order || 0,
         is_popular: pkg.is_popular,
         is_active: pkg.is_active,
       });
@@ -150,7 +158,7 @@ export function AdminSettings({
       if (result.success) {
         setLocalPackages((prev) => [...prev, { ...newPkg, id: crypto.randomUUID() }]);
         setShowNewForm(false);
-        setNewPkg({ type: "", name: "", min_riders: 2, max_riders: 4, price_per_person: 2000, leaders_count: 1, heroes_count: 0, is_popular: false });
+        setNewPkg({ type: "", name: "", min_riders: 2, max_riders: 4, price_per_person: 2000, leaders_count: 1, heroes_count: 0, description: "", icon: "star", sort_order: (localPackages.length + 2) * 10, is_popular: false, is_active: true });
         showSaved("new");
       }
     };
@@ -166,11 +174,23 @@ export function AdminSettings({
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <Field label="Name" value={pkg.name} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, name: v } : p))} />
+                      <Field label="Type (slug)" value={pkg.type} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, type: v } : p))} />
                       <Field label="Price/Person (THB)" type="number" value={pkg.price_per_person} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, price_per_person: Number(v) } : p))} />
                       <Field label="Min Riders" type="number" value={pkg.min_riders} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, min_riders: Number(v) } : p))} />
                       <Field label="Max Riders" type="number" value={pkg.max_riders} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, max_riders: Number(v) } : p))} />
                       <Field label="Leaders" type="number" value={pkg.leaders_count} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, leaders_count: Number(v) } : p))} />
                       <Field label="Heroes" type="number" value={pkg.heroes_count} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, heroes_count: Number(v) } : p))} />
+                      <Field label="Icon (star/zap/crown)" value={pkg.icon || ""} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, icon: v } : p))} />
+                      <Field label="Sort Order" type="number" value={pkg.sort_order || 0} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, sort_order: Number(v) } : p))} />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-ink-muted mb-1 block">Description</label>
+                      <textarea
+                        value={pkg.description || ""}
+                        onChange={(e) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, description: e.target.value } : p))}
+                        rows={2}
+                        className="w-full px-3 py-2 rounded-lg border-2 border-sand/60 text-sm focus:border-ink focus:outline-none transition-colors bg-surface resize-none"
+                      />
                     </div>
                     <div className="flex items-center gap-3">
                       <label className="flex items-center gap-2 text-xs">
@@ -233,12 +253,31 @@ export function AdminSettings({
           <Card padding="md">
             <p className="font-semibold text-sm mb-3">New Package</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <Field label="Type (slug)" value={newPkg.type} onChange={(v) => setNewPkg((p) => ({ ...p, type: v }))} />
-              <Field label="Name" value={newPkg.name} onChange={(v) => setNewPkg((p) => ({ ...p, name: v }))} />
-              <Field label="Price/Person" type="number" value={newPkg.price_per_person} onChange={(v) => setNewPkg((p) => ({ ...p, price_per_person: Number(v) }))} />
+              <Field label="Type (slug, e.g. trio)" value={newPkg.type} onChange={(v) => setNewPkg((p) => ({ ...p, type: v.toLowerCase().replace(/\s+/g, "_") }))} />
+              <Field label="Display Name" value={newPkg.name} onChange={(v) => setNewPkg((p) => ({ ...p, name: v }))} />
+              <Field label="Price/Person (THB)" type="number" value={newPkg.price_per_person} onChange={(v) => setNewPkg((p) => ({ ...p, price_per_person: Number(v) }))} />
               <Field label="Min Riders" type="number" value={newPkg.min_riders} onChange={(v) => setNewPkg((p) => ({ ...p, min_riders: Number(v) }))} />
               <Field label="Max Riders" type="number" value={newPkg.max_riders} onChange={(v) => setNewPkg((p) => ({ ...p, max_riders: Number(v) }))} />
               <Field label="Leaders" type="number" value={newPkg.leaders_count} onChange={(v) => setNewPkg((p) => ({ ...p, leaders_count: Number(v) }))} />
+              <Field label="Heroes" type="number" value={newPkg.heroes_count} onChange={(v) => setNewPkg((p) => ({ ...p, heroes_count: Number(v) }))} />
+              <Field label="Icon (star/zap/crown)" value={newPkg.icon} onChange={(v) => setNewPkg((p) => ({ ...p, icon: v }))} />
+              <Field label="Sort Order" type="number" value={newPkg.sort_order} onChange={(v) => setNewPkg((p) => ({ ...p, sort_order: Number(v) }))} />
+            </div>
+            <div className="mt-3">
+              <label className="text-[10px] text-ink-muted mb-1 block">Description</label>
+              <textarea
+                value={newPkg.description}
+                onChange={(e) => setNewPkg((p) => ({ ...p, description: e.target.value }))}
+                rows={2}
+                placeholder="Short description for the package card"
+                className="w-full px-3 py-2 rounded-lg border-2 border-sand/60 text-sm focus:border-ink focus:outline-none transition-colors bg-surface resize-none placeholder:text-ink-muted/70"
+              />
+            </div>
+            <div className="flex items-center gap-3 mt-2">
+              <label className="flex items-center gap-2 text-xs">
+                <input type="checkbox" checked={newPkg.is_popular} onChange={(e) => setNewPkg((p) => ({ ...p, is_popular: e.target.checked }))} className="rounded" />
+                Popular badge
+              </label>
             </div>
             <div className="flex gap-2 mt-3">
               <Button size="sm" onClick={handleCreate} disabled={saving === "new" || !newPkg.type || !newPkg.name}>
@@ -833,9 +872,28 @@ export function AdminSettings({
   };
 
   const AdminAccessSection = () => {
-    if (!adminsLoaded) {
-      loadAdmins();
-    }
+    const [accessMessage, setAccessMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+    // Load admins on mount
+    useEffect(() => {
+      if (!adminsLoaded) loadAdmins();
+    }, []);// eslint-disable-line react-hooks/exhaustive-deps
+
+    const onGrant = async () => {
+      setAccessMessage(null);
+      await handleGrantAdmin();
+      if (error) {
+        setAccessMessage({ type: "error", text: error });
+      } else {
+        setAccessMessage({ type: "success", text: `Admin access granted to ${newAdminEmail || "user"}` });
+      }
+    };
+
+    const onRevoke = async (email: string) => {
+      setAccessMessage(null);
+      await handleRevokeAdmin(email);
+      setAccessMessage({ type: "success", text: `Admin access revoked for ${email}` });
+    };
 
     return (
       <div className="space-y-4">
@@ -846,11 +904,23 @@ export function AdminSettings({
           </h2>
         </div>
 
+        {accessMessage && (
+          <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm ${
+            accessMessage.type === "success"
+              ? "bg-success/10 text-success border border-success/20"
+              : "bg-red-50 text-red-700 border border-red-200"
+          }`}>
+            {accessMessage.type === "success" ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+            {accessMessage.text}
+            <button onClick={() => setAccessMessage(null)} className="ml-auto"><X className="h-3 w-3" /></button>
+          </div>
+        )}
+
         {/* Add new admin */}
         <Card padding="md" className="space-y-3">
           <p className="text-sm font-semibold">Grant Admin Access</p>
           <p className="text-xs text-ink-muted">
-            The user must have already signed up. Enter their email to grant admin access.
+            The user must have already signed up with their email. Enter it below to grant admin access.
           </p>
           <div className="flex gap-2">
             <input
@@ -858,24 +928,32 @@ export function AdminSettings({
               value={newAdminEmail}
               onChange={(e) => setNewAdminEmail(e.target.value)}
               placeholder="email@example.com"
-              className="flex-1 px-3 py-2 rounded-lg border-2 border-sand/60 text-sm focus:border-ink focus:outline-none transition-colors bg-surface"
-              onKeyDown={(e) => e.key === "Enter" && handleGrantAdmin()}
+              className="flex-1 px-3 py-2 rounded-lg border-2 border-sand/60 text-sm focus:border-ink focus:outline-none transition-colors bg-surface placeholder:text-ink-muted/70"
+              onKeyDown={(e) => e.key === "Enter" && onGrant()}
             />
             <Button
               size="sm"
-              onClick={handleGrantAdmin}
+              onClick={onGrant}
               disabled={adminActionLoading || !newAdminEmail.trim()}
             >
-              <Plus className="h-4 w-4 mr-1" /> Grant
+              {adminActionLoading ? "..." : <><Plus className="h-4 w-4 mr-1" /> Grant</>}
             </Button>
           </div>
         </Card>
 
         {/* Current admins list */}
         <Card padding="md" className="space-y-3">
-          <p className="text-sm font-semibold">Current Admins</p>
-          {admins.length === 0 ? (
-            <p className="text-xs text-ink-muted">Loading…</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold">Current Admins</p>
+            <span className="text-xs text-ink-muted">{admins.length} admin{admins.length !== 1 ? "s" : ""}</span>
+          </div>
+          {!adminsLoaded ? (
+            <div className="flex items-center gap-2 py-4 justify-center">
+              <div className="h-4 w-4 border-2 border-ink-muted/30 border-t-ink-muted rounded-full animate-spin" />
+              <p className="text-xs text-ink-muted">Loading admins...</p>
+            </div>
+          ) : admins.length === 0 ? (
+            <p className="text-xs text-ink-muted py-4 text-center">No admins found. Grant access above.</p>
           ) : (
             <div className="space-y-2">
               {admins.map((a) => (
@@ -892,9 +970,9 @@ export function AdminSettings({
                       <Badge variant="accent">Owner</Badge>
                     ) : (
                       <button
-                        onClick={() => handleRevokeAdmin(a.email)}
+                        onClick={() => onRevoke(a.email)}
                         disabled={adminActionLoading}
-                        className="text-xs text-warning hover:text-warning/80 font-medium transition-colors"
+                        className="px-3 py-1.5 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
                       >
                         Revoke
                       </button>

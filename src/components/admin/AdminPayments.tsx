@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   CreditCard,
   Search,
@@ -15,7 +16,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { verifyPayment } from "@/lib/actions/admin";
+import { verifyPayment, rejectPayment } from "@/lib/actions/admin";
 import { TIME_SLOTS } from "@/lib/constants";
 
 const STATUS_TABS = [
@@ -45,10 +46,11 @@ export function AdminPayments({
   pendingPayments: any[];
   allPayments: any[];
 }) {
+  const router = useRouter();
   const [tab, setTab] = useState("pending");
   const [searchQuery, setSearchQuery] = useState("");
   const [verifying, setVerifying] = useState<string | null>(null);
-  const [verified, setVerified] = useState<Set<string>>(new Set());
+  const [rejecting, setRejecting] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const displayPayments = tab === "pending" ? pendingPayments : allPayments;
@@ -58,8 +60,6 @@ export function AdminPayments({
     if (tab !== "all" && tab !== "pending") {
       if (p.status !== tab) return false;
     }
-    // Exclude already-client-verified from pending
-    if (tab === "pending" && verified.has(p.id)) return false;
 
     // Search
     if (searchQuery) {
@@ -79,14 +79,22 @@ export function AdminPayments({
     const result = await verifyPayment(paymentId, bookingId);
     setVerifying(null);
     if (result.success) {
-      setVerified((prev) => new Set(prev).add(paymentId));
+      router.refresh();
     }
   };
 
-  const pendingCount = pendingPayments.filter((p) => !verified.has(p.id)).length;
-  const pendingTotal = pendingPayments
-    .filter((p) => !verified.has(p.id))
-    .reduce((sum, p) => sum + p.amount, 0);
+  const handleReject = async (paymentId: string, bookingId: string) => {
+    if (!confirm("Reject this payment? The booking will revert to pending so the customer can re-submit.")) return;
+    setRejecting(paymentId);
+    const result = await rejectPayment(paymentId, bookingId);
+    setRejecting(null);
+    if (result.success) {
+      router.refresh();
+    }
+  };
+
+  const pendingCount = pendingPayments.length;
+  const pendingTotal = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -156,8 +164,7 @@ export function AdminPayments({
           filtered.map((payment) => {
             const booking = payment.bookings;
             const session = booking?.ride_sessions;
-            const isVerifiedClient = verified.has(payment.id);
-            const status = isVerifiedClient ? "verified" : payment.status;
+            const status = payment.status;
             const badge = STATUS_BADGES[status] || STATUS_BADGES.pending;
             const isExpanded = expandedId === payment.id;
             const slot = TIME_SLOTS.find((s) => s.id === session?.time_slot_id);
@@ -199,16 +206,28 @@ export function AdminPayments({
                   {/* Actions */}
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {status === "pending" && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleVerify(payment.id, booking.id);
-                        }}
-                        disabled={verifying === payment.id}
-                        className="px-3 py-1.5 rounded-lg bg-success text-white text-xs font-semibold hover:bg-success/90 transition-colors disabled:opacity-50"
-                      >
-                        {verifying === payment.id ? "..." : "✓ Verify"}
-                      </button>
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReject(payment.id, booking.id);
+                          }}
+                          disabled={rejecting === payment.id}
+                          className="px-3 py-1.5 rounded-lg bg-surface border border-red-300 text-red-600 text-xs font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
+                        >
+                          {rejecting === payment.id ? "..." : "✗ Reject"}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleVerify(payment.id, booking.id);
+                          }}
+                          disabled={verifying === payment.id}
+                          className="px-3 py-1.5 rounded-lg bg-success text-white text-xs font-semibold hover:bg-success/90 transition-colors disabled:opacity-50"
+                        >
+                          {verifying === payment.id ? "..." : "✓ Verify"}
+                        </button>
+                      </>
                     )}
                     <ChevronDown
                       className={`h-4 w-4 text-ink-muted transition-transform ${
@@ -295,19 +314,22 @@ export function AdminPayments({
                       </a>
                     )}
 
-                    {/* Verify button (in expanded view too) */}
+                    {/* Verify/Reject buttons (in expanded view too) */}
                     {status === "pending" && (
                       <div className="flex gap-2">
                         <button
-                          onClick={() =>
-                            handleVerify(payment.id, booking.id)
-                          }
+                          onClick={() => handleReject(payment.id, booking.id)}
+                          disabled={rejecting === payment.id}
+                          className="px-4 py-2 rounded-lg bg-surface border border-red-300 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
+                        >
+                          {rejecting === payment.id ? "Rejecting..." : "✗ Reject Payment"}
+                        </button>
+                        <button
+                          onClick={() => handleVerify(payment.id, booking.id)}
                           disabled={verifying === payment.id}
                           className="px-4 py-2 rounded-lg bg-success text-white text-sm font-semibold hover:bg-success/90 transition-colors disabled:opacity-50"
                         >
-                          {verifying === payment.id
-                            ? "Verifying..."
-                            : "✓ Verify Payment"}
+                          {verifying === payment.id ? "Verifying..." : "✓ Verify Payment"}
                         </button>
                       </div>
                     )}

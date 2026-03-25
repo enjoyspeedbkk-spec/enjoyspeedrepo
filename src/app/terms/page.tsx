@@ -36,7 +36,7 @@ export default function TermsPage() {
             </h2>
             <p>
               En-Joy Speed provides guided group cycling experiences at the
-              Buriram International Circuit. Through our platform, you can book
+              Skylane (Happy and Healthy Bike Lane) near Suvarnabhumi, Bangkok. Through our platform, you can book
               rides, manage rider details, and process payments. All rides are
               supervised by trained Athlete Leaders and Hero Riders.
             </p>
@@ -148,8 +148,8 @@ export default function TermsPage() {
               11. Contact
             </h2>
             <p>
-              For questions about these terms, reach us via LINE (@enjoyspeed)
-              or email at support@enjoyspeed.com.
+              For questions about these terms, reach us via LINE (@691gsvky)
+              or email at enjoyspeed.bkk@gmail.com.
             </p>
           </section>
         </div>

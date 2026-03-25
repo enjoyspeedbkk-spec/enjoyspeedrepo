@@ -239,6 +239,40 @@ export async function verifyPayment(
 }
 
 // ========================================
+// REJECT PAYMENT
+// ========================================
+export async function rejectPayment(
+  paymentId: string,
+  bookingId: string,
+  reason?: string
+): Promise<{ success: boolean; error?: string }> {
+  const { userId, admin } = await requireAdmin();
+
+  const { error: paymentError } = await admin
+    .from("payments")
+    .update({
+      status: "failed",
+      notes: reason || "Rejected by admin",
+      verified_by: userId,
+      verified_at: new Date().toISOString(),
+    })
+    .eq("id", paymentId);
+
+  if (paymentError) {
+    return { success: false, error: "Could not reject payment" };
+  }
+
+  // Revert booking status back to pending so customer can re-submit
+  await admin
+    .from("bookings")
+    .update({ status: "pending" })
+    .eq("id", bookingId);
+
+  revalidatePath("/admin/payments");
+  return { success: true };
+}
+
+// ========================================
 // UPDATE BOOKING STATUS
 // ========================================
 export async function updateBookingStatus(

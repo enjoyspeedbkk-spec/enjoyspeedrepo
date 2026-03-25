@@ -4,9 +4,9 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const rawNext = searchParams.get("next") ?? "/booking";
+  const rawNext = searchParams.get("next") ?? "/account";
   // Don't redirect non-admin users back to admin routes after sign-in
-  const next = rawNext.startsWith("/admin") ? "/booking" : rawNext;
+  const next = rawNext.startsWith("/admin") ? "/account" : rawNext;
 
   if (code) {
     const supabase = await createClient();
