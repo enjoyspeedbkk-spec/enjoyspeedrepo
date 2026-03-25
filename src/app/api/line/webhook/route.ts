@@ -162,13 +162,21 @@ export async function POST(request: NextRequest) {
 // NOTE: Exact button labels are matched first (before keyword matching)
 // so button taps always get the right response regardless of phrasing.
 
-const PRICING_REPLY = `💰 En-Joy Speed Pricing:\n\n🔹 Duo (2 riders): 2,500 THB/person\n🔹 Squad (3–5 riders): 2,100 THB/person\n🔹 Peloton (6–8 riders): 2,000 THB/person\n\n🚲 Bike rental (paid at track):\n• Hybrid: 420 THB\n• Road: 720 THB\n• Own bike: Free\n\n🎁 Every rider gets a free Starter Kit (padded shorts, energy gel, eco bag)!\n\n👉 Book now: https://enjoyspeedbkk.com/booking`;
+// LIFF URL keeps the user inside LINE's browser with full LIFF context,
+// so their LINE account is automatically linked after email verification.
+// Falls back to the regular booking URL if LIFF_ID isn't configured.
+const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID;
+const BOOK_URL = LIFF_ID
+  ? `https://liff.line.me/${LIFF_ID}`
+  : "https://www.enjoyspeedbkk.com/booking";
+
+const PRICING_REPLY = `💰 En-Joy Speed Pricing:\n\n🔹 Duo (2 riders): 2,500 THB/person\n🔹 Squad (3–5 riders): 2,100 THB/person\n🔹 Peloton (6–8 riders): 2,000 THB/person\n\n🚲 Bike rental (paid at track):\n• Hybrid: 420 THB\n• Road: 720 THB\n• Own bike: Free\n\n🎁 Every rider gets a free Starter Kit (padded shorts, energy gel, eco bag)!\n\n👉 Book now: ${BOOK_URL}`;
 
 const LOCATION_REPLY = `📍 Meeting point: Skylane (Happy & Healthy Bike Lane)\nNear Suvarnabhumi Airport, Bangkok.\n\nMap: https://maps.app.goo.gl/ZexMhiLu1BcSdCiJ9\n\nWe'll send you exact directions 24 hours before your ride. Look for our team in orange vests at the Skylane entrance!`;
 
 const WHAT_TO_BRING_REPLY = `📋 What to bring:\n\n✅ Sport shoes — closed-toe (mandatory)\n✅ Athletic socks\n✅ Breathable top\n✅ Sunscreen + sunglasses\n✅ Water bottle\n\n🎁 We provide:\nHelmet, bike (if renting), and your Starter Kit (padded liner shorts, energy gel, eco mesh bag)!\n\nNo cycling experience needed — your Athlete Leader handles everything. 🚴`;
 
-const BOOKING_REPLY = `🚴 Ready to ride?\n\nBook here (takes 2 minutes):\n👉 https://enjoyspeedbkk.com/booking\n\nChoose your date, time slot, and group size. Pay securely via PromptPay — no card needed!`;
+const BOOKING_REPLY = `🚴 Ready to ride?\n\nBook here (takes 2 minutes):\n👉 ${BOOK_URL}\n\nChoose your date, time slot, and group size. Pay securely via PromptPay — no card needed!\n\n📲 Booking through LINE? We'll send ride reminders directly to this chat — no extra setup needed.`;
 
 function getAutoReply(text: string): string | null {
   // ── Exact button label matches (highest priority) ──────────────────

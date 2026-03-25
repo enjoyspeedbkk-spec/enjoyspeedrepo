@@ -1218,6 +1218,26 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     your group.
                   </p>
 
+                  {/* LINE notifications consent — shown only when booking through LINE */}
+                  {liff.isInClient && liff.profile && (
+                    <div className="flex items-start gap-3 p-4 rounded-xl bg-[#06C755]/8 border border-[#06C755]/20 mb-6">
+                      {/* LINE logo mark */}
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#06C755] flex items-center justify-center mt-0.5">
+                        <svg viewBox="0 0 48 48" className="w-5 h-5 fill-white">
+                          <path d="M24 4C12.95 4 4 11.82 4 21.5c0 6.1 3.55 11.47 8.98 14.73-.38 1.4-1.38 5.07-1.58 5.86-.25.97.36 1.96 1.38 1.61.82-.28 9.44-6.23 11.42-7.54.59.07 1.19.1 1.8.1 11.05 0 20-7.82 20-17.5S35.05 4 24 4z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-ink">
+                          LINE notifications connected
+                        </p>
+                        <p className="text-xs text-ink-muted mt-0.5">
+                          Hi {liff.profile.displayName?.split(" ")[0] || "there"}! Since you&apos;re booking through LINE, we&apos;ll send your booking confirmation, ride reminders, and weather updates directly to this chat — no extra steps needed.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Waiver text */}
                   <Card padding="md" className="mb-6 relative">
                     <div className="max-h-48 overflow-y-auto text-xs text-ink-light leading-relaxed space-y-3 pr-2 scroll-smooth" style={{ scrollbarWidth: "thin" }}>
