@@ -526,7 +526,7 @@ export function TodayRides({ slots }: TodayRidesProps) {
                       {booking.riders.some((r) => !r.checked_in && !localUpdates[r.id]) && (
                         <button
                           onClick={() => handleBulkCheckIn(booking.id)}
-                          className="flex items-center gap-1.5 text-xs font-medium text-success hover:text-success/80 transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-success/10 text-xs font-medium text-success hover:bg-success/20 transition-colors"
                         >
                           <UserCheck className="h-3.5 w-3.5" />
                           Check in all {booking.rider_count} riders
@@ -547,7 +547,7 @@ export function TodayRides({ slots }: TodayRidesProps) {
                 {!isCancelled && (
                   <button
                     onClick={() => setCancelModal({ type: "weather", slotId: slot.id })}
-                    className="flex items-center gap-1.5 text-xs text-error/70 hover:text-error transition-colors mt-2"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors mt-2"
                   >
                     <CloudRain className="h-3.5 w-3.5" />
                     Cancel this slot (weather/other)

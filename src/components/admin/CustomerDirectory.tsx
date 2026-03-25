@@ -248,7 +248,7 @@ export function CustomerDirectory({ customers }: CustomerDirectoryProps) {
                     {/* Spent */}
                     <div className="text-center">
                       <p className="font-semibold text-ink text-lg">
-                        ฿{(customer.stats.spent / 100).toFixed(2)}
+                        ฿{(customer.stats.spent / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
                     </div>
 
@@ -312,7 +312,7 @@ export function CustomerDirectory({ customers }: CustomerDirectoryProps) {
                                 Total Spent
                               </p>
                               <p className="font-semibold text-ink text-sm mt-1">
-                                ฿{(customer.stats.spent / 100).toFixed(2)}
+                                ฿{(customer.stats.spent / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </p>
                             </div>
                             <div className="bg-cream rounded-lg p-3 border border-sand/40">

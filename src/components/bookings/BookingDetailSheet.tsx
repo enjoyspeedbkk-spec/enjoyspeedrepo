@@ -242,7 +242,7 @@ export function BookingDetailSheet({
                     </div>
                     {rider.bike_rental_price > 0 && (
                       <p className="text-[10px] text-ink-muted">
-                        {rider.bike_rental_price} THB
+                        {rider.bike_rental_price.toLocaleString()} THB
                       </p>
                     )}
                   </div>

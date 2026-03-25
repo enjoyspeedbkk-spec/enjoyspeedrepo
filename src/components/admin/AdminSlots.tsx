@@ -378,7 +378,7 @@ export function AdminSlots({
                         <button
                           onClick={() => handleRemoveBlackout(b.id)}
                           disabled={updating === b.id}
-                          className="text-ink-muted hover:text-warning transition-colors"
+                          className="text-ink-muted hover:text-warning transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-ink-muted"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -445,7 +445,7 @@ export function AdminSlots({
                                   )
                                 }
                                 disabled={updating === session.id}
-                                className="p-1 rounded hover:bg-sand/30 transition-colors"
+                                className="p-1 rounded hover:bg-sand/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                 title={`Weather: ${
                                   session.weather_status || "clear"
                                 }`}
@@ -558,7 +558,7 @@ export function AdminSlots({
                   <button
                     onClick={() => handleRemoveBlackout(b.id)}
                     disabled={updating === b.id}
-                    className="text-ink-muted hover:text-warning transition-colors"
+                    className="text-ink-muted hover:text-warning transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-ink-muted"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>

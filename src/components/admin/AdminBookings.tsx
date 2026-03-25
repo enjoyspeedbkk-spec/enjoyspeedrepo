@@ -231,7 +231,7 @@ export function AdminBookings({ initialBookings }: { initialBookings: any[] }) {
                                 <Bike className="h-3 w-3" />
                                 {r.bike_preference}
                                 {r.bike_rental_price > 0 &&
-                                  ` (${r.bike_rental_price})`}
+                                  ` (${r.bike_rental_price.toLocaleString()} THB)`}
                               </div>
                             </div>
                           ))}

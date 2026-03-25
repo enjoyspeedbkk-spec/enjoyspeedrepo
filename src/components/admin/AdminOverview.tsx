@@ -114,7 +114,7 @@ export function AdminOverview({
           <StatCard
             icon={DollarSign}
             label="Today's Revenue"
-            value={`${(stats.todayRevenue / 1000).toFixed(1)}k THB`}
+            value={`${stats.todayRevenue.toLocaleString()} THB`}
             sub="Confirmed payments"
             color="text-success bg-success/10"
           />
@@ -139,8 +139,8 @@ export function AdminOverview({
           <StatCard
             icon={TrendingUp}
             label="This Week"
-            value={`${(stats.weekRevenue / 1000).toFixed(1)}k`}
-            sub="THB revenue"
+            value={`${stats.weekRevenue.toLocaleString()}`}
+            sub="THB this week"
             color="text-accent bg-accent/10"
           />
           <StatCard

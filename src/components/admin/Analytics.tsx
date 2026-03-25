@@ -114,7 +114,7 @@ export function Analytics({
               </span>
             </div>
             <p className="text-2xl font-bold text-ink">
-              ฿{revenueData.totalRevenue.toFixed(2)}
+              ฿{revenueData.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             <p className="text-xs text-ink-muted">Last 30 days</p>
           </div>
@@ -199,7 +199,7 @@ export function Analytics({
                         className="flex-shrink-0 flex flex-col items-center gap-1"
                       >
                         <div className="text-xs text-ink-muted font-medium">
-                          ฿{amount > 0 ? (amount / 1000).toFixed(0) : "0"}k
+                          ฿{amount > 0 ? amount.toLocaleString() : "0"}
                         </div>
                         <motion.div
                           whileHover={{ scaleY: 1.05, opacity: 1 }}
@@ -408,7 +408,7 @@ export function Analytics({
                         {methodNames[method] || method}
                       </span>
                       <span className="text-sm font-bold text-accent">
-                        ฿{data.total.toFixed(2)}
+                        ฿{data.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -461,7 +461,7 @@ export function Analytics({
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-accent">
-                        ฿{customer.totalSpent.toFixed(2)}
+                        ฿{customer.totalSpent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
                       <p className="text-xs text-ink-muted">spent</p>
                     </div>
