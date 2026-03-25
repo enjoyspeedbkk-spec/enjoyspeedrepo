@@ -411,7 +411,20 @@
     "skylaneDesc": "Happy and Healthy Bike Lane — 23.5 km elevated cycling track",
     "parkingLocation": "Parking: Signs K & L",
     "parkingDesc": "Free parking available. Arrive 15 minutes early for check-in and safety briefing.",
-    "openInGoogleMaps": "Open in Google Maps"
+    "openInGoogleMaps": "Open in Google Maps",
+    "coachRole": "Athlete Leader & Co-Founder",
+    "pailinBio": "Experienced cycling coach and LKB Cycling Club member. Pailin leads the morning golden hour rides and brings warmth, energy, and precision to every session. Her focus: making every rider feel confident from the first pedal stroke.",
+    "pailinSpecialties": [
+      "Golden Hour Specialist",
+      "First-Timer Friendly",
+      "Safety Lead"
+    ],
+    "udornBio": "Veteran cyclist and ride architect. Udorn designs the route pacing, manages group dynamics, and ensures every ride runs with military precision and genuine heart. He will match your pace, push you just enough, and make sure you finish with a smile.",
+    "udornSpecialties": [
+      "Pace Strategy",
+      "Group Dynamics",
+      "Route Design"
+    ]
   },
   "contact": {
     "getInTouch": "Get in Touch",
