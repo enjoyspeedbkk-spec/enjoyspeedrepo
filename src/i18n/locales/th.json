@@ -398,7 +398,16 @@
     ],
     "readyToRide": "พร้อมที่จะปั่นหรือไม่?",
     "pickADate": "เลือกวันที่ เลือกขนาดกลุ่มของคุณ และเราจัดการส่วนที่เหลือ",
-    "bookARide": "จองเลย"
+    "bookARide": "จองเลย",
+    "rentalNote": "เช่าจักรยานผ่าน HHBL (Happy and Healthy Bike Lane) โดยตรง เราอำนวยความสะดวกให้ จักรยานเช่าทุกคันผ่านการดูแลอย่างมืออาชีพและพร้อมใช้งาน หมวกกันน็อครวมในทุกการเช่า",
+    "meetingPoint": "จุดนัดพบ",
+    "whereToMeetUs": "พบกันที่ไหน",
+    "meetingDescription": "นัดพบที่ Skylane (Happy and Healthy Bike Lane) สุวรรณภูมิ มองหาป้ายจอดรถ K และ L",
+    "skylaneLocation": "Skylane HHBL สุวรรณภูมิ",
+    "skylaneDesc": "Happy and Healthy Bike Lane — เส้นทางปั่นจักรยานยกระดับ 23.5 กม.",
+    "parkingLocation": "ที่จอดรถ: ป้าย K และ L",
+    "parkingDesc": "จอดรถฟรี มาถึงก่อนเวลา 15 นาทีเพื่อเช็คอินและบรีฟเรื่องความปลอดภัย",
+    "openInGoogleMaps": "เปิดใน Google Maps"
   },
   "contact": {
     "getInTouch": "ติดต่อเรา",

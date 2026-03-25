@@ -402,7 +402,16 @@
     ],
     "readyToRide": "Ready to ride?",
     "pickADate": "Pick a date, choose your group size, and we handle the rest.",
-    "bookARide": "Book a Ride"
+    "bookARide": "Book a Ride",
+    "rentalNote": "Rental is directly through HHBL (Happy and Healthy Bike Lane). We facilitate the process. All rental bikes are professionally maintained and ready to ride. Helmet included with every rental.",
+    "meetingPoint": "Meeting Point",
+    "whereToMeetUs": "Where to meet us",
+    "meetingDescription": "We meet at the Skylane (Happy and Healthy Bike Lane) at Suvarnabhumi. Look for Parking signs K and L.",
+    "skylaneLocation": "Skylane HHBL, Suvarnabhumi",
+    "skylaneDesc": "Happy and Healthy Bike Lane — 23.5 km elevated cycling track",
+    "parkingLocation": "Parking: Signs K & L",
+    "parkingDesc": "Free parking available. Arrive 15 minutes early for check-in and safety briefing.",
+    "openInGoogleMaps": "Open in Google Maps"
   },
   "contact": {
     "getInTouch": "Get in Touch",

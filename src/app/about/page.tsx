@@ -32,78 +32,12 @@ export const metadata = {
     "Learn about En-Joy Speed — Bangkok's premium guided cycling experience on the Skylane.",
 };
 
-const values = [
-  {
-    icon: Shield,
-    title: "Safety First",
-    text: "Helmets required, conduct briefings given, and our Leaders have authority to ensure everyone stays safe.",
-  },
-  {
-    icon: Heart,
-    title: "Experience Design",
-    text: "From booking to post-ride recovery, every touchpoint is intentional. We craft experiences, not just rides.",
-  },
-  {
-    icon: Bike,
-    title: "Operational Precision",
-    text: "Structured slots, trained Leaders, weather monitoring, and seamless communication — invisible because it works.",
-  },
-  {
-    icon: Sun,
-    title: "Premium Simplicity",
-    text: "Beautiful doesn't mean complicated. Booking, rides, and recovery all follow the same principle: frictionless.",
-  },
-];
-
-const inclusions = [
-  {
-    icon: Users,
-    title: "Athlete Leaders",
-    description:
-      "Elite local cyclists who set the pace, guide the route, and keep the group safe. They lead from the front.",
-  },
-  {
-    icon: Shield,
-    title: "Hero Support Riders",
-    description:
-      "Sweep riders at the back watching over every participant. No one gets left behind.",
-  },
-  {
-    icon: Camera,
-    title: "Ride Photography",
-    description:
-      "We capture action shots and group moments during your ride — candid, fun memories delivered digitally after the session.",
-  },
-  {
-    icon: Package,
-    title: "Starter Kit",
-    description:
-      "Padded gel cycling liners (yours to keep), energy gel, and a reusable eco mesh bag.",
-  },
-  {
-    icon: Droplets,
-    title: "Post-Ride Recovery",
-    description:
-      "Electrolyte drinks and recovery refreshments after every ride.",
-  },
-  {
-    icon: HeartPulse,
-    title: "Safety Briefing",
-    description:
-      "15-minute orientation covering hand signals, lane rules, pacing, and SOS procedures.",
-  },
-  {
-    icon: Wind,
-    title: "Weather Monitoring",
-    description:
-      "We track conditions for your ride window and communicate proactively via LINE if plans change.",
-  },
-  {
-    icon: Shirt,
-    title: "Ready-to-Ride Guidance",
-    description:
-      "Pre-ride checklist shared in advance: closed-toe shoes, athletic socks, sun protection, helmet required.",
-  },
+// Icons for the values and inclusions sections (order must match JSON arrays)
+const VALUE_ICONS = [Shield, Heart, Bike, Sun];
+const INCLUSION_ICONS = [Users, Shield, Camera, Package, Droplets, HeartPulse, Wind, Shirt];
+const INCLUSION_KEYS = [
+  "athleteLeaders", "heroRiders", "professionalPhotography", "starterKit",
+  "postRideRecovery", "safetyBriefing", "weatherMonitoring", "readyToRideGuidance",
 ];
 
 export default async function AboutPage() {
@@ -144,10 +78,12 @@ export default async function AboutPage() {
       <section className="py-16 bg-surface border-b border-sand/40">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {values.map((v) => (
+            {((dict.about?.values as Array<{title: string; text: string}>) ?? []).map((v, i) => {
+              const Icon = VALUE_ICONS[i] ?? Shield;
+              return (
               <div key={v.title} className="flex gap-3">
                 <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-accent/8 border border-accent/10">
-                  <v.icon className="h-4 w-4 text-accent" />
+                  <Icon className="h-4 w-4 text-accent" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-ink">{v.title}</h3>
@@ -156,7 +92,7 @@ export default async function AboutPage() {
                   </p>
                 </div>
               </div>
-            ))}
+            );})}
           </div>
         </div>
       </section>
@@ -219,22 +155,25 @@ export default async function AboutPage() {
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
-            {inclusions.map((item) => (
+            {INCLUSION_KEYS.map((key, i) => {
+              const Icon = INCLUSION_ICONS[i] ?? Shield;
+              const inc = dict.about?.[key] as {title: string; description: string} | undefined;
+              return (
               <div
-                key={item.title}
+                key={key}
                 className="flex gap-4 p-5 rounded-xl bg-white border border-sand/40"
               >
                 <div className="flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-lg bg-accent/8 border border-accent/10">
-                  <item.icon className="h-5 w-5 text-accent" />
+                  <Icon className="h-5 w-5 text-accent" />
                 </div>
                 <div>
-                  <h4 className="text-base font-bold text-ink">{item.title}</h4>
+                  <h4 className="text-base font-bold text-ink">{inc?.title ?? key}</h4>
                   <p className="text-sm text-ink-muted leading-relaxed mt-0.5">
-                    {item.description}
+                    {inc?.description ?? ''}
                   </p>
                 </div>
               </div>
-            ))}
+            );})}
           </div>
 
           {/* Bike rental callout */}
@@ -246,8 +185,7 @@ export default async function AboutPage() {
               {t('about.hybrid')} &middot; {t('about.road')} &middot; {t('about.bringYourOwn')}
             </p>
             <p className="text-xs text-ink-muted mt-2">
-              Rental is directly through HHBL (Happy and Healthy Bike Lane). We facilitate the process.
-              <br />All rental bikes are professionally maintained and ready to ride. Helmet included with every rental.
+              {t('about.rentalNote')}
             </p>
           </div>
         </div>
@@ -278,11 +216,10 @@ export default async function AboutPage() {
       <section id="meeting-point" className="py-20 bg-cream">
         <div className="mx-auto max-w-4xl px-6 lg:px-8">
           <div className="text-center mb-10">
-            <Badge variant="sky">Meeting Point</Badge>
-            <h2 className="mt-4">Where to meet us</h2>
+            <Badge variant="sky">{t('about.meetingPoint')}</Badge>
+            <h2 className="mt-4">{t('about.whereToMeetUs')}</h2>
             <p className="mt-3 text-ink-muted max-w-lg mx-auto">
-              We meet at the Skylane (Happy and Healthy Bike Lane) at Suvarnabhumi.
-              Look for Parking signs K and L.
+              {t('about.meetingDescription')}
             </p>
           </div>
 
@@ -311,18 +248,18 @@ export default async function AboutPage() {
               <div className="flex gap-3">
                 <MapPin className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold text-ink">Skylane HHBL, Suvarnabhumi</p>
+                  <p className="font-bold text-ink">{t('about.skylaneLocation')}</p>
                   <p className="text-sm text-ink-muted mt-1">
-                    Happy and Healthy Bike Lane — 23.5 km elevated cycling track
+                    {t('about.skylaneDesc')}
                   </p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <MapPin className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold text-ink">Parking: Signs K &amp; L</p>
+                  <p className="font-bold text-ink">{t('about.parkingLocation')}</p>
                   <p className="text-sm text-ink-muted mt-1">
-                    Free parking available. Arrive 15 minutes early for check-in and safety briefing.
+                    {t('about.parkingDesc')}
                   </p>
                 </div>
               </div>
@@ -332,7 +269,7 @@ export default async function AboutPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full bg-accent/10 text-accent-dark px-5 py-2.5 text-sm font-semibold hover:bg-accent/20 transition-colors"
               >
-                Open in Google Maps
+                {t('about.openInGoogleMaps')}
                 <ChevronRight className="h-4 w-4" />
               </a>
             </div>
