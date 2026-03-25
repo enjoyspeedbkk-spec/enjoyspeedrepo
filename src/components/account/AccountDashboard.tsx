@@ -158,10 +158,14 @@ export function AccountDashboard({
           <button
             onClick={handleSignOut}
             disabled={signingOut}
-            className="p-2.5 rounded-xl text-ink-muted hover:text-ink hover:bg-sand/30 transition-all"
+            className={`p-2.5 rounded-xl transition-all ${signingOut ? "opacity-50 cursor-not-allowed" : "text-ink-muted hover:text-ink hover:bg-sand/30"}`}
             title="Sign out"
           >
-            <LogOut className="h-5 w-5" />
+            {signingOut ? (
+              <div className="h-5 w-5 border-2 border-ink-muted/30 border-t-ink-muted rounded-full animate-spin" />
+            ) : (
+              <LogOut className="h-5 w-5" />
+            )}
           </button>
         </div>
 

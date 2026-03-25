@@ -223,9 +223,11 @@ export function BookingsDashboard({
                   Book the same experience with one tap.
                 </p>
               </div>
-              <Button variant="secondary" size="sm" arrow>
-                Rebook
-              </Button>
+              <a href="/booking">
+                <Button variant="secondary" size="sm" arrow>
+                  Rebook
+                </Button>
+              </a>
             </div>
           </div>
         )}
@@ -294,7 +296,7 @@ function BookingCard({
   });
 
   return (
-    <Card padding="md" hover className="relative">
+    <Card padding="md" hover className="relative" onClick={onViewDetails}>
       {/* Weather warning banner */}
       {isWeatherWarning && (
         <div className="flex items-center gap-2 p-2.5 -mx-6 -mt-6 mb-4 px-6 rounded-t-2xl bg-warning/10 border-b border-warning/20">
@@ -389,7 +391,7 @@ function BookingCard({
           {/* Actions */}
           <div className="flex items-center gap-2 mt-3">
             {isPending && (
-              <a href={`/bookings/${booking.id}/pay`}>
+              <a href={`/bookings/${booking.id}/pay`} onClick={(e) => e.stopPropagation()}>
                 <Button variant="secondary" size="sm">
                   Complete Payment
                 </Button>
@@ -397,7 +399,7 @@ function BookingCard({
             )}
             {isCompleted && (
               <button
-                onClick={onReview}
+                onClick={(e) => { e.stopPropagation(); onReview(); }}
                 className="flex items-center gap-1 text-xs font-semibold text-accent hover:text-accent-dark transition-colors"
               >
                 <Star className="h-3.5 w-3.5" />
@@ -405,7 +407,7 @@ function BookingCard({
               </button>
             )}
             <button
-              onClick={onViewDetails}
+              onClick={(e) => { e.stopPropagation(); onViewDetails(); }}
               className="flex items-center gap-1 text-xs font-semibold text-ink-muted hover:text-ink transition-colors"
             >
               Details

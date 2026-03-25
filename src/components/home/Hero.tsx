@@ -496,8 +496,9 @@ export function Hero() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, y: 10 }}
                     transition={{ delay: 0.8 }}
-                    className="absolute bottom-6 left-4 right-4 glass rounded-2xl p-4 border border-white/40 shadow-lg z-[25]"
+                    className="absolute bottom-6 left-4 right-4 z-[25]"
                   >
+                    <Link href="/booking" className="block glass rounded-2xl p-4 border border-white/40 shadow-lg hover:shadow-xl hover:border-white/60 transition-all group">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs font-medium text-ink-muted uppercase tracking-wider">
@@ -522,6 +523,7 @@ export function Hero() {
                         </span>
                       </div>
                     </div>
+                    </Link>
                   </motion.div>
                 )}
               </AnimatePresence>

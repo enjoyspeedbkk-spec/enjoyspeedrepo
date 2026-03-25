@@ -118,7 +118,7 @@ export function TimeSlots() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
               >
-                <Card hover padding="md" className="flex flex-col h-full">
+                <Card padding="md" className="flex flex-col h-full">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <span className="text-xs font-bold text-sky bg-sky/10 px-2 py-0.5 rounded-full">
@@ -165,7 +165,7 @@ export function TimeSlots() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
               >
-                <Card hover padding="md" className={`flex flex-col h-full ${slot.staffPick ? "ring-1 ring-accent/20 border-accent/30" : ""}`}>
+                <Card padding="md" className={`flex flex-col h-full ${slot.staffPick ? "ring-1 ring-accent/20 border-accent/30" : ""}`}>
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <span className="text-xs font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full">
