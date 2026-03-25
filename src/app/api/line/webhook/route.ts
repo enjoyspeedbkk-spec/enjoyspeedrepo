@@ -232,6 +232,11 @@ function getAutoReply(text: string): string | null {
   return null;
 }
 
+// ── GET handler — LINE verifies the webhook URL with a GET request ────
+export async function GET() {
+  return NextResponse.json({ status: "ok" });
+}
+
 // ── Reply helper ──────────────────────────────
 
 async function sendReply(
