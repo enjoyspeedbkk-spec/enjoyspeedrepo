@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Users, Star, Zap, Crown } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const packages = [
   {
@@ -73,13 +74,14 @@ const colorMap: Record<string, { bg: string; border: string; iconBg: string; tex
 };
 
 export function RidePackages() {
+  const { t } = useLanguage();
   return (
     <section className="py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <SectionHeading
-          badge="Ride Formats"
-          title="Choose your ride style"
-          subtitle="Three curated formats designed for different group sizes. Every ride includes an Athlete Leader, Hero support riders, and photography."
+          badge={t('packages.rideFormats')}
+          title={t('packages.chooseYourRide')}
+          subtitle={t('packages.formatDescription')}
         />
 
         <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
@@ -107,7 +109,7 @@ export function RidePackages() {
                     {pkg.popular && (
                       <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-10">
                         <span className="inline-flex items-center px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-accent text-white shadow-md whitespace-nowrap">
-                          Most Popular
+                          {t('packages.squad.popular')}
                         </span>
                       </div>
                     )}
@@ -146,7 +148,7 @@ export function RidePackages() {
                         {pkg.support}
                       </p>
                       <p className="text-xs text-ink-muted mt-0.5">
-                        Photography included
+                        {t('packages.photographyIncluded')}
                       </p>
                     </div>
 
@@ -157,7 +159,7 @@ export function RidePackages() {
                           {pkg.price.toLocaleString()}
                         </span>
                         <span className="text-sm text-ink-muted">
-                          THB per person
+                          THB {t('hero.perPerson')}
                         </span>
                       </div>
                       {pkg.minRiders === pkg.maxRiders ? (
@@ -170,7 +172,7 @@ export function RidePackages() {
                         </p>
                       )}
                       <p className="text-xs text-ink-muted/70 mt-1">
-                        Bike rental separate if needed
+                        {t('packages.bikeRental')}
                       </p>
                     </div>
 
@@ -182,7 +184,7 @@ export function RidePackages() {
                           : "bg-sand/50 text-ink group-hover:bg-sand"
                       }`}
                     >
-                      Book {pkg.name}
+                      {t('packages.bookNow', { name: pkg.name })}
                     </div>
                   </Card>
                 </Link>

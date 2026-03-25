@@ -4,19 +4,16 @@ import { motion } from "framer-motion";
 import { Camera, Package } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SiteImage } from "@/lib/site-images-context";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const highlights = [
   {
     icon: Package,
-    title: "Starter Kit",
-    description:
-      "Padded cycling liners (yours to keep), energy gel, and a reusable eco mesh bag — ready at check-in.",
+    key: "whatsIncluded.starterKit",
   },
   {
     icon: Camera,
-    title: "Ride Photography",
-    description:
-      "We capture action shots and group moments during your ride — delivered digitally after the session. Candid, fun memories of your experience.",
+    key: "whatsIncluded.photography",
   },
 ];
 
@@ -43,20 +40,22 @@ function EquipmentImage({ imageKey, fallback, alt, index }: { imageKey: string; 
 }
 
 export function WhatsIncluded() {
+  const { t } = useLanguage();
+
   return (
     <section className="py-24 lg:py-32 bg-surface">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <SectionHeading
-          badge="What's Included"
-          title="Everything you need, nothing you don't"
-          subtitle="Every ride includes Leaders, safety support, photography, starter kit, and post-ride recovery."
+          badge={t('whatsIncluded.badge')}
+          title={t('whatsIncluded.everythingYouNeed')}
+          subtitle={t('whatsIncluded.subtitle')}
         />
 
         {/* Two primary highlights */}
         <div className="grid sm:grid-cols-2 gap-6 lg:gap-8 mb-10">
           {highlights.map((item, i) => (
             <motion.div
-              key={item.title}
+              key={item.key}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -68,10 +67,10 @@ export function WhatsIncluded() {
               </div>
               <div>
                 <h4 className="text-base font-bold text-ink mb-1">
-                  {item.title}
+                  {((t(item.key) as unknown) as { title: string }).title}
                 </h4>
                 <p className="text-sm text-ink-muted leading-relaxed">
-                  {item.description}
+                  {((t(item.key) as unknown) as { description: string }).description}
                 </p>
               </div>
             </motion.div>
@@ -97,7 +96,7 @@ export function WhatsIncluded() {
           viewport={{ once: true }}
           className="text-center text-sm text-ink-muted mt-6"
         >
-          Bike rental available separately — Hybrid 420 THB · Road 720 THB · Or bring your own.
+          {t('whatsIncluded.rentalNote')}
         </motion.p>
       </div>
     </section>

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { signOut, updateProfile } from "@/lib/actions/auth";
 import { TIME_SLOTS } from "@/lib/constants";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
   User,
   Calendar,
@@ -71,6 +72,7 @@ export function AccountDashboard({
   user: AccountUser;
   recentBookings: Booking[];
 }) {
+  const { t } = useLanguage();
   const [signingOut, setSigningOut] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -181,7 +183,7 @@ export function AccountDashboard({
                 </div>
                 <div>
                   <p className="font-semibold text-sm">Book a Ride</p>
-                  <p className="text-xs text-ink-muted">New session</p>
+                  <p className="text-xs text-ink-muted">{t("account.editProfile")}</p>
                 </div>
               </div>
             </Card>
@@ -193,11 +195,11 @@ export function AccountDashboard({
                   <Calendar className="h-5 w-5 text-sky" />
                 </div>
                 <div>
-                  <p className="font-semibold text-sm">My Bookings</p>
+                  <p className="font-semibold text-sm">{t("account.recentBookings")}</p>
                   <p className="text-xs text-ink-muted">
                     {upcomingBookings.length > 0
                       ? `${upcomingBookings.length} upcoming`
-                      : "View all"}
+                      : t("account.viewAllBookings")}
                   </p>
                 </div>
               </div>
@@ -209,12 +211,12 @@ export function AccountDashboard({
         {upcomingBookings.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold">Upcoming Rides</h2>
+              <h2 className="text-lg font-bold">{t("account.upcomingRides")}</h2>
               <Link
                 href="/bookings"
                 className="text-xs font-medium text-accent hover:text-accent-dark flex items-center gap-0.5 transition-colors"
               >
-                View all <ArrowRight className="h-3 w-3" />
+                {t("account.viewAllBookings")} <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
             <div className="space-y-2">
@@ -283,9 +285,9 @@ export function AccountDashboard({
         {upcomingBookings.length === 0 && (
           <Card padding="lg" className="mb-8 text-center">
             <Bike className="h-8 w-8 text-ink-muted/30 mx-auto mb-3" />
-            <p className="font-semibold text-sm">No upcoming rides</p>
+            <p className="font-semibold text-sm">{t("account.noBookings")}</p>
             <p className="text-xs text-ink-muted mt-1 mb-4">
-              Book your first guided cycling session on the Skylane.
+              {t("account.startBooking")}
             </p>
             <Link href="/booking">
               <Button variant="secondary" size="sm" arrow>
@@ -298,7 +300,7 @@ export function AccountDashboard({
         {/* Past bookings preview */}
         {pastBookings.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-lg font-bold mb-3">Recent Rides</h2>
+            <h2 className="text-lg font-bold mb-3">{t("account.pastRides")}</h2>
             <div className="space-y-2">
               {pastBookings.slice(0, 3).map((booking) => {
                 const session = booking.ride_sessions;
@@ -348,7 +350,7 @@ export function AccountDashboard({
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Settings className="h-4 w-4 text-ink-muted" />
-              <h2 className="text-sm font-bold">Account Details</h2>
+              <h2 className="text-sm font-bold">{t("account.profile")}</h2>
             </div>
             {!editing ? (
               <button
@@ -356,7 +358,7 @@ export function AccountDashboard({
                 className="flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-dark transition-colors"
               >
                 <Pencil className="h-3 w-3" />
-                Edit
+                {t("account.editProfile")}
               </button>
             ) : (
               <div className="flex items-center gap-2">
@@ -365,7 +367,7 @@ export function AccountDashboard({
                   className="flex items-center gap-1 text-xs font-medium text-ink-muted hover:text-ink transition-colors"
                 >
                   <X className="h-3 w-3" />
-                  Cancel
+                  {t("account.discardChanges")}
                 </button>
                 <button
                   onClick={handleSaveProfile}
@@ -375,12 +377,12 @@ export function AccountDashboard({
                   {saving ? (
                     <>
                       <Loader2 className="h-3 w-3 animate-spin" />
-                      Saving…
+                      {t("account.saveChanges")}…
                     </>
                   ) : (
                     <>
                       <Check className="h-3 w-3" />
-                      Save
+                      {t("account.saveChanges")}
                     </>
                   )}
                 </button>
@@ -390,7 +392,7 @@ export function AccountDashboard({
 
           {saved && (
             <div className="mb-4 p-2.5 rounded-lg bg-success/10 border border-success/20 text-sm text-success font-medium text-center">
-              Profile updated successfully
+              {t("account.changesSaved")}
             </div>
           )}
 
@@ -399,7 +401,7 @@ export function AccountDashboard({
               <div>
                 <label className="block text-xs font-medium text-ink-muted mb-1.5">
                   <User className="inline h-3 w-3 mr-1" />
-                  Full Name
+                  {t("account.fullName")}
                 </label>
                 <input
                   type="text"
@@ -412,7 +414,7 @@ export function AccountDashboard({
               <div>
                 <label className="block text-xs font-medium text-ink-muted mb-1.5">
                   <Phone className="inline h-3 w-3 mr-1" />
-                  Phone Number
+                  {t("account.phone")}
                 </label>
                 <input
                   type="tel"
@@ -436,7 +438,7 @@ export function AccountDashboard({
               <div>
                 <label className="block text-xs font-medium text-ink-muted mb-1.5">
                   <MessageCircle className="inline h-3 w-3 mr-1" />
-                  LINE ID
+                  {t("account.lineId")}
                 </label>
                 <input
                   type="text"
@@ -449,12 +451,12 @@ export function AccountDashboard({
               <div>
                 <label className="block text-xs font-medium text-ink-muted mb-1.5">
                   <Globe className="inline h-3 w-3 mr-1" />
-                  Preferred Language
+                  {t("account.preferredLanguage")}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { value: "en", label: "English" },
-                    { value: "th", label: "ภาษาไทย" },
+                    { value: "en", label: t("account.english") },
+                    { value: "th", label: t("account.thai") },
                   ].map((lang) => (
                     <button
                       key={lang.value}
@@ -483,7 +485,7 @@ export function AccountDashboard({
           ) : (
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-ink-muted">Name</span>
+                <span className="text-ink-muted">{t("account.fullName")}</span>
                 <span className="font-medium">{user.fullName || "Not set"}</span>
               </div>
               <div className="flex justify-between">
@@ -491,19 +493,19 @@ export function AccountDashboard({
                 <span className="font-medium">{user.email}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-ink-muted">Phone</span>
+                <span className="text-ink-muted">{t("account.phone")}</span>
                 <span className="font-medium">{user.phone || "Not set"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-ink-muted">LINE ID</span>
+                <span className="text-ink-muted">{t("account.lineId")}</span>
                 <span className="font-medium">{user.lineId || "Not set"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-ink-muted">Language</span>
-                <span className="font-medium">{user.preferredLanguage === "th" ? "ภาษาไทย" : "English"}</span>
+                <span className="font-medium">{user.preferredLanguage === "th" ? t("account.thai") : t("account.english")}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-ink-muted">Member since</span>
+                <span className="text-ink-muted">{t("account.createdAt").split("{date}")[0]}</span>
                 <span className="font-medium">
                   {new Date(user.createdAt).toLocaleDateString("en-US", {
                     month: "long",
@@ -522,7 +524,7 @@ export function AccountDashboard({
             disabled={signingOut}
             className="text-sm text-ink-muted hover:text-ink font-medium transition-colors"
           >
-            {signingOut ? "Signing out..." : "Sign out"}
+            {signingOut ? `${t("account.signOut")}...` : t("account.signOut")}
           </button>
         </div>
       </div>

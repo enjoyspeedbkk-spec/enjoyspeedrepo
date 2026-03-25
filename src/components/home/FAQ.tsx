@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const faqs = [
   {
@@ -97,15 +98,16 @@ function FAQItem({
 }
 
 export function FAQ() {
+  const { t } = useLanguage();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
     <section className="py-24 lg:py-32">
       <div className="mx-auto max-w-3xl px-6 lg:px-8">
         <SectionHeading
-          badge="FAQ"
-          title="Questions? We've got answers"
-          subtitle="Everything you need to know before your first ride."
+          badge={t('faq.faqTitle')}
+          title={t('faq.questionsWeveGotAnswers')}
+          subtitle={t('faq.everythingYouNeedToKnow')}
         />
 
         <div className="bg-surface rounded-2xl border border-sand/60 px-6 lg:px-8">

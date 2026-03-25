@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { sendEmailOtp, verifyEmailOtp } from "@/lib/actions/email-auth";
 import { createBrowserClient } from "@supabase/ssr";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface EmailVerificationProps {
   initialEmail?: string;
@@ -21,6 +22,7 @@ export function EmailVerification({
   onVerified,
   onSkipAuth,
 }: EmailVerificationProps) {
+  const { t } = useLanguage();
   const [email, setEmail] = useState(initialEmail);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [step, setStep] = useState<"email" | "otp">("email");
@@ -143,7 +145,7 @@ export function EmailVerification({
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-accent/10 mb-4">
           <Mail className="h-6 w-6 text-accent" />
         </div>
-        <h2 className="text-xl font-bold text-ink">Verify your email</h2>
+        <h2 className="text-xl font-bold text-ink">{t('auth.email')}</h2>
         <p className="text-sm text-ink-muted mt-2">
           We&apos;ll send a 6-digit code to confirm your booking and keep you updated about your ride.
         </p>
@@ -160,13 +162,13 @@ export function EmailVerification({
           >
             <Card padding="lg">
               <label className="block text-sm font-medium text-ink mb-2">
-                Email address
+                {t('auth.email')}
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
+                placeholder={t('auth.emailPlaceholder')}
                 className="w-full px-4 py-3.5 rounded-xl border-2 border-sand/60 bg-surface text-ink text-lg placeholder:text-ink-muted/40 focus:border-ink focus:outline-none transition-colors"
                 autoFocus
                 onKeyDown={(e) => e.key === "Enter" && isValidEmail && handleSendOtp()}
@@ -191,12 +193,12 @@ export function EmailVerification({
                 disabled={!isValidEmail || sending}
                 className="mt-4"
               >
-                {sending ? "Sending code..." : "Send verification code"}
+                {sending ? t('common.loading') : t('common.continue')}
                 {!sending && <ArrowRight className="h-4 w-4" />}
               </Button>
 
               <p className="mt-3 text-xs text-center text-ink-muted">
-                We&apos;ll only email you about your ride. No spam, ever.
+                {t('auth.signInDescription')}
               </p>
             </Card>
           </motion.div>
@@ -256,7 +258,7 @@ export function EmailVerification({
                   onClick={() => { setStep("email"); setError(""); }}
                   className="text-sm text-ink-muted hover:text-ink transition-colors"
                 >
-                  Change email
+                  {t('common.back')}
                 </button>
                 <button
                   onClick={handleResend}

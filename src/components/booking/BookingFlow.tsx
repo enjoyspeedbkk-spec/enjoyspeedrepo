@@ -52,15 +52,16 @@ import type {
 import { createBooking } from "@/lib/actions/booking";
 import { PaymentPromptPay } from "@/components/booking/PaymentPromptPay";
 import { EmailVerification } from "@/components/booking/EmailVerification";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 // ------ Step definitions ------
 const STEPS = [
-  { id: "date", label: "Date", icon: CalendarDays },
-  { id: "time", label: "Time Slot", icon: Clock },
-  { id: "package", label: "Ride Type", icon: Users },
-  { id: "riders", label: "Riders", icon: UserPlus },
-  { id: "waiver", label: "Waiver", icon: ShieldCheck },
-  { id: "review", label: "Review & Pay", icon: CreditCard },
+  { id: "date", labelKey: "booking.date", icon: CalendarDays },
+  { id: "time", labelKey: "booking.time", icon: Clock },
+  { id: "package", labelKey: "booking.package", icon: Users },
+  { id: "riders", labelKey: "booking.riders", icon: UserPlus },
+  { id: "waiver", labelKey: "booking.waiver", icon: ShieldCheck },
+  { id: "review", labelKey: "booking.reviewAndPay", icon: CreditCard },
 ] as const;
 
 type StepId = (typeof STEPS)[number]["id"];
@@ -101,6 +102,7 @@ interface BookingFlowProps {
 }
 
 export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFlowProps) {
+  const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedSlot, setSelectedSlot] = useState<TimeSlotId | null>(null);
@@ -202,9 +204,10 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
 
   // Update page title with current step
   useEffect(() => {
-    const stepLabel = STEPS[currentStep]?.label || "";
+    const stepKey = STEPS[currentStep]?.labelKey;
+    const stepLabel = stepKey ? t(stepKey) : "";
     document.title = `${stepLabel} — Book a Ride | En-Joy Speed`;
-  }, [currentStep]);
+  }, [currentStep, t]);
 
   // Generate next 30 days
   const availableDates = useMemo(() => {
@@ -434,7 +437,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
             <p className="text-xs text-ink-muted font-medium">
               Step {currentStep + 1} of {STEPS.length}
             </p>
-            <p className="text-xs font-semibold text-ink">{STEPS[currentStep].label}</p>
+            <p className="text-xs font-semibold text-ink">{t(STEPS[currentStep].labelKey)}</p>
           </div>
           {/* Progress bar (mobile) / Step pills (desktop) */}
           <div className="sm:hidden h-1.5 bg-sand/40 rounded-full overflow-hidden mb-4">
@@ -462,7 +465,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                   ) : (
                     <step.icon className="h-4 w-4" />
                   )}
-                  <span className="text-xs">{step.label}</span>
+                  <span className="text-xs">{t(step.labelKey)}</span>
                 </button>
                 {i < STEPS.length - 1 && (
                   <div

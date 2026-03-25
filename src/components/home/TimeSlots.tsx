@@ -5,6 +5,7 @@ import { Sunrise, Sunset, Clock, MapPin } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Card } from "@/components/ui/Card";
 import { SiteImage } from "@/lib/site-images-context";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const slots = [
   {
@@ -51,6 +52,7 @@ const slots = [
 ];
 
 export function TimeSlots() {
+  const { t } = useLanguage();
   const morningSlots = slots.filter((s) => s.period === "morning");
   const eveningSlots = slots.filter((s) => s.period === "evening");
 
@@ -58,9 +60,9 @@ export function TimeSlots() {
     <section className="py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <SectionHeading
-          badge="Session Times"
-          title="Ride when it feels right"
-          subtitle="Mornings for performance and fresh air. Evenings for golden light and vibes. Every session on the Skylane's dedicated 23.5 km track at Suvarnabhumi."
+          badge={t('timeSlots.sessionTimes')}
+          title={t('timeSlots.rideWhenItFeelsRight')}
+          subtitle={t('timeSlots.morningAndEvening')}
         />
 
         {/* Route photo strip */}
@@ -88,7 +90,7 @@ export function TimeSlots() {
             </div>
             <div className="hidden sm:flex items-center gap-1.5 text-white/70 text-sm">
               <MapPin className="h-4 w-4" />
-              Bangkok
+              {t('timeSlots.bangkok')}
             </div>
           </div>
         </motion.div>
@@ -100,9 +102,9 @@ export function TimeSlots() {
               <Sunrise className="h-5 w-5 text-sky" />
             </div>
             <div>
-              <h3 className="text-lg font-bold">Morning Sessions</h3>
+              <h3 className="text-lg font-bold">{t('timeSlots.morningSessionsHeader')}</h3>
               <p className="text-sm text-ink-muted">
-                Clean air, cool temps, quiet roads
+                {t('timeSlots.morningDesc')}
               </p>
             </div>
           </div>
@@ -147,9 +149,9 @@ export function TimeSlots() {
               <Sunset className="h-5 w-5 text-accent" />
             </div>
             <div>
-              <h3 className="text-lg font-bold">Evening Sessions</h3>
+              <h3 className="text-lg font-bold">{t('timeSlots.eveningSessionsHeader')}</h3>
               <p className="text-sm text-ink-muted">
-                Golden light, sunset views, perfect atmosphere
+                {t('timeSlots.eveningDesc')}
               </p>
             </div>
           </div>

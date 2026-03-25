@@ -6,27 +6,30 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ChevronRight, User, LogOut, CalendarDays, Shield } from "lucide-react";
 import { createBrowserClient } from "@supabase/ssr";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 // Base nav links — "Book a Ride" removed (redundant with CTA button)
+// Note: Labels will be translated using i18n hooks inside the component
 const customerLinks = [
-  { href: "/", label: "Home" },
-  { href: "/packages", label: "Rides" },
-  { href: "/bookings", label: "My Bookings" },
-  { href: "/about", label: "About" },
+  { href: "/", i18nKey: "nav.home", label: "Home" },
+  { href: "/packages", i18nKey: "nav.rides", label: "Rides" },
+  { href: "/bookings", i18nKey: "nav.myBookings", label: "My Bookings" },
+  { href: "/about", i18nKey: "nav.about", label: "About" },
 ];
 
-// Admin sees a different nav — focused on admin tasks
+// Admin sees a different nav — English only (no translation needed for back-office)
 const adminLinks = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/bookings", label: "Bookings" },
-  { href: "/admin/payments", label: "Payments" },
-  { href: "/admin/customers", label: "Customers" },
-  { href: "/admin/settings", label: "Settings" },
+  { href: "/admin", i18nKey: undefined, label: "Dashboard" },
+  { href: "/admin/bookings", i18nKey: undefined, label: "Bookings" },
+  { href: "/admin/payments", i18nKey: undefined, label: "Payments" },
+  { href: "/admin/customers", i18nKey: undefined, label: "Customers" },
+  { href: "/admin/settings", i18nKey: undefined, label: "Settings" },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState<{ email?: string; fullName?: string; avatarUrl?: string; isAdmin?: boolean } | null>(null);
@@ -165,7 +168,7 @@ export function Navbar() {
                         : "text-ink-light hover:text-ink hover:bg-sand/40"
                     }`}
                   >
-                    {link.label}
+                    {link.i18nKey ? t(link.i18nKey) : link.label}
                     {active && (
                       <motion.div
                         layoutId="nav-indicator"
@@ -193,7 +196,7 @@ export function Navbar() {
                   href="/booking"
                   className="group inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-accent-dark hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  Book a Ride
+                  {t('nav.booking')}
                   <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                 </Link>
               )}
@@ -250,7 +253,7 @@ export function Navbar() {
                               className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm hover:bg-sand/30 transition-colors"
                             >
                               <User className="h-4 w-4 text-ink-muted" />
-                              My Account
+                              {t('nav.myAccount')}
                             </Link>
                             {user.isAdmin ? (
                               <>
@@ -286,7 +289,7 @@ export function Navbar() {
                                 className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm hover:bg-sand/30 transition-colors"
                               >
                                 <CalendarDays className="h-4 w-4 text-ink-muted" />
-                                My Bookings
+                                {t('nav.myBookings')}
                               </Link>
                             )}
                             <button
@@ -294,7 +297,7 @@ export function Navbar() {
                               className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-ink-muted hover:bg-sand/30 hover:text-ink transition-colors w-full text-left"
                             >
                               <LogOut className="h-4 w-4" />
-                              Sign Out
+                              {t('nav.signOut')}
                             </button>
                           </div>
                         </motion.div>
@@ -309,7 +312,7 @@ export function Navbar() {
                   href="/account"
                   className="px-4 py-2 text-sm font-medium text-ink-light hover:text-ink transition-colors"
                 >
-                  Sign In
+                  {t('nav.signIn')}
                 </Link>
               )}
             </div>
@@ -395,7 +398,7 @@ export function Navbar() {
                       >
                         <span className="flex items-center gap-2.5">
                           {active && <div className="w-1.5 h-1.5 rounded-full bg-accent" />}
-                          {link.label}
+                          {link.i18nKey ? t(link.i18nKey) : link.label}
                         </span>
                         <ChevronRight className={`h-4 w-4 ${active ? "text-accent" : "text-ink-muted"}`} />
                       </Link>
@@ -414,7 +417,7 @@ export function Navbar() {
                       onClick={() => setIsOpen(false)}
                       className="flex items-center justify-between py-3 px-4 text-lg font-medium text-ink hover:bg-sand/40 rounded-xl transition-colors"
                     >
-                      My Account
+                      {t('nav.myAccount')}
                       <User className="h-4 w-4 text-ink-muted" />
                     </Link>
                   </motion.div>
@@ -432,7 +435,7 @@ export function Navbar() {
                       onClick={() => setIsOpen(false)}
                       className="flex items-center justify-center gap-2 w-full rounded-full border-2 border-sand/60 px-6 py-3 text-base font-medium text-ink-light hover:text-ink transition-colors"
                     >
-                      View Public Site
+                      View Site
                       <ChevronRight className="h-4 w-4" />
                     </Link>
                   ) : (
@@ -441,7 +444,7 @@ export function Navbar() {
                       onClick={() => setIsOpen(false)}
                       className="flex items-center justify-center gap-2 w-full rounded-full bg-accent px-6 py-3.5 text-base font-semibold text-white hover:bg-accent-dark transition-colors"
                     >
-                      Book a Ride
+                      {t('nav.booking')}
                       <ChevronRight className="h-4 w-4" />
                     </Link>
                   )}
@@ -451,7 +454,7 @@ export function Navbar() {
                       onClick={() => setIsOpen(false)}
                       className="flex items-center justify-center mt-3 text-sm font-medium text-ink-muted hover:text-ink transition-colors"
                     >
-                      Sign In
+                      {t('nav.signIn')}
                     </Link>
                   )}
                   {user && (
@@ -460,7 +463,7 @@ export function Navbar() {
                       className={`flex items-center justify-center gap-2 ${!user.isAdmin ? "mt-3" : ""} text-sm font-medium text-ink-muted hover:text-ink transition-colors w-full`}
                     >
                       <LogOut className="h-3.5 w-3.5" />
-                      Sign Out
+                      {t('nav.signOut')}
                     </button>
                   )}
                 </motion.div>

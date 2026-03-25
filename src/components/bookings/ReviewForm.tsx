@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
   X,
   Star,
@@ -24,6 +25,7 @@ interface ReviewFormProps {
 type ReviewStep = "rating" | "survey" | "comment" | "done";
 
 export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
+  const { t } = useLanguage();
   const [step, setStep] = useState<ReviewStep>("rating");
   const [rating, setRating] = useState(0);
   const [hoveredStar, setHoveredStar] = useState(0);
@@ -57,7 +59,14 @@ export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
     }
   };
 
-  const ratingLabels = ["", "Not great", "Could be better", "Good", "Really enjoyed it", "Absolutely amazing!"];
+  const ratingLabels = [
+    "",
+    t("review.notGreat"),
+    t("review.couldBeBetter"),
+    t("review.good"),
+    t("review.reallyEnjoyedIt"),
+    t("review.absolutelyAmazing"),
+  ];
 
   return (
     <>
@@ -82,7 +91,7 @@ export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
           <div className="w-10 h-1 bg-sand rounded-full mx-auto mb-3" />
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-lg">
-              {step === "done" ? "Thanks!" : "How was your ride?"}
+              {step === "done" ? t("review.thanks") : t("review.howWasYourRide")}
             </h2>
             <button
               onClick={onClose}
@@ -98,7 +107,7 @@ export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
           {step === "rating" && (
             <div className="text-center py-6">
               <p className="text-sm text-ink-muted mb-6">
-                Tap a star to rate your overall experience
+                {t("review.rateYourExperience")}
               </p>
 
               <div className="flex justify-center gap-2 mb-4">
@@ -140,7 +149,7 @@ export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
                   onClick={() => setStep("survey")}
                   arrow
                 >
-                  Continue
+                  {t("bookings.viewDetails")}
                 </Button>
               </div>
             </div>
@@ -224,7 +233,7 @@ export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
                 onClick={() => setStep("comment")}
                 arrow
               >
-                Almost done
+                {t("bookings.viewDetails")}
               </Button>
             </div>
           )}
@@ -257,7 +266,7 @@ export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
                 loading={submitting}
               >
                 <Send className="h-4 w-4" />
-                Submit Review
+                {t("review.submitReview")}
               </Button>
 
               <button
@@ -281,9 +290,9 @@ export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
                 <Sparkles className="h-10 w-10 text-success" />
               </motion.div>
 
-              <h3 className="text-xl font-bold mb-2">Thanks for riding!</h3>
+              <h3 className="text-xl font-bold mb-2">{t("review.thanks")} for riding!</h3>
               <p className="text-sm text-ink-muted mb-1">
-                Your feedback helps us improve every ride.
+                {t("review.thankYouMessage")}
               </p>
 
               {/* Show stars */}
@@ -303,7 +312,7 @@ export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
               <div className="space-y-2 mt-6">
                 <a href="/booking">
                   <Button variant="secondary" size="lg" fullWidth arrow>
-                    Book Your Next Ride
+                    {t("review.bookAnotherRide")}
                   </Button>
                 </a>
                 <button
@@ -335,6 +344,7 @@ function SurveyQuestion({
   value: boolean | null;
   onChange: (val: boolean) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">

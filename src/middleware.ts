@@ -1,10 +1,25 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getLocaleFromRequest } from "@/lib/i18n/getLocaleFromRequest";
 
 export async function middleware(request: NextRequest) {
+  // Detect locale at the start
+  const locale = getLocaleFromRequest(request);
   let supabaseResponse = NextResponse.next({
     request,
   });
+
+  // Pass locale to server components via header
+  supabaseResponse.headers.set("x-locale", locale);
+
+  // Set cookie on first visit
+  if (!request.cookies.get("lang")) {
+    supabaseResponse.cookies.set("lang", locale, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
+  }
 
   // Skip middleware if env vars are not set
   if (

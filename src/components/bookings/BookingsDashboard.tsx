@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatDate } from "@/lib/format";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
   CalendarDays,
   Clock,
@@ -112,22 +113,23 @@ export function BookingsDashboard({
   cancelled,
   userName,
 }: BookingsDashboardProps) {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabId>("upcoming");
   const [selectedBooking, setSelectedBooking] =
     useState<BookingWithDetails | null>(null);
   const [showReviewFor, setShowReviewFor] = useState<string | null>(null);
 
   const tabs: { id: TabId; label: string; count: number; icon: typeof Zap }[] = [
-    { id: "upcoming", label: "Upcoming", count: upcoming.length, icon: Zap },
+    { id: "upcoming", label: t("bookings.upcoming"), count: upcoming.length, icon: Zap },
     {
       id: "completed",
-      label: "Completed",
+      label: t("bookings.completed"),
       count: completed.length,
       icon: Star,
     },
     {
       id: "cancelled",
-      label: "Cancelled",
+      label: t("bookings.cancelled"),
       count: cancelled.length,
       icon: XCircle,
     },
@@ -147,7 +149,7 @@ export function BookingsDashboard({
       <div className="mx-auto max-w-3xl px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <Badge variant="accent">My Bookings</Badge>
+          <Badge variant="accent">{t("bookings.myBookings")}</Badge>
           <h1 className="mt-4 text-3xl font-bold">
             {userName ? `Hey ${userName.split(" ")[0]}` : "Your rides"}
           </h1>
@@ -226,7 +228,7 @@ export function BookingsDashboard({
               </div>
               <a href="/booking">
                 <Button variant="secondary" size="sm" arrow>
-                  Rebook
+                  Book
                 </Button>
               </a>
             </div>
@@ -239,10 +241,9 @@ export function BookingsDashboard({
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/10 mb-4">
               <Bike className="h-8 w-8 text-accent" />
             </div>
-            <h2 className="text-xl font-bold mb-2">No bookings yet</h2>
+            <h2 className="text-xl font-bold mb-2">{t("bookings.noBookings")}</h2>
             <p className="text-ink-muted text-sm mb-6 max-w-sm mx-auto">
-              Book your first guided cycling session on Bangkok&apos;s Skylane.
-              It takes just 3 minutes.
+              {t("bookings.startBooking")}
             </p>
             <Button variant="secondary" size="lg" arrow>
               <a href="/booking">Book Your First Ride</a>
@@ -282,6 +283,7 @@ function BookingCard({
   onViewDetails: () => void;
   onReview: () => void;
 }) {
+  const { t } = useLanguage();
   const statusInfo = STATUS_CONFIG[booking.status] || STATUS_CONFIG.pending;
   const StatusIcon = statusInfo.icon;
   const PackageIcon = PACKAGE_ICONS[booking.group_type] || Star;
@@ -400,14 +402,14 @@ function BookingCard({
                 className="flex items-center gap-1 text-xs font-semibold text-accent hover:text-accent-dark transition-colors"
               >
                 <Star className="h-3.5 w-3.5" />
-                Rate & Review
+                {t("bookings.leaveReview")}
               </button>
             )}
             <button
               onClick={(e) => { e.stopPropagation(); onViewDetails(); }}
               className="flex items-center gap-1 text-xs font-semibold text-ink-muted hover:text-ink transition-colors"
             >
-              Details
+              {t("bookings.viewDetails")}
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -427,6 +429,7 @@ function BookingCard({
 
 // ======== Empty State ========
 function EmptyState({ tab }: { tab: TabId }) {
+  const { t } = useLanguage();
   const config = {
     upcoming: {
       icon: CalendarDays,

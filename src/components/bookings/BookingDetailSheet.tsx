@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatDate } from "@/lib/format";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
   X,
   CalendarDays,
@@ -46,6 +47,7 @@ export function BookingDetailSheet({
   booking,
   onClose,
 }: BookingDetailSheetProps) {
+  const { t } = useLanguage();
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelResult, setCancelResult] = useState<string | null>(null);
@@ -95,7 +97,7 @@ export function BookingDetailSheet({
         <div className="sticky top-0 bg-cream rounded-t-3xl z-10 pt-3 pb-2 px-6">
           <div className="w-10 h-1 bg-sand rounded-full mx-auto mb-3" />
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-lg">Booking Details</h2>
+            <h2 className="font-bold text-lg">{t("bookings.bookingDetails")}</h2>
             <button
               onClick={onClose}
               className="p-2 rounded-full hover:bg-sand/40 transition-colors"
@@ -186,7 +188,7 @@ export function BookingDetailSheet({
           {/* Ride Package */}
           <div>
             <h3 className="text-sm font-semibold text-ink-muted mb-2">
-              Ride Package
+              {t("bookings.package")}
             </h3>
             <div className="p-3 rounded-xl bg-surface border border-sand/60">
               <div className="flex items-center justify-between">
@@ -207,7 +209,7 @@ export function BookingDetailSheet({
           {/* Riders */}
           <div>
             <h3 className="text-sm font-semibold text-ink-muted mb-2">
-              Riders & Bikes
+              {t("bookings.riderCount")} & Bikes
             </h3>
             <div className="space-y-2">
               {booking.riders.map((rider, i) => (
@@ -250,7 +252,7 @@ export function BookingDetailSheet({
           {/* Price Breakdown */}
           <div>
             <h3 className="text-sm font-semibold text-ink-muted mb-2">
-              Payment
+              {t("bookings.paymentStatus")}
             </h3>
             <div className="p-4 rounded-xl bg-surface border border-sand/60 space-y-2">
               <div className="flex justify-between text-sm">
@@ -411,7 +413,7 @@ export function BookingDetailSheet({
               {showCancelConfirm ? (
                 <div className="p-4 rounded-xl bg-error/5 border border-error/20 space-y-3">
                   <p className="text-sm font-medium text-error">
-                    Are you sure you want to cancel this booking?
+                    {t("bookings.cancelConfirm")}
                   </p>
                   <p className="text-xs text-ink-muted">
                     Refund policy applies based on how close the ride date is.
@@ -429,7 +431,7 @@ export function BookingDetailSheet({
                       disabled={cancelling}
                       className="px-4 py-2 rounded-lg bg-error text-white text-sm font-semibold hover:bg-error/90 transition-colors disabled:opacity-50"
                     >
-                      {cancelling ? "Cancelling..." : "Yes, Cancel"}
+                      {cancelling ? `${t("bookings.cancelling")}...` : `${t("bookings.cancel")}`}
                     </button>
                   </div>
                 </div>
@@ -438,7 +440,7 @@ export function BookingDetailSheet({
                   onClick={() => setShowCancelConfirm(true)}
                   className="text-xs text-ink-muted hover:text-error transition-colors"
                 >
-                  Cancel this booking
+                  {t("bookings.cancel")}
                 </button>
               )}
             </div>

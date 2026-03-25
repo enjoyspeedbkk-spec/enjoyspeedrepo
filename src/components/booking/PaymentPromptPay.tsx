@@ -24,6 +24,7 @@ import {
 import { STARTER_KIT, LINE_OA } from "@/lib/constants";
 import { SlipUpload } from "@/components/booking/SlipUpload";
 import Link from "next/link";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface PaymentPromptPayProps {
   bookingId: string;
@@ -40,6 +41,7 @@ export function PaymentPromptPay({
   promptPayTarget,
   contactName,
 }: PaymentPromptPayProps) {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
   const [copiedAccount, setCopiedAccount] = useState(false);
   const [slipUploaded, setSlipUploaded] = useState(false);
@@ -112,24 +114,24 @@ export function PaymentPromptPay({
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success/10 mb-4">
             <CheckCircle2 className="h-8 w-8 text-success" />
           </div>
-          <h1 className="text-2xl font-bold">Booking created!</h1>
+          <h1 className="text-2xl font-bold">{t('booking.bookingCreated')}</h1>
           <p className="mt-2 text-ink-muted text-sm">
-            Hi {contactName}, complete payment to confirm your ride.
+            {t('booking.completionMessage', { name: contactName })}
           </p>
           <p className="mt-1 text-xs text-ink-muted">
-            Booking #{bookingId.slice(0, 8).toUpperCase()}
+            {t('booking.bookingNumber', { id: bookingId.slice(0, 8).toUpperCase() })}
           </p>
         </div>
 
         {/* Payment breakdown — clear split between now vs track */}
         {rentalAmount > 0 && (
           <Card padding="md" className="mb-6">
-            <p className="text-xs font-bold uppercase tracking-wider text-ink-muted mb-3">Payment breakdown</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-ink-muted mb-3">{t('booking.reviewBooking')}</p>
             <div className="space-y-2">
               <div className="flex items-center justify-between p-3 rounded-lg bg-accent/5 border border-accent/20">
                 <div className="flex items-center gap-2">
                   <QrCode className="h-4 w-4 text-accent" />
-                  <span className="text-sm font-semibold text-ink">Pay now via PromptPay</span>
+                  <span className="text-sm font-semibold text-ink">{t('booking.scanToPay')}</span>
                 </div>
                 <span className="text-sm font-bold text-accent">{amount.toLocaleString()} THB</span>
               </div>
@@ -137,8 +139,8 @@ export function PaymentPromptPay({
                 <div className="flex items-center gap-2">
                   <Bike className="h-4 w-4 text-sky" />
                   <div>
-                    <span className="text-sm font-semibold text-ink">Bike rental — pay at track</span>
-                    <p className="text-xs text-ink-muted">Paid to HHBL on ride day</p>
+                    <span className="text-sm font-semibold text-ink">{t('booking.bikeRentalPayment', { amount: rentalAmount.toLocaleString() }).split(' THB')[0]}</span>
+                    <p className="text-xs text-ink-muted">{t('booking.paidSeparatelyAtTrack')}</p>
                   </div>
                 </div>
                 <span className="text-sm font-bold text-sky">{rentalAmount.toLocaleString()} THB</span>
@@ -157,14 +159,14 @@ export function PaymentPromptPay({
         {/* QR Code */}
         <Card padding="lg" className="text-center mb-6">
           <Badge variant="accent" className="mb-4">
-            Scan to Pay
+            {t('payment.scanToPayQR')}
           </Badge>
           <div className="bg-white rounded-2xl p-4 inline-block mx-auto mb-4 shadow-sm">
             {qrUrl ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={qrUrl}
-                alt="PromptPay QR Code"
+                alt={t('payment.qrCodeLabel')}
                 width={280}
                 height={280}
                 className="mx-auto"
@@ -176,7 +178,7 @@ export function PaymentPromptPay({
                   QR code failed to load
                 </p>
                 <p className="text-xs text-ink-muted text-center">
-                  Use the account details below to transfer manually via your banking app.
+                  {t('booking.openYourBankingApp')}
                 </p>
                 <button
                   onClick={() => {
@@ -210,21 +212,21 @@ export function PaymentPromptPay({
               {copied ? (
                 <>
                   <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                  Copied!
+                  {t('payment.amount', { amount: 'Copied' }).replace('{amount} THB', 'Copied')}
                 </>
               ) : (
                 <>
                   <Copy className="h-3.5 w-3.5" />
-                  Copy amount
+                  {t('booking.copyAmount')}
                 </>
               )}
             </button>
           </div>
 
           <div className="mt-4 pt-4 border-t border-sand/60 text-xs text-ink-muted space-y-2">
-            <p>Open your banking app, scan this QR, and the amount will auto-fill.</p>
+            <p>{t('booking.openYourBankingApp')}</p>
             <div className="bg-sand/20 rounded-lg p-3 text-left">
-              <p className="text-xs uppercase text-ink-muted/60 tracking-wide mb-1">Transfer to</p>
+              <p className="text-xs uppercase text-ink-muted/60 tracking-wide mb-1">{t('booking.transferTo')}</p>
               <p className="text-sm font-semibold text-ink">En-Joy Speed — PromptPay</p>
               <div className="flex items-center justify-between mt-1">
                 <p className="font-mono text-sm text-ink-light">{promptPayTarget}</p>
@@ -235,12 +237,12 @@ export function PaymentPromptPay({
                   {copiedAccount ? (
                     <>
                       <CheckCircle2 className="h-3 w-3 text-success" />
-                      Copied
+                      {t('booking.copyAccount')}
                     </>
                   ) : (
                     <>
                       <Copy className="h-3 w-3" />
-                      Copy
+                      {t('booking.copyAccount')}
                     </>
                   )}
                 </button>
@@ -252,9 +254,9 @@ export function PaymentPromptPay({
         {/* Split payment reminder — only show if there's a rental */}
         {rentalAmount > 0 && (
           <div className="p-4 rounded-xl bg-sky/5 border border-sky/20 mb-6">
-            <p className="text-sm font-medium text-ink mb-1">Payment schedule</p>
+            <p className="text-sm font-medium text-ink mb-1">{t('payment.paymentCountdown')}</p>
             <p className="text-xs text-ink-muted">
-              After paying <span className="font-semibold text-ink">{amount.toLocaleString()} THB</span> now, you'll pay <span className="font-semibold text-ink">{rentalAmount.toLocaleString()} THB</span> for bike rental at the track on ride day.
+              {t('payment.paymentHeld')}
             </p>
           </div>
         )}
@@ -267,12 +269,12 @@ export function PaymentPromptPay({
             <Clock className={`h-5 w-5 flex-shrink-0 ${timerExpired ? "text-error" : timerUrgent ? "text-warning" : "text-ink-muted"}`} />
             <div className="flex-1">
               <p className={`text-sm font-bold ${timerExpired ? "text-error" : "text-ink"}`}>
-                {timerExpired ? "Payment window expired" : timerUrgent ? "Hurry — time is running out!" : "Complete payment to confirm"}
+                {timerExpired ? t('booking.timeExpired') : timerUrgent ? "Hurry — time is running out!" : t('payment.paymentCountdown')}
               </p>
               <p className="text-xs text-ink-muted mt-0.5">
                 {timerExpired
-                  ? "Your slot may have been released."
-                  : "Your booking is held while you complete payment."}
+                  ? t('booking.yourSlotMayHaveBeenReleased')
+                  : t('payment.paymentHeld')}
               </p>
             </div>
             {!timerExpired && (
@@ -301,11 +303,11 @@ export function PaymentPromptPay({
                   className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 border-ink/15 text-ink text-sm font-semibold hover:bg-sand/30 transition-colors"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  Contact support
+                  {t('payment.contactUS')}
                 </a>
               </div>
               <p className="text-xs text-ink-muted">
-                Already paid? No worries — contact us on LINE and we&apos;ll confirm your booking manually.
+                Already paid? No worries — contact us on LINE and we'll confirm your booking manually.
               </p>
             </div>
           )}
@@ -316,11 +318,11 @@ export function PaymentPromptPay({
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Upload className="h-4 w-4 text-ink-muted" />
-              <span className="text-sm font-semibold text-ink">Upload payment slip</span>
+              <span className="text-sm font-semibold text-ink">{t('payment.uploadSlip')}</span>
             </div>
-            <span className="text-xs font-medium text-ink-muted/70 bg-sand/30 px-2 py-0.5 rounded-full">Optional</span>
+            <span className="text-xs font-medium text-ink-muted/70 bg-sand/30 px-2 py-0.5 rounded-full">{t('booking.optional')}</span>
           </div>
-          <p className="text-xs text-ink-muted mb-3">Speeds up confirmation — not required.</p>
+          <p className="text-xs text-ink-muted mb-3">{t('payment.uploadDesc')}</p>
           <SlipUpload
             bookingId={bookingId}
             onUploaded={handleSlipUploaded}
@@ -330,7 +332,7 @@ export function PaymentPromptPay({
         {/* Rental reminder for no-rental bookings */}
         {rentalAmount === 0 && (
           <div className="p-3 rounded-xl bg-success/5 border border-success/20 mb-6">
-            <p className="text-sm font-medium text-ink">No bike rental needed</p>
+            <p className="text-sm font-medium text-ink">{t('booking.noRentalNeeded')}</p>
             <p className="text-xs text-ink-muted mt-0.5">
               You&apos;re bringing your own bike. Total cost is {amount.toLocaleString()} THB.
             </p>
@@ -343,13 +345,13 @@ export function PaymentPromptPay({
             <Gift className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-sm font-medium text-ink">
-                Your Starter Kit is included
+                {t('booking.yourStarterKitIsIncluded')}
               </p>
               <p className="text-xs text-ink-muted mt-0.5">
                 {STARTER_KIT.join(" · ")}
               </p>
               <p className="text-xs text-ink-muted">
-                Yours to keep after the ride.
+                {t('booking.yoursToKeepAfterRide')}
               </p>
             </div>
           </div>
@@ -357,24 +359,24 @@ export function PaymentPromptPay({
 
         {/* Next steps */}
         <Card padding="md">
-          <h3 className="font-semibold text-sm mb-3">What happens next</h3>
+          <h3 className="font-semibold text-sm mb-3">{t('payment.nextSteps')}</h3>
           <div className="space-y-3">
             {[
               {
                 step: "1",
-                text: "We verify your payment (usually within 15 min)",
+                text: t('payment.step1'),
               },
               {
                 step: "2",
-                text: `You'll get a confirmation via LINE (${LINE_OA}). Don't have LINE? We'll email you too.`,
+                text: t('payment.step2', { line: LINE_OA }),
               },
               {
                 step: "3",
-                text: "We send your ride prep guide 24 hours before",
+                text: t('payment.step3'),
               },
               {
                 step: "4",
-                text: "Show up, ride, and enjoy!",
+                text: t('payment.step4'),
               },
             ].map((item) => (
               <div key={item.step} className="flex items-start gap-3">
@@ -394,7 +396,7 @@ export function PaymentPromptPay({
               <MessageCircle className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-ink">Get updates on LINE</p>
+              <p className="text-sm font-semibold text-ink">{t('payment.nextSteps')}</p>
               <p className="text-xs text-ink-muted mt-0.5">
                 Follow @691gsvky for booking confirmations, ride-day reminders, weather alerts, and instant support.
               </p>

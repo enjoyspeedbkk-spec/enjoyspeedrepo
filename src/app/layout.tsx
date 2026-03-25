@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import "@/styles/globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ToastProvider } from "@/components/ui/Toast";
+import { LanguageProvider } from "@/lib/i18n/LanguageContext";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import type { Locale } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "En-Joy Speed | Premium Guided Cycling Bangkok",
@@ -27,11 +31,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  const locale = (headersList.get("x-locale") ?? "en") as Locale;
+
   return (
     <html lang="en">
       <head>
@@ -49,9 +56,12 @@ export default function RootLayout({
       </head>
       <body className="bg-cream text-ink antialiased">
         <ToastProvider>
-          <Navbar />
-          <main className="min-h-screen">{children}</main>
-          <Footer />
+          <LanguageProvider initialLocale={locale}>
+            <Navbar />
+            <main className="min-h-screen">{children}</main>
+            <Footer />
+            <LanguageSwitcher />
+          </LanguageProvider>
         </ToastProvider>
       </body>
     </html>

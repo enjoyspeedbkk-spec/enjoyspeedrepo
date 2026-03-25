@@ -3,8 +3,10 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ChevronRight, Sparkles } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export function CTASection() {
+  const { t } = useLanguage();
   return (
     <section className="py-24 lg:py-32 bg-ink relative overflow-hidden">
       {/* Decorative elements */}
@@ -23,16 +25,15 @@ export function CTASection() {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/15 border border-accent/20 mb-8">
             <Sparkles className="h-3.5 w-3.5 text-accent" />
             <span className="text-sm font-medium text-accent">
-              Sessions fill up fast
+              {t('cta.sessionsFillUpFast')}
             </span>
           </div>
 
           <h2 className="text-cream text-balance">
-            Ready to ride?
+            {t('cta.readyToRide')}
           </h2>
           <p className="mt-4 text-lg text-cream/50 max-w-xl mx-auto text-balance">
-            Book your premium guided cycling session today. Limited spots per
-            session, guaranteed personal attention.
+            {t('cta.bookingDescription')}
           </p>
 
           <div className="mt-10 flex items-center justify-center">
@@ -40,14 +41,13 @@ export function CTASection() {
               href="/booking"
               className="group inline-flex items-center gap-2 rounded-full bg-accent px-8 py-4 text-base font-bold text-white shadow-lg hover:shadow-xl hover:bg-accent-light transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
             >
-              Book Your Ride
+              {t('cta.bookYourRide')}
               <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
 
           <p className="mt-8 text-sm text-cream/30">
-            Book at least 24 hours in advance. Confirmation and meetup details
-            sent via LINE.
+            {t('cta.bookingNote')}
           </p>
         </motion.div>
       </div>

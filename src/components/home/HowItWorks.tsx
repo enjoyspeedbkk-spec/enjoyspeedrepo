@@ -10,60 +10,57 @@ import {
   Heart,
 } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const steps = [
   {
     number: "01",
     icon: CalendarDays,
-    title: "Pick your ride",
-    description:
-      "Choose your date, time slot, and group size. See pricing instantly. Book at least 24 hours ahead.",
+    titleKey: "howItWorks.step1.title",
+    descriptionKey: "howItWorks.step1.description",
   },
   {
     number: "02",
     icon: CreditCard,
-    title: "Pay seamlessly",
-    description:
-      "Scan the PromptPay QR with your amount auto-calculated. No manual inputs, no friction.",
+    titleKey: "howItWorks.step2.title",
+    descriptionKey: "howItWorks.step2.description",
   },
   {
     number: "03",
     icon: MessageCircle,
-    title: "Get prepped via LINE",
-    description:
-      "Receive your meetup location, ride details, and preparation tips. Complete your rider profile.",
+    titleKey: "howItWorks.step3.title",
+    descriptionKey: "howItWorks.step3.description",
   },
   {
     number: "04",
     icon: Bike,
-    title: "Ride with confidence",
-    description:
-      "Your Athlete Leader guides the pace. Hero riders keep you safe. Just pedal and enjoy.",
+    titleKey: "howItWorks.step4.title",
+    descriptionKey: "howItWorks.step4.description",
   },
   {
     number: "05",
     icon: Camera,
-    title: "Capture the moment",
-    description:
-      "Professional photography included. Get your shots from the ride delivered after the session.",
+    titleKey: "howItWorks.step5.title",
+    descriptionKey: "howItWorks.step5.description",
   },
   {
     number: "06",
     icon: Heart,
-    title: "Recover & relax",
-    description:
-      "Cold towels, electrolyte drinks, and recovery refreshments. End the ride feeling taken care of.",
+    titleKey: "howItWorks.step6.title",
+    descriptionKey: "howItWorks.step6.description",
   },
 ];
 
 export function HowItWorks() {
+  const { t } = useLanguage();
+
   return (
     <section className="py-24 lg:py-32 bg-surface">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <SectionHeading
-          badge="The Experience"
-          title="From booking to recovery, we handle everything"
-          subtitle="Six steps. Zero stress. Every detail curated so you can focus on what matters: the ride."
+          badge={t('howItWorks.theExperience')}
+          title={t('howItWorks.fromBookingToRecovery')}
+          subtitle={t('howItWorks.subtitle')}
         />
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -87,9 +84,9 @@ export function HowItWorks() {
               </div>
 
               {/* Content */}
-              <h3 className="text-lg font-bold text-ink">{step.title}</h3>
+              <h3 className="text-lg font-bold text-ink">{t(step.titleKey)}</h3>
               <p className="mt-2 text-sm text-ink-muted leading-relaxed">
-                {step.description}
+                {t(step.descriptionKey)}
               </p>
             </motion.div>
           ))}

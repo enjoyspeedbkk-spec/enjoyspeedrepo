@@ -7,11 +7,12 @@ import Link from "next/link";
 import { ChevronRight, Play, Pause, Shield, Camera, Users, Volume2, VolumeX, SkipForward } from "lucide-react";
 import { useSiteImage } from "@/lib/site-images-context";
 import { useToast } from "@/components/ui/Toast";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const stats = [
-  { icon: Shield, label: "Athlete-Led & Safe" },
-  { icon: Camera, label: "Photography Included" },
-  { icon: Users, label: "Small Groups Only" },
+  { icon: Shield, i18nKey: "hero.athleteLed" },
+  { icon: Camera, i18nKey: "hero.photographyIncluded" },
+  { icon: Users, i18nKey: "hero.smallGroupsOnly" },
 ];
 
 const SUPABASE_VIDEO_BASE =
@@ -44,6 +45,7 @@ const HERO_VIDEOS = [
 ];
 
 export function Hero() {
+  const { t } = useLanguage();
   const heroStill = useSiteImage("hero-still", "/images/hero-golden-hour-still.jpg");
   const toast = useToast();
   const [videoPlaying, setVideoPlaying] = useState(false);
@@ -295,7 +297,7 @@ export function Hero() {
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                 <span className="text-sm font-medium text-ink-muted">
-                  Limited spots available
+                  {t('hero.tagline')}
                 </span>
                 <span className="text-xs text-accent font-medium group-hover:translate-x-0.5 transition-transform">
                   →
@@ -317,9 +319,7 @@ export function Hero() {
               transition={{ delay: 0.3 }}
               className="mt-6 text-lg text-ink-muted max-w-lg"
             >
-              Premium guided cycling on Bangkok&apos;s Skylane. Led by Athlete
-              Leaders, supported by Hero riders, with photography, safety, and
-              post-ride recovery all handled for you.
+              {t('hero.description')}
             </motion.p>
 
             <motion.div
@@ -332,7 +332,7 @@ export function Hero() {
                 href="/booking"
                 className="group inline-flex items-center gap-2 rounded-full bg-accent px-7 py-3.5 text-base font-semibold text-white shadow-lg hover:shadow-xl hover:bg-accent-dark transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
               >
-                Book Your Ride
+                {t('hero.ctaMain')}
                 <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </motion.div>
@@ -344,10 +344,10 @@ export function Hero() {
               className="mt-10 flex flex-wrap gap-6"
             >
               {stats.map((stat) => (
-                <div key={stat.label} className="flex items-center gap-2">
+                <div key={stat.i18nKey} className="flex items-center gap-2">
                   <stat.icon className="h-4 w-4 text-accent" />
                   <span className="text-sm font-medium text-ink-muted">
-                    {stat.label}
+                    {t(stat.i18nKey)}
                   </span>
                 </div>
               ))}
@@ -440,7 +440,7 @@ export function Hero() {
                       <Play className="h-8 w-8 text-accent ml-1" />
                     </motion.div>
                     <span className="absolute bottom-24 left-1/2 -translate-x-1/2 text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm whitespace-nowrap">
-                      Watch the ride experience
+                      {t('hero.watchVideoPrompt')}
                     </span>
                   </motion.button>
                 )}
@@ -501,7 +501,7 @@ export function Hero() {
                         onClick={handleCloseVideo}
                         className="px-3 py-1.5 rounded-full bg-black/50 text-white text-xs font-medium hover:bg-black/70 transition-colors backdrop-blur-sm"
                       >
-                        Close
+                        {t('common.closeModal')}
                       </button>
                     </div>
                   </motion.div>
@@ -522,27 +522,27 @@ export function Hero() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs font-medium text-ink-muted uppercase tracking-wider">
-                          Next Available
+                          {t('hero.nextAvailable')}
                         </p>
                         <p className="text-base font-bold text-navy mt-0.5">
-                          Golden Hour Ride
+                          {t('hero.goldenHourRide')}
                         </p>
                         <p className="text-sm text-ink-muted">
-                          16:45 — 18:45 &middot; Staff Pick
+                          16:45 — 18:45 &middot; {t('hero.staffPick')}
                         </p>
                       </div>
                       <div className="flex flex-col items-end">
                         <span className="text-xs font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full">
-                          Small groups
+                          {t('hero.smallGroupsOnly')}
                         </span>
                         <span className="text-lg font-bold text-navy mt-1">
-                          From 2,000
+                          {t('hero.from')} 2,000
                           <span className="text-xs font-normal text-ink-muted">
                             {" "}THB
                           </span>
                         </span>
                         <span className="text-xs text-ink-muted mt-1">
-                          Bike rental separate
+                          {t('packages.bikeRental')}
                         </span>
                       </div>
                     </div>

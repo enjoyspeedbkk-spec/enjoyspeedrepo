@@ -8,6 +8,7 @@ import { signInWithGoogle } from "@/lib/actions/auth";
 import { sendEmailOtp, verifyEmailOtp } from "@/lib/actions/email-auth";
 import { createBrowserClient } from "@supabase/ssr";
 import { Mail, AlertCircle, Info, Loader2, RefreshCw } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 // =============================================
 // Email-First Auth Form
@@ -16,6 +17,7 @@ import { Mail, AlertCircle, Info, Loader2, RefreshCw } from "lucide-react";
 // =============================================
 
 export function AuthForm() {
+  const { t } = useLanguage();
   const [step, setStep] = useState<"email" | "otp">("email");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -139,9 +141,9 @@ export function AuthForm() {
     <section className="min-h-screen pt-24 pb-16 bg-cream">
       <div className="mx-auto max-w-md px-6">
         <div className="text-center mb-8">
-          <Badge variant="accent">Welcome</Badge>
+          <Badge variant="accent">{t('auth.welcome')}</Badge>
           <h1 className="mt-4 text-3xl font-bold">
-            {step === "email" ? "Sign in to book" : "Enter your code"}
+            {step === "email" ? t('auth.signInToBook') : t('common.error')}
           </h1>
           <p className="mt-2 text-ink-muted text-sm">
             {step === "email"
@@ -156,14 +158,14 @@ export function AuthForm() {
               {/* Name (optional) */}
               <div>
                 <label htmlFor="auth-name" className="block text-sm font-medium text-ink mb-1.5">
-                  Your Name
+                  {t('auth.yourName')}
                 </label>
                 <input
                   id="auth-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="What should we call you?"
+                  placeholder={t('auth.yourName')}
                   autoComplete="name"
                   className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/70 focus:border-ink focus:outline-none transition-colors"
                 />
@@ -172,7 +174,7 @@ export function AuthForm() {
               {/* Email */}
               <div>
                 <label htmlFor="auth-email" className="block text-sm font-medium text-ink mb-1.5">
-                  Email Address
+                  {t('auth.email')}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" />
@@ -181,7 +183,7 @@ export function AuthForm() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
+                    placeholder={t('auth.emailPlaceholder')}
                     required
                     autoComplete="email"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/70 focus:border-ink focus:outline-none transition-colors"
@@ -204,7 +206,7 @@ export function AuthForm() {
                 loading={loading}
                 disabled={!isValidEmail}
               >
-                Send Verification Code
+                {t('common.continue')}
               </Button>
             </form>
           ) : (
@@ -212,7 +214,7 @@ export function AuthForm() {
               {/* 6-digit OTP boxes */}
               <div>
                 <label className="block text-sm font-medium text-ink mb-3 text-center">
-                  Verification Code
+                  {t('auth.email')}
                 </label>
                 <div className="flex justify-center gap-2">
                   {otp.map((digit, i) => (
@@ -261,7 +263,7 @@ export function AuthForm() {
                   }}
                   className="text-ink-muted hover:text-ink transition-colors"
                 >
-                  Change email
+                  {t('common.back')}
                 </button>
                 <button
                   type="button"
@@ -286,7 +288,7 @@ export function AuthForm() {
               <div className="flex items-center gap-3 my-6">
                 <div className="flex-1 h-px bg-sand/60" />
                 <span className="text-xs text-ink-muted font-medium">
-                  or continue with
+                  {t('auth.orUseEmail')}
                 </span>
                 <div className="flex-1 h-px bg-sand/60" />
               </div>
@@ -319,9 +321,7 @@ export function AuthForm() {
               </form>
 
               <p className="mt-4 text-xs text-ink-muted text-center">
-                Email verification is our primary sign-in method.
-                <br />
-                Google is available as a backup option.
+                {t('auth.signInDescription')}
               </p>
             </>
           )}

@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 type FooterLink = { label: string; href: string; external?: boolean };
 
@@ -41,6 +44,7 @@ function FooterLink({ link }: { link: FooterLink }) {
 }
 
 export function Footer() {
+  const { t } = useLanguage();
   return (
     <footer className="bg-ink text-cream/70">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -51,7 +55,7 @@ export function Footer() {
             <div className="flex items-center gap-2.5 mb-4">
               <Image
                 src="/images/logo.jpg"
-                alt="En-Joy Speed"
+                alt={t('common.appName')}
                 width={40}
                 height={40}
                 className="rounded-lg brightness-110"
@@ -66,15 +70,14 @@ export function Footer() {
               </div>
             </div>
             <p className="text-sm leading-relaxed text-cream/70 max-w-xs">
-              Let us handle the speed. You enjoy the ride. Premium guided
-              cycling experiences on Bangkok&apos;s Skylane.
+              {t('footer.slogan')}
             </p>
           </div>
 
           {/* Rides */}
           <div>
             <h4 className="font-heading text-sm font-semibold text-cream mb-4 uppercase tracking-wider">
-              Rides
+              {t('footer.rides')}
             </h4>
             <ul className="space-y-2.5">
               {footerLinks.rides.map((link) => (
@@ -88,7 +91,7 @@ export function Footer() {
           {/* Company */}
           <div>
             <h4 className="font-heading text-sm font-semibold text-cream mb-4 uppercase tracking-wider">
-              Company
+              {t('footer.company')}
             </h4>
             <ul className="space-y-2.5">
               {footerLinks.company.map((link) => (
@@ -102,7 +105,7 @@ export function Footer() {
           {/* Support */}
           <div>
             <h4 className="font-heading text-sm font-semibold text-cream mb-4 uppercase tracking-wider">
-              Support
+              {t('footer.support')}
             </h4>
             <ul className="space-y-2.5">
               {footerLinks.support.map((link) => (
@@ -124,13 +127,13 @@ export function Footer() {
               href="/privacy"
               className="text-xs text-cream/50 hover:text-cream transition-colors"
             >
-              Privacy
+              {t('footer.privacy')}
             </Link>
             <Link
               href="/terms"
               className="text-xs text-cream/50 hover:text-cream transition-colors"
             >
-              Terms
+              {t('footer.terms')}
             </Link>
           </div>
         </div>
