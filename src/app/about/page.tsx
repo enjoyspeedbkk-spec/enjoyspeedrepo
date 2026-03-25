@@ -264,7 +264,7 @@ export default async function AboutPage() {
             <h2 className="mt-4">{t('about.yourSafetyIsNonNegotiable')}</h2>
           </div>
           <div className="bg-cream rounded-2xl border border-sand/60 p-8 space-y-4">
-            {((t('about.safetyRules') as unknown) as string[]).map((rule, i) => (
+            {((dict.about?.safetyRules as string[]) ?? []).map((rule, i) => (
               <div key={i} className="flex gap-3">
                 <Shield className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
                 <p className="text-base text-ink-light leading-relaxed">{rule}</p>
