@@ -193,7 +193,7 @@ export function Navbar() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={user.avatarUrl}
-                        alt=""
+                        alt={user.fullName || "User avatar"}
                         className="w-8 h-8 rounded-full object-cover ring-2 ring-sand/60"
                       />
                     ) : (
@@ -322,7 +322,7 @@ export function Navbar() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={user.avatarUrl}
-                        alt=""
+                        alt={user.fullName || "User avatar"}
                         className="w-10 h-10 rounded-full object-cover"
                       />
                     ) : (

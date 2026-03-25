@@ -242,7 +242,7 @@ export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Your ride experience, suggestions, or a message for your leader..."
                 rows={4}
-                className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/50 focus:border-ink focus:outline-none transition-colors resize-none"
+                className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/70 focus:border-ink focus:outline-none transition-colors resize-none"
               />
 
               {error && (

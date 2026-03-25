@@ -113,7 +113,7 @@ export function AdminPayments({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name or phone..."
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl border-2 border-sand/60 bg-surface text-sm placeholder:text-ink-muted/50 focus:border-ink focus:outline-none transition-colors"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border-2 border-sand/60 bg-surface text-sm placeholder:text-ink-muted/70 focus:border-ink focus:outline-none transition-colors"
           />
         </div>
         <div className="flex gap-1.5">

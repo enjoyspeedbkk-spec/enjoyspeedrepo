@@ -29,6 +29,7 @@ export function Card({
         rounded-2xl bg-surface border border-sand/60
         shadow-sm
         ${hover ? "hover:shadow-lg hover:border-sand hover:-translate-y-1 cursor-pointer transition-all duration-300 ease-out" : ""}
+        ${onClick ? "cursor-pointer focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none" : ""}
         ${paddings[padding]}
         ${className}
       `}

@@ -841,7 +841,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                             updateRider(activeRiderIndex, "name", e.target.value)
                           }
                           placeholder="e.g. Somchai Jaidee"
-                          className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/50 focus:border-ink focus:outline-none transition-colors"
+                          className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/70 focus:border-ink focus:outline-none transition-colors"
                         />
                       </div>
                       <div>
@@ -859,7 +859,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                             )
                           }
                           placeholder="What should we call you?"
-                          className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/50 focus:border-ink focus:outline-none transition-colors"
+                          className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/70 focus:border-ink focus:outline-none transition-colors"
                         />
                       </div>
                     </div>
@@ -972,7 +972,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                               )
                             }
                             placeholder="e.g. 170"
-                            className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/50 focus:border-ink focus:outline-none transition-colors"
+                            className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/70 focus:border-ink focus:outline-none transition-colors"
                           />
                         </div>
                         <div>
@@ -1254,7 +1254,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         value={contactName}
                         onChange={(e) => setContactName(e.target.value)}
                         placeholder="Primary contact for this booking"
-                        className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/50 focus:border-ink focus:outline-none transition-colors"
+                        className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/70 focus:border-ink focus:outline-none transition-colors"
                       />
                     </div>
                     <div className="grid sm:grid-cols-2 gap-4">
@@ -1267,7 +1267,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                           value={contactEmail}
                           onChange={(e) => setContactEmail(e.target.value)}
                           placeholder="your@email.com"
-                          className={`w-full px-4 py-3 rounded-xl border-2 bg-surface text-ink placeholder:text-ink-muted/50 focus:outline-none transition-colors ${
+                          className={`w-full px-4 py-3 rounded-xl border-2 bg-surface text-ink placeholder:text-ink-muted/70 focus:outline-none transition-colors ${
                             contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)
                               ? "border-error/40 focus:border-error"
                               : "border-sand/60 focus:border-ink"
@@ -1294,7 +1294,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                             setContactPhone(formatted);
                           }}
                           placeholder="08X-XXX-XXXX"
-                          className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/50 focus:border-ink focus:outline-none transition-colors"
+                          className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/70 focus:border-ink focus:outline-none transition-colors"
                         />
                       </div>
                     </div>
