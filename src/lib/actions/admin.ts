@@ -660,7 +660,7 @@ export async function deleteBikeRental(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   const { admin } = await requireAdmin();
-  const { error } = await admin.from("bike_rentals").delete().eq("id", id);
+  const { error } = await admin.from("bike_rentals_config").delete().eq("id", id);
   if (error) return { success: false, error: error.message };
   revalidatePath("/admin/settings");
   return { success: true };
@@ -670,7 +670,7 @@ export async function deleteStarterKitItem(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   const { admin } = await requireAdmin();
-  const { error } = await admin.from("starter_kit").delete().eq("id", id);
+  const { error } = await admin.from("starter_kit_config").delete().eq("id", id);
   if (error) return { success: false, error: error.message };
   revalidatePath("/admin/settings");
   return { success: true };
@@ -680,7 +680,7 @@ export async function deleteStaffMember(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   const { admin } = await requireAdmin();
-  const { error } = await admin.from("staff").delete().eq("id", id);
+  const { error } = await admin.from("staff_members").delete().eq("id", id);
   if (error) return { success: false, error: error.message };
   revalidatePath("/admin/settings");
   return { success: true };
