@@ -1,11 +1,97 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verifyPayment } from "@/lib/actions/admin";
 
 interface UploadResult {
   success: boolean;
   slipUrl?: string;
   error?: string;
+  /** "verified" = auto-verified via slip API, "pending" = uploaded but needs manual review */
+  verification?: "verified" | "pending" | "failed";
+}
+
+// ── EasySlip API integration ──────────────────────────
+// Verifies Thai bank transfer slips by reading the embedded QR code.
+// Sign up at https://developer.easyslip.com/ to get an API key.
+// Set EASYSLIP_API_KEY in your environment variables.
+const EASYSLIP_API_KEY = process.env.EASYSLIP_API_KEY || "";
+const EASYSLIP_ENDPOINT = "https://developer.easyslip.com/api/v1/verify";
+
+interface EasySlipResponse {
+  status: number;
+  data?: {
+    transactionId?: string;
+    date?: string;
+    amount?: number;
+    sender?: { name?: string };
+    receiver?: {
+      name?: string;
+      phone?: string;
+      bank?: string;
+      accountName?: string;
+    };
+  };
+}
+
+/**
+ * Verify a slip image against the EasySlip API.
+ * Returns the parsed transaction data, or null if verification fails.
+ */
+async function verifySlipWithEasySlip(
+  base64Image: string,
+  expectedAmount: number
+): Promise<{ verified: boolean; transactionId?: string; amount?: number; error?: string }> {
+  if (!EASYSLIP_API_KEY) {
+    console.log("[SlipVerify] No EASYSLIP_API_KEY configured — skipping auto-verification");
+    return { verified: false, error: "no_api_key" };
+  }
+
+  try {
+    const res = await fetch(EASYSLIP_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${EASYSLIP_API_KEY}`,
+      },
+      body: JSON.stringify({ image: base64Image }),
+    });
+
+    if (!res.ok) {
+      console.error("[SlipVerify] EasySlip API error:", res.status, await res.text());
+      return { verified: false, error: "api_error" };
+    }
+
+    const result: EasySlipResponse = await res.json();
+
+    if (result.status !== 200 || !result.data) {
+      console.log("[SlipVerify] Slip could not be read:", result);
+      return { verified: false, error: "unreadable" };
+    }
+
+    const slipAmount = result.data.amount || 0;
+
+    // Check if amount matches (allow ±1 THB tolerance for rounding)
+    if (Math.abs(slipAmount - expectedAmount) > 1) {
+      console.log(`[SlipVerify] Amount mismatch: slip=${slipAmount}, expected=${expectedAmount}`);
+      return {
+        verified: false,
+        amount: slipAmount,
+        transactionId: result.data.transactionId,
+        error: "amount_mismatch",
+      };
+    }
+
+    console.log(`[SlipVerify] ✅ Verified: ${slipAmount} THB, txn=${result.data.transactionId}`);
+    return {
+      verified: true,
+      amount: slipAmount,
+      transactionId: result.data.transactionId,
+    };
+  } catch (err) {
+    console.error("[SlipVerify] Request failed:", err);
+    return { verified: false, error: "network_error" };
+  }
 }
 
 /**
@@ -67,29 +153,44 @@ export async function uploadPaymentSlip(
 
     const slipUrl = urlData?.publicUrl || uploadData?.path || fileName;
 
-    // 6. Update the payment record
-    const { error: updateError } = await admin
+    // 6. Update the payment record with slip URL
+    const { data: payment, error: updateError } = await admin
       .from("payments")
       .update({
         slip_url: slipUrl,
         slip_uploaded_at: new Date().toISOString(),
       })
-      .eq("booking_id", bookingId);
+      .eq("booking_id", bookingId)
+      .select("id, amount")
+      .single();
 
     if (updateError) {
       console.error("Payment update error:", updateError);
-      // Non-fatal — file is uploaded, admin can still see it
     }
-
-    // 7. Update booking status to indicate slip was uploaded
-    await admin
-      .from("bookings")
-      .update({ status: "pending" }) // Keep as pending until admin verifies
-      .eq("id", bookingId);
 
     console.log(`📎 Payment slip uploaded for booking ${bookingId}: ${slipUrl}`);
 
-    return { success: true, slipUrl };
+    // 7. Try auto-verification via EasySlip API
+    const expectedAmount = payment?.amount || 0;
+    const slipCheck = await verifySlipWithEasySlip(base64Data, expectedAmount);
+
+    if (slipCheck.verified && payment?.id) {
+      // Slip verified! Auto-confirm the payment + booking (same flow as admin verify)
+      console.log(`✅ Auto-verifying payment for booking ${bookingId}`);
+      const verifyResult = await verifyPayment(payment.id, bookingId);
+
+      if (verifyResult.success) {
+        return { success: true, slipUrl, verification: "verified" };
+      }
+      // If verify action failed, fall through to pending
+    }
+
+    // Not auto-verified — keep as pending for manual admin review
+    return {
+      success: true,
+      slipUrl,
+      verification: slipCheck.error === "no_api_key" ? "pending" : "pending",
+    };
   } catch (err) {
     console.error("Slip upload error:", err);
     return { success: false, error: "Something went wrong. Please try again." };

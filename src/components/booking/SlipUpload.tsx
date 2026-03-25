@@ -16,7 +16,7 @@ import { uploadPaymentSlip } from "@/lib/actions/slip-upload";
 
 interface SlipUploadProps {
   bookingId: string;
-  onUploaded?: (slipUrl: string) => void;
+  onUploaded?: (slipUrl: string, verification?: "verified" | "pending" | "failed") => void;
 }
 
 export function SlipUpload({ bookingId, onUploaded }: SlipUploadProps) {
@@ -24,6 +24,7 @@ export function SlipUpload({ bookingId, onUploaded }: SlipUploadProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
+  const [verification, setVerification] = useState<"verified" | "pending" | "failed" | null>(null);
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -74,7 +75,8 @@ export function SlipUpload({ bookingId, onUploaded }: SlipUploadProps) {
 
       if (result.success) {
         setUploaded(true);
-        onUploaded?.(result.slipUrl || "");
+        setVerification(result.verification || "pending");
+        onUploaded?.(result.slipUrl || "", result.verification);
       } else {
         setError(result.error || "Upload failed. Please try again.");
       }
@@ -95,18 +97,34 @@ export function SlipUpload({ bookingId, onUploaded }: SlipUploadProps) {
   };
 
   if (uploaded) {
+    const isAutoVerified = verification === "verified";
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="flex items-center gap-3 p-4 rounded-xl bg-success/5 border border-success/20"
+        className={`flex items-center gap-3 p-4 rounded-xl ${
+          isAutoVerified
+            ? "bg-success/10 border border-success/30"
+            : "bg-success/5 border border-success/20"
+        }`}
       >
-        <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0" />
+        <CheckCircle2 className={`h-5 w-5 flex-shrink-0 ${isAutoVerified ? "text-success" : "text-success/70"}`} />
         <div>
-          <p className="text-sm font-medium text-ink">Slip uploaded successfully</p>
-          <p className="text-xs text-ink-muted mt-0.5">
-            Our team will verify your payment within 15 minutes. You&apos;ll get a confirmation via LINE.
-          </p>
+          {isAutoVerified ? (
+            <>
+              <p className="text-sm font-semibold text-success">Payment verified!</p>
+              <p className="text-xs text-ink-muted mt-0.5">
+                Your slip was automatically verified. Booking confirmed — you&apos;ll receive a confirmation shortly.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-medium text-ink">Slip uploaded successfully</p>
+              <p className="text-xs text-ink-muted mt-0.5">
+                We&apos;ll verify your payment shortly. You&apos;ll get a confirmation via email or LINE.
+              </p>
+            </>
+          )}
         </div>
       </motion.div>
     );
