@@ -13,11 +13,15 @@ import {
   ChevronDown,
   Eye,
   Filter,
+  Loader2,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { useToast } from "@/components/ui/Toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { verifyPayment, rejectPayment } from "@/lib/actions/admin";
 import { TIME_SLOTS } from "@/lib/constants";
+import { formatDate } from "@/lib/format";
 
 const STATUS_TABS = [
   { value: "pending", label: "Pending", icon: Clock },
@@ -47,11 +51,21 @@ export function AdminPayments({
   allPayments: any[];
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [tab, setTab] = useState("pending");
   const [searchQuery, setSearchQuery] = useState("");
   const [verifying, setVerifying] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    detail?: string;
+    variant: "danger" | "warning" | "default";
+    confirmLabel: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const displayPayments = tab === "pending" ? pendingPayments : allPayments;
 
@@ -79,18 +93,45 @@ export function AdminPayments({
     const result = await verifyPayment(paymentId, bookingId);
     setVerifying(null);
     if (result.success) {
+      toast.success("Payment verified successfully");
       router.refresh();
+    } else {
+      toast.error("Failed to verify payment. Please try again.");
     }
   };
 
-  const handleReject = async (paymentId: string, bookingId: string) => {
-    if (!confirm("Reject this payment? The booking will revert to pending so the customer can re-submit.")) return;
-    setRejecting(paymentId);
-    const result = await rejectPayment(paymentId, bookingId);
-    setRejecting(null);
-    if (result.success) {
-      router.refresh();
-    }
+  const handleVerifyConfirm = (paymentId: string, bookingId: string, contactName: string, amount: number) => {
+    setConfirmDialog({
+      open: true,
+      title: "Verify this payment?",
+      description: `Confirm ${amount.toLocaleString()} THB from ${contactName}. This will mark the booking as confirmed.`,
+      variant: "default",
+      confirmLabel: "Verify Payment",
+      onConfirm: async () => {
+        await handleVerify(paymentId, bookingId);
+      },
+    });
+  };
+
+  const handleReject = (paymentId: string, bookingId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: "Reject this payment?",
+      description: "The booking will revert to pending so the customer can re-submit their payment.",
+      variant: "danger",
+      confirmLabel: "Reject Payment",
+      onConfirm: async () => {
+        setRejecting(paymentId);
+        const result = await rejectPayment(paymentId, bookingId);
+        setRejecting(null);
+        if (result.success) {
+          toast.success("Payment rejected. Booking reverted to pending.");
+          router.refresh();
+        } else {
+          toast.error("Failed to reject payment. Please try again.");
+        }
+      },
+    });
   };
 
   const pendingCount = pendingPayments.length;
@@ -138,7 +179,7 @@ export function AdminPayments({
               <t.icon className="h-3 w-3" />
               {t.label}
               {t.value === "pending" && pendingCount > 0 && (
-                <span className="ml-1 bg-warning/20 text-warning text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                <span className="ml-1 bg-warning/20 text-warning text-xs px-1.5 py-0.5 rounded-full font-bold">
                   {pendingCount}
                 </span>
               )}
@@ -180,7 +221,7 @@ export function AdminPayments({
                     <p className="font-bold text-lg text-accent leading-none">
                       {payment.amount.toLocaleString()}
                     </p>
-                    <p className="text-[9px] text-ink-muted mt-0.5">THB</p>
+                    <p className="text-xs text-ink-muted mt-0.5">THB</p>
                   </div>
 
                   {/* Details */}
@@ -193,10 +234,7 @@ export function AdminPayments({
                     </div>
                     <p className="text-xs text-ink-muted mt-0.5">
                       {session
-                        ? `${new Date(session.date).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })} · ${slot?.label || session.time_slot_id}`
+                        ? `${formatDate(session.date, "short")} · ${slot?.label || session.time_slot_id}`
                         : ""}{" "}
                       · {booking?.group_type} · {booking?.rider_count} riders · via{" "}
                       {payment.method || "promptpay"}
@@ -215,17 +253,17 @@ export function AdminPayments({
                           disabled={rejecting === payment.id}
                           className="px-3 py-1.5 rounded-lg bg-surface border border-red-300 text-red-600 text-xs font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
                         >
-                          {rejecting === payment.id ? "..." : "✗ Reject"}
+                          {rejecting === payment.id ? <><Loader2 className="h-3 w-3 animate-spin inline mr-1" /> Rejecting…</> : "✗ Reject"}
                         </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleVerify(payment.id, booking.id);
+                            handleVerifyConfirm(payment.id, booking.id, booking?.contact_name || "Unknown", payment.amount);
                           }}
                           disabled={verifying === payment.id}
                           className="px-3 py-1.5 rounded-lg bg-success text-white text-xs font-semibold hover:bg-success/90 transition-colors disabled:opacity-50"
                         >
-                          {verifying === payment.id ? "..." : "✓ Verify"}
+                          {verifying === payment.id ? <><Loader2 className="h-3 w-3 animate-spin inline mr-1" /> Verifying…</> : "✓ Verify"}
                         </button>
                       </>
                     )}
@@ -243,40 +281,27 @@ export function AdminPayments({
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                       <div>
                         <p className="text-ink-muted mb-0.5">Payment ID</p>
-                        <p className="font-mono text-[11px]">
+                        <p className="font-mono text-xs">
                           {payment.id.slice(0, 12)}...
                         </p>
                       </div>
                       <div>
                         <p className="text-ink-muted mb-0.5">Booking ID</p>
-                        <p className="font-mono text-[11px]">
+                        <p className="font-mono text-xs">
                           {booking?.id?.slice(0, 12)}...
                         </p>
                       </div>
                       <div>
                         <p className="text-ink-muted mb-0.5">Created</p>
                         <p>
-                          {new Date(payment.created_at).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })}
+                          {formatDate(payment.created_at, "datetime")}
                         </p>
                       </div>
                       {payment.verified_at && (
                         <div>
                           <p className="text-ink-muted mb-0.5">Verified</p>
                           <p>
-                            {new Date(payment.verified_at).toLocaleDateString(
-                              "en-US",
-                              {
-                                month: "short",
-                                day: "numeric",
-                                hour: "numeric",
-                                minute: "2-digit",
-                              }
-                            )}
+                            {formatDate(payment.verified_at, "datetime")}
                           </p>
                         </div>
                       )}
@@ -322,14 +347,14 @@ export function AdminPayments({
                           disabled={rejecting === payment.id}
                           className="px-4 py-2 rounded-lg bg-surface border border-red-300 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
                         >
-                          {rejecting === payment.id ? "Rejecting..." : "✗ Reject Payment"}
+                          {rejecting === payment.id ? <><Loader2 className="h-3.5 w-3.5 animate-spin inline mr-1" /> Rejecting…</> : "✗ Reject Payment"}
                         </button>
                         <button
-                          onClick={() => handleVerify(payment.id, booking.id)}
+                          onClick={() => handleVerifyConfirm(payment.id, booking.id, booking?.contact_name || "Unknown", payment.amount)}
                           disabled={verifying === payment.id}
                           className="px-4 py-2 rounded-lg bg-success text-white text-sm font-semibold hover:bg-success/90 transition-colors disabled:opacity-50"
                         >
-                          {verifying === payment.id ? "Verifying..." : "✓ Verify Payment"}
+                          {verifying === payment.id ? <><Loader2 className="h-3.5 w-3.5 animate-spin inline mr-1" /> Verifying…</> : "✓ Verify Payment"}
                         </button>
                       </div>
                     )}
@@ -340,6 +365,22 @@ export function AdminPayments({
           })
         )}
       </div>
+
+      {confirmDialog && (
+        <ConfirmDialog
+          open={confirmDialog.open}
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          detail={confirmDialog.detail}
+          variant={confirmDialog.variant}
+          confirmLabel={confirmDialog.confirmLabel}
+          onConfirm={() => {
+            confirmDialog.onConfirm();
+            setConfirmDialog(null);
+          }}
+          onCancel={() => setConfirmDialog(null)}
+        />
+      )}
     </div>
   );
 }

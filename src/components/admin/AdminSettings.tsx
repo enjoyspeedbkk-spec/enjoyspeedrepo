@@ -45,6 +45,8 @@ import {
   revokeAdminAccess,
 } from "@/lib/actions/admin";
 import { Shield } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface SectionProps {
   id: string;
@@ -90,6 +92,17 @@ export function AdminSettings({
   const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const toast = useToast();
+
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    detail?: string;
+    variant: "danger" | "warning" | "default";
+    onConfirm: () => void;
+  } | null>(null);
+
   // Sync with URL tab param when it changes
   useEffect(() => {
     if (tabParam && SECTIONS.some((s) => s.id === tabParam)) {
@@ -121,16 +134,25 @@ export function AdminSettings({
   const handleTabSwitch = (newTab: string) => {
     if (newTab === activeSection) return;
     if (hasUnsavedChanges(activeSection)) {
-      if (!confirm("You have unsaved changes. Switch tabs and lose them?")) return;
-      // Revert current section to server state
-      switch (activeSection) {
-        case "packages": setLocalPackages(packages); break;
-        case "slots": setLocalSlots(timeSlots); break;
-        case "bikes": setLocalBikes(bikeRentals); break;
-        case "kit": setLocalKit(starterKit); break;
-        case "staff": setLocalStaff(staff); break;
-        case "promos": setLocalPromos(promos); break;
-      }
+      setConfirmDialog({
+        open: true,
+        title: "Unsaved Changes",
+        description: "You have unsaved changes. Switch tabs and lose them?",
+        variant: "warning",
+        onConfirm: () => {
+          // Revert current section to server state
+          switch (activeSection) {
+            case "packages": setLocalPackages(packages); break;
+            case "slots": setLocalSlots(timeSlots); break;
+            case "bikes": setLocalBikes(bikeRentals); break;
+            case "kit": setLocalKit(starterKit); break;
+            case "staff": setLocalStaff(staff); break;
+            case "promos": setLocalPromos(promos); break;
+          }
+          setActiveSection(newTab);
+        },
+      });
+      return;
     }
     setActiveSection(newTab);
   };
@@ -193,8 +215,9 @@ export function AdminSettings({
       if (result.success) {
         showSaved(pkg.id);
         setEditingId(null);
+        toast.success("Package saved successfully");
       } else {
-        setError("Failed to save");
+        toast.error("Failed to save package. Please try again.");
       }
     };
 
@@ -208,7 +231,10 @@ export function AdminSettings({
         setShowNewForm(false);
         setNewPkg({ type: "", name: "", min_riders: 2, max_riders: 4, price_per_person: 2000, leaders_count: 1, heroes_count: 0, description: "", icon: "star", sort_order: (localPackages.length + 2) * 10, is_popular: false, is_active: true });
         showSaved("new");
+        toast.success("Package created successfully");
         router.refresh(); // Fetch real DB IDs
+      } else {
+        toast.error("Failed to create package. Please try again.");
       }
     };
 
@@ -230,7 +256,7 @@ export function AdminSettings({
                       <Field label="Leaders" type="number" value={pkg.leaders_count} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, leaders_count: Number(v) } : p))} />
                       <Field label="Heroes" type="number" value={pkg.heroes_count} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, heroes_count: Number(v) } : p))} />
                       <div>
-                        <label className="text-[11px] text-ink-muted mb-1 block">Icon</label>
+                        <label className="text-xs text-ink-muted mb-1 block">Icon</label>
                         <select
                           value={pkg.icon || "star"}
                           onChange={(e) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, icon: e.target.value } : p))}
@@ -244,7 +270,7 @@ export function AdminSettings({
                       <Field label="Sort Order" type="number" value={pkg.sort_order || 0} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, sort_order: Number(v) } : p))} />
                     </div>
                     <div>
-                      <label className="text-[11px] text-ink-muted mb-1 block">Description</label>
+                      <label className="text-xs text-ink-muted mb-1 block">Description</label>
                       <textarea
                         value={pkg.description || ""}
                         onChange={(e) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, description: e.target.value } : p))}
@@ -287,19 +313,27 @@ export function AdminSettings({
                       <button
                         className="ml-auto p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                         title="Delete package"
-                        onClick={async () => {
-                          if (!confirm(`Delete "${pkg.name}"? This cannot be undone.`)) return;
-                          setSaving(pkg.id);
-                          const result = await deletePackage(pkg.id);
-                          setSaving(null);
-                          if (result.success) {
-                            setLocalPackages((prev) => prev.filter((p) => p.id !== pkg.id));
-                            setEditingId(null);
-                          } else {
-                            setError(result.error || "Failed to delete");
-                          }
+                        onClick={() => {
+                          setConfirmDialog({
+                            open: true,
+                            title: "Delete Package",
+                            description: `Delete "${pkg.name}"?`,
+                            detail: "This cannot be undone.",
+                            variant: "danger",
+                            onConfirm: async () => {
+                              setSaving(pkg.id);
+                              const result = await deletePackage(pkg.id);
+                              setSaving(null);
+                              if (result.success) {
+                                setLocalPackages((prev) => prev.filter((p) => p.id !== pkg.id));
+                                setEditingId(null);
+                                toast.success("Package deleted successfully");
+                              } else {
+                                toast.error("Failed to delete package. Please try again.");
+                              }
+                            },
+                          });
                         }}
-                        disabled={saving === pkg.id}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -344,7 +378,7 @@ export function AdminSettings({
               <Field label="Leaders" type="number" value={newPkg.leaders_count} onChange={(v) => setNewPkg((p) => ({ ...p, leaders_count: Number(v) }))} />
               <Field label="Heroes" type="number" value={newPkg.heroes_count} onChange={(v) => setNewPkg((p) => ({ ...p, heroes_count: Number(v) }))} />
               <div>
-                <label className="text-[11px] text-ink-muted mb-1 block">Icon</label>
+                <label className="text-xs text-ink-muted mb-1 block">Icon</label>
                 <select
                   value={newPkg.icon}
                   onChange={(e) => setNewPkg((p) => ({ ...p, icon: e.target.value }))}
@@ -358,7 +392,7 @@ export function AdminSettings({
               <Field label="Sort Order" type="number" value={newPkg.sort_order} onChange={(v) => setNewPkg((p) => ({ ...p, sort_order: Number(v) }))} />
             </div>
             <div className="mt-3">
-              <label className="text-[11px] text-ink-muted mb-1 block">Description</label>
+              <label className="text-xs text-ink-muted mb-1 block">Description</label>
               <textarea
                 value={newPkg.description}
                 onChange={(e) => setNewPkg((p) => ({ ...p, description: e.target.value }))}
@@ -499,8 +533,9 @@ export function AdminSettings({
                           if (result.success) {
                             showSaved(bike.id);
                             setEditingBikeId(null);
+                            toast.success("Bike rental saved successfully");
                           } else {
-                            setError("Failed to save bike rental");
+                            toast.error("Failed to save bike rental. Please try again.");
                           }
                         }}
                         disabled={saving === bike.id}
@@ -518,15 +553,26 @@ export function AdminSettings({
                       <button
                         className="ml-auto p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                         title="Delete bike"
-                        onClick={async () => {
-                          if (!confirm(`Delete "${bike.name}"? This cannot be undone.`)) return;
-                          setSaving(bike.id);
-                          const result = await deleteBikeRental(bike.id);
-                          setSaving(null);
-                          if (result.success) {
-                            setLocalBikes((prev) => prev.filter((b) => b.id !== bike.id));
-                            setEditingBikeId(null);
-                          } else setError(result.error || "Failed to delete");
+                        onClick={() => {
+                          setConfirmDialog({
+                            open: true,
+                            title: "Delete Bike Rental",
+                            description: `Delete "${bike.name}"?`,
+                            detail: "This cannot be undone.",
+                            variant: "danger",
+                            onConfirm: async () => {
+                              setSaving(bike.id);
+                              const result = await deleteBikeRental(bike.id);
+                              setSaving(null);
+                              if (result.success) {
+                                setLocalBikes((prev) => prev.filter((b) => b.id !== bike.id));
+                                setEditingBikeId(null);
+                                toast.success("Bike rental deleted successfully");
+                              } else {
+                                toast.error("Failed to delete bike rental. Please try again.");
+                              }
+                            },
+                          });
                         }}
                         disabled={saving === bike.id}
                       >
@@ -594,9 +640,14 @@ export function AdminSettings({
                   size="sm"
                   onClick={async () => {
                     setSaving(item.id);
-                    await updateStarterKitItem(item.id, { name: item.name, description: item.description });
+                    const result = await updateStarterKitItem(item.id, { name: item.name, description: item.description });
                     setSaving(null);
-                    showSaved(item.id);
+                    if (result.success) {
+                      showSaved(item.id);
+                      toast.success("Item saved successfully");
+                    } else {
+                      toast.error("Failed to save item. Please try again.");
+                    }
                   }}
                   disabled={saving === item.id}
                 >
@@ -605,13 +656,24 @@ export function AdminSettings({
                 <button
                   className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                   title="Delete item"
-                  onClick={async () => {
-                    if (!confirm(`Delete "${item.name}"?`)) return;
-                    setSaving(item.id);
-                    const result = await deleteStarterKitItem(item.id);
-                    setSaving(null);
-                    if (result.success) setLocalKit((prev) => prev.filter((k) => k.id !== item.id));
-                    else setError(result.error || "Failed to delete");
+                  onClick={() => {
+                    setConfirmDialog({
+                      open: true,
+                      title: "Delete Item",
+                      description: `Delete "${item.name}"?`,
+                      variant: "danger",
+                      onConfirm: async () => {
+                        setSaving(item.id);
+                        const result = await deleteStarterKitItem(item.id);
+                        setSaving(null);
+                        if (result.success) {
+                          setLocalKit((prev) => prev.filter((k) => k.id !== item.id));
+                          toast.success("Item deleted successfully");
+                        } else {
+                          toast.error("Failed to delete item. Please try again.");
+                        }
+                      },
+                    });
                   }}
                   disabled={saving === item.id}
                 >
@@ -638,7 +700,10 @@ export function AdminSettings({
                   setShowNew(false);
                   setNewName("");
                   setNewDesc("");
+                  toast.success("Item created successfully");
                   router.refresh();
+                } else {
+                  toast.error("Failed to create item. Please try again.");
                 }
               }} disabled={saving === "newkit" || !newName}>
                 {saving === "newkit" ? "Adding..." : "Add Item"}
@@ -679,7 +744,7 @@ export function AdminSettings({
                       <Field label="Name" value={member.name} onChange={(v) => setLocalStaff((prev) => prev.map((s) => s.id === member.id ? { ...s, name: v } : s))} />
                       <Field label="Nickname" value={member.nickname || ""} onChange={(v) => setLocalStaff((prev) => prev.map((s) => s.id === member.id ? { ...s, nickname: v } : s))} />
                       <div>
-                        <label className="text-[11px] text-ink-muted mb-1 block">Role</label>
+                        <label className="text-xs text-ink-muted mb-1 block">Role</label>
                         <select
                           value={member.role}
                           onChange={(e) => setLocalStaff((prev) => prev.map((s) => s.id === member.id ? { ...s, role: e.target.value } : s))}
@@ -708,13 +773,18 @@ export function AdminSettings({
                     <div className="flex gap-2">
                       <Button size="sm" onClick={async () => {
                         setSaving(member.id);
-                        await updateStaffMember(member.id, {
+                        const result = await updateStaffMember(member.id, {
                           name: member.name, nickname: member.nickname, role: member.role,
                           phone: member.phone, bio: member.bio, max_sessions_per_day: member.max_sessions_per_day, is_active: member.is_active,
                         });
                         setSaving(null);
-                        showSaved(member.id);
-                        setEditingId(null);
+                        if (result.success) {
+                          showSaved(member.id);
+                          setEditingId(null);
+                          toast.success("Staff member saved successfully");
+                        } else {
+                          toast.error("Failed to save staff member. Please try again.");
+                        }
                       }} disabled={saving === member.id}>
                         <Save className="h-3 w-3" />
                         {saving === member.id ? "Saving..." : "Save"}
@@ -727,13 +797,26 @@ export function AdminSettings({
                       <button
                         className="ml-auto p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                         title="Delete staff member"
-                        onClick={async () => {
-                          if (!confirm(`Delete "${member.name}"? This cannot be undone.`)) return;
-                          setSaving(member.id);
-                          const result = await deleteStaffMember(member.id);
-                          setSaving(null);
-                          if (result.success) { setLocalStaff((prev) => prev.filter((s) => s.id !== member.id)); setEditingId(null); }
-                          else setError(result.error || "Failed to delete");
+                        onClick={() => {
+                          setConfirmDialog({
+                            open: true,
+                            title: "Delete Staff Member",
+                            description: `Delete "${member.name}"?`,
+                            detail: "This cannot be undone.",
+                            variant: "danger",
+                            onConfirm: async () => {
+                              setSaving(member.id);
+                              const result = await deleteStaffMember(member.id);
+                              setSaving(null);
+                              if (result.success) {
+                                setLocalStaff((prev) => prev.filter((s) => s.id !== member.id));
+                                setEditingId(null);
+                                toast.success("Staff member deleted successfully");
+                              } else {
+                                toast.error("Failed to delete staff member. Please try again.");
+                              }
+                            },
+                          });
                         }}
                         disabled={saving === member.id}
                       >
@@ -779,7 +862,7 @@ export function AdminSettings({
               <Field label="Name" value={newMember.name} onChange={(v) => setNewMember((p) => ({ ...p, name: v }))} />
               <Field label="Nickname" value={newMember.nickname} onChange={(v) => setNewMember((p) => ({ ...p, nickname: v }))} />
               <div>
-                <label className="text-[11px] text-ink-muted mb-1 block">Role</label>
+                <label className="text-xs text-ink-muted mb-1 block">Role</label>
                 <select
                   value={newMember.role}
                   onChange={(e) => setNewMember((p) => ({ ...p, role: e.target.value }))}
@@ -802,7 +885,10 @@ export function AdminSettings({
                 if (result.success) {
                   setShowNew(false);
                   setNewMember({ name: "", nickname: "", role: "leader", phone: "", bio: "", max_sessions_per_day: 2 });
+                  toast.success("Staff member created successfully");
                   router.refresh();
+                } else {
+                  toast.error("Failed to create staff member. Please try again.");
                 }
               }} disabled={saving === "newstaff" || !newMember.name}>
                 {saving === "newstaff" ? "Adding..." : "Add Staff"}
@@ -858,7 +944,7 @@ export function AdminSettings({
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <Field label="Code" value={promo.code} onChange={(v) => setLocalPromos((prev) => prev.map((p) => p.id === promo.id ? { ...p, code: v.toUpperCase() } : p))} />
                       <div>
-                        <label className="text-[11px] text-ink-muted mb-1 block">Discount Type</label>
+                        <label className="text-xs text-ink-muted mb-1 block">Discount Type</label>
                         <select
                           value={promo.discount_type}
                           onChange={(e) => setLocalPromos((prev) => prev.map((p) => p.id === promo.id ? { ...p, discount_type: e.target.value } : p))}
@@ -885,15 +971,20 @@ export function AdminSettings({
                     <div className="flex gap-2">
                       <Button size="sm" onClick={async () => {
                         setSaving(promo.id);
-                        await updatePromoCode(promo.id, {
+                        const result = await updatePromoCode(promo.id, {
                           code: promo.code, discount_type: promo.discount_type,
                           discount_value: promo.discount_value, max_uses: promo.max_uses,
                           valid_from: promo.valid_from || null, valid_until: promo.valid_until || null,
                           is_active: promo.is_active,
                         });
                         setSaving(null);
-                        showSaved(promo.id);
-                        setEditingId(null);
+                        if (result.success) {
+                          showSaved(promo.id);
+                          setEditingId(null);
+                          toast.success("Promo code saved successfully");
+                        } else {
+                          toast.error("Failed to save promo code. Please try again.");
+                        }
                       }} disabled={saving === promo.id}>
                         <Save className="h-3 w-3" />
                         {saving === promo.id ? "Saving..." : "Save"}
@@ -906,13 +997,26 @@ export function AdminSettings({
                       <button
                         className="ml-auto p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                         title="Delete promo code"
-                        onClick={async () => {
-                          if (!confirm(`Delete promo "${promo.code}"? This cannot be undone.`)) return;
-                          setSaving(promo.id);
-                          const result = await deletePromoCode(promo.id);
-                          setSaving(null);
-                          if (result.success) { setLocalPromos((prev) => prev.filter((p) => p.id !== promo.id)); setEditingId(null); }
-                          else setError(result.error || "Failed to delete");
+                        onClick={() => {
+                          setConfirmDialog({
+                            open: true,
+                            title: "Delete Promo Code",
+                            description: `Delete promo "${promo.code}"?`,
+                            detail: "This cannot be undone.",
+                            variant: "danger",
+                            onConfirm: async () => {
+                              setSaving(promo.id);
+                              const result = await deletePromoCode(promo.id);
+                              setSaving(null);
+                              if (result.success) {
+                                setLocalPromos((prev) => prev.filter((p) => p.id !== promo.id));
+                                setEditingId(null);
+                                toast.success("Promo code deleted successfully");
+                              } else {
+                                toast.error("Failed to delete promo code. Please try again.");
+                              }
+                            },
+                          });
                         }}
                         disabled={saving === promo.id}
                       >
@@ -955,7 +1059,7 @@ export function AdminSettings({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <Field label="Code" value={newCode.code} onChange={(v) => setNewCode((p) => ({ ...p, code: v.toUpperCase() }))} />
               <div>
-                <label className="text-[11px] text-ink-muted mb-1 block">Discount Type</label>
+                <label className="text-xs text-ink-muted mb-1 block">Discount Type</label>
                 <select
                   value={newCode.discount_type}
                   onChange={(e) => setNewCode((p) => ({ ...p, discount_type: e.target.value as "percentage" | "fixed" }))}
@@ -978,7 +1082,10 @@ export function AdminSettings({
                 if (result.success) {
                   setShowNew(false);
                   setNewCode({ code: "", discount_type: "percentage", discount_value: 10, max_uses: 0, valid_from: "", valid_until: "", is_active: true });
+                  toast.success("Promo code created successfully");
                   router.refresh();
+                } else {
+                  toast.error("Failed to create promo code. Please try again.");
                 }
               }} disabled={saving === "newpromo" || !newCode.code}>
                 {saving === "newpromo" ? "Creating..." : "Create Code"}
@@ -1032,25 +1139,36 @@ export function AdminSettings({
       if (result.success) {
         setAccessMessage({ type: "success", text: `Admin access granted to ${emailToGrant}` });
         setNewAdminEmail("");
+        toast.success("Admin access granted");
         await loadAdmins();
       } else {
+        toast.error("Failed to grant access. Please try again.");
         setAccessMessage({ type: "error", text: result.message || "Failed to grant access" });
       }
       setAdminActionLoading(false);
     };
 
     const onRevoke = async (email: string) => {
-      if (!confirm(`Revoke admin access for ${email}?`)) return;
-      setAccessMessage(null);
-      setAdminActionLoading(true);
-      const result = await revokeAdminAccess(email);
-      if (result.success) {
-        setAccessMessage({ type: "success", text: `Admin access revoked for ${email}` });
-        await loadAdmins();
-      } else {
-        setAccessMessage({ type: "error", text: result.message || "Failed to revoke access" });
-      }
-      setAdminActionLoading(false);
+      setConfirmDialog({
+        open: true,
+        title: "Revoke Admin Access",
+        description: `Revoke admin access for ${email}?`,
+        variant: "warning",
+        onConfirm: async () => {
+          setAccessMessage(null);
+          setAdminActionLoading(true);
+          const result = await revokeAdminAccess(email);
+          if (result.success) {
+            setAccessMessage({ type: "success", text: `Admin access revoked for ${email}` });
+            toast.success("Admin access revoked");
+            await loadAdmins();
+          } else {
+            toast.error("Failed to revoke access. Please try again.");
+            setAccessMessage({ type: "error", text: result.message || "Failed to revoke access" });
+          }
+          setAdminActionLoading(false);
+        },
+      });
     };
 
     return (
@@ -1207,6 +1325,21 @@ export function AdminSettings({
 
       {/* Active section content */}
       <ActiveContent />
+
+      {confirmDialog && (
+        <ConfirmDialog
+          open={confirmDialog.open}
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          detail={confirmDialog.detail}
+          variant={confirmDialog.variant}
+          onConfirm={() => {
+            confirmDialog.onConfirm();
+            setConfirmDialog(null);
+          }}
+          onCancel={() => setConfirmDialog(null)}
+        />
+      )}
     </div>
   );
 }
@@ -1227,7 +1360,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="text-[11px] text-ink-muted mb-1 block">{label}</label>
+      <label className="text-xs text-ink-muted mb-1 block">{label}</label>
       <input
         type={type}
         value={value}

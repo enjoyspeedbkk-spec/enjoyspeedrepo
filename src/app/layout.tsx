@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@/styles/globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { ToastProvider } from "@/components/ui/Toast";
 
 export const metadata: Metadata = {
   title: "En-Joy Speed | Premium Guided Cycling Bangkok",
@@ -47,9 +48,11 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-cream text-ink antialiased">
-        <Navbar />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
+        <ToastProvider>
+          <Navbar />
+          <main className="min-h-screen">{children}</main>
+          <Footer />
+        </ToastProvider>
       </body>
     </html>
   );

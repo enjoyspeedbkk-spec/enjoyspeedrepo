@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLiff } from "@/lib/liff/useLiff";
+import { formatDate } from "@/lib/format";
 import { motion, AnimatePresence } from "framer-motion";
 import { AnimatedNumber, AnimatedPrice } from "@/components/ui/AnimatedNumber";
 import {
@@ -401,36 +402,52 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
         </div>
 
         {/* Progress Steps */}
-        <div className="flex items-center justify-center gap-1 mb-12 overflow-x-auto pb-2">
-          {STEPS.map((step, i) => (
-            <div key={step.id} className="flex items-center flex-shrink-0">
-              <button
-                onClick={() => i < currentStep && setCurrentStep(i)}
-                disabled={i > currentStep}
-                className={`flex items-center gap-1.5 px-2.5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                  i === currentStep
-                    ? "bg-ink text-cream shadow-md"
-                    : i < currentStep
-                    ? "bg-success/10 text-success cursor-pointer hover:bg-success/20"
-                    : "bg-sand/40 text-ink-muted cursor-default"
-                }`}
-              >
-                {i < currentStep ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <step.icon className="h-4 w-4" />
-                )}
-                <span className="hidden sm:inline text-xs">{step.label}</span>
-              </button>
-              {i < STEPS.length - 1 && (
-                <div
-                  className={`w-4 lg:w-8 h-0.5 mx-0.5 rounded-full transition-colors ${
-                    i < currentStep ? "bg-success/30" : "bg-sand/60"
+        <div className="mb-12">
+          {/* Mobile: current step indicator */}
+          <div className="sm:hidden flex items-center justify-between mb-3 px-1">
+            <p className="text-xs text-ink-muted font-medium">
+              Step {currentStep + 1} of {STEPS.length}
+            </p>
+            <p className="text-xs font-semibold text-ink">{STEPS[currentStep].label}</p>
+          </div>
+          {/* Progress bar (mobile) / Step pills (desktop) */}
+          <div className="sm:hidden h-1.5 bg-sand/40 rounded-full overflow-hidden mb-4">
+            <div
+              className="h-full bg-ink rounded-full transition-all duration-500"
+              style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
+            />
+          </div>
+          <div className="hidden sm:flex items-center justify-center gap-1 overflow-x-auto pb-2">
+            {STEPS.map((step, i) => (
+              <div key={step.id} className="flex items-center flex-shrink-0">
+                <button
+                  onClick={() => i < currentStep && setCurrentStep(i)}
+                  disabled={i > currentStep}
+                  className={`flex items-center gap-1.5 px-2.5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                    i === currentStep
+                      ? "bg-ink text-cream shadow-md"
+                      : i < currentStep
+                      ? "bg-success/10 text-success cursor-pointer hover:bg-success/20"
+                      : "bg-sand/40 text-ink-muted cursor-default"
                   }`}
-                />
-              )}
-            </div>
-          ))}
+                >
+                  {i < currentStep ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <step.icon className="h-4 w-4" />
+                  )}
+                  <span className="text-xs">{step.label}</span>
+                </button>
+                {i < STEPS.length - 1 && (
+                  <div
+                    className={`w-4 lg:w-8 h-0.5 mx-0.5 rounded-full transition-colors ${
+                      i < currentStep ? "bg-success/30" : "bg-sand/60"
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Step Content */}
@@ -451,7 +468,57 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     Select a date for your ride. All dates are at least 24 hours
                     from now.
                   </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+                  {/* Mobile: Horizontal carousel, Desktop: Calendar grid */}
+                  {/* Mobile carousel */}
+                  <div className="sm:hidden -mx-4 px-4">
+                    <div className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory">
+                      {availableDates.map((date) => {
+                        const dateStr = date.toISOString().split("T")[0];
+                        const isSelected = selectedDate === dateStr;
+                        const dayName = date.toLocaleDateString("en-US", {
+                          weekday: "short",
+                        });
+                        const dayNum = date.getDate();
+                        const month = date.toLocaleDateString("en-US", {
+                          month: "short",
+                        });
+
+                        return (
+                          <button
+                            key={dateStr}
+                            onClick={() => setSelectedDate(dateStr)}
+                            className={`flex flex-col items-center py-3 px-2 rounded-lg border-2 transition-all duration-200 flex-shrink-0 snap-start ${
+                              isSelected
+                                ? "border-ink bg-ink text-cream shadow-md"
+                                : "border-sand/60 bg-surface hover:border-ink/20 hover:shadow-sm"
+                            }`}
+                            style={{ width: "70px" }}
+                          >
+                            <span
+                              className={`text-xs font-medium ${
+                                isSelected ? "text-cream/90" : "text-ink-muted"
+                              }`}
+                            >
+                              {dayName}
+                            </span>
+                            <span className={`text-xl font-bold mt-1 ${isSelected ? "text-cream" : "text-ink"}`}>
+                              {dayNum}
+                            </span>
+                            <span
+                              className={`text-xs ${
+                                isSelected ? "text-cream/90" : "text-ink-muted"
+                              }`}
+                            >
+                              {month}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Desktop: Calendar grid (7-column layout) */}
+                  <div className="hidden sm:grid sm:grid-cols-4 lg:grid-cols-7 gap-3">
                     {availableDates.map((date) => {
                       const dateStr = date.toISOString().split("T")[0];
                       const isSelected = selectedDate === dateStr;
@@ -643,7 +710,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         >
                           {pkg.type === "squad" && (
                             <span
-                              className={`absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full whitespace-nowrap z-10 ${
+                              className={`absolute -top-2.5 left-1/2 -translate-x-1/2 text-xs font-bold uppercase tracking-wider px-3 py-0.5 rounded-full whitespace-nowrap z-10 ${
                                 isSelected
                                   ? "bg-accent text-white shadow-md"
                                   : "bg-accent text-white shadow-sm"
@@ -940,7 +1007,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                               {option.price}
                             </span>
                             <span
-                              className={`text-[10px] mt-1 text-center ${
+                              className={`text-xs mt-1 text-center ${
                                 riders[activeRiderIndex]?.bikePreference ===
                                 option.value
                                   ? "text-cream/90"
@@ -997,7 +1064,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                             ))}
                           </div>
                         </div>
-                        <p className="text-[11px] text-ink-muted sm:col-span-2">
+                        <p className="text-xs text-ink-muted sm:col-span-2">
                           Height and gender help the rental shop prepare the right bike size for you.
                         </p>
                       </div>
@@ -1029,7 +1096,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                             <span className="text-sm font-semibold">
                               {opt.label}
                             </span>
-                            <span className="text-[10px] text-ink-muted mt-0.5">
+                            <span className="text-xs text-ink-muted mt-0.5">
                               {opt.desc}
                             </span>
                           </button>
@@ -1057,11 +1124,11 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                             className="w-full h-full object-cover"
                           />
                           <div className="absolute inset-0 bg-ink/40 flex items-center justify-center group-hover:bg-ink/50 transition-colors">
-                            <span className="text-[9px] font-bold text-cream uppercase tracking-wide">Size Guide</span>
+                            <span className="text-xs font-bold text-cream uppercase tracking-wide">Size Guide</span>
                           </div>
                         </button>
                         <div className="flex-1">
-                          <p className="text-[11px] text-ink-muted">
+                          <p className="text-xs text-ink-muted">
                             Padded gel cycling liners — worn under your shorts for comfort. Size up if between sizes. Yours to keep.
                           </p>
                           <button
@@ -1211,15 +1278,23 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                   </Card>
 
                   {/* Waiver acceptance */}
-                  <button
-                    onClick={() => setWaiverAccepted(!waiverAccepted)}
-                    className={`flex items-start gap-3 w-full p-4 rounded-xl border-2 text-left transition-all duration-200 mb-6 ${
+                  <label
+                    htmlFor="waiver-accepted"
+                    className={`flex items-start gap-3 w-full p-4 rounded-xl border-2 text-left transition-all duration-200 mb-6 cursor-pointer ${
                       waiverAccepted
                         ? "border-success bg-success/5"
                         : "border-sand/60 bg-surface hover:border-ink/20"
                     }`}
                   >
+                    <input
+                      type="checkbox"
+                      id="waiver-accepted"
+                      checked={waiverAccepted}
+                      onChange={(e) => setWaiverAccepted(e.target.checked)}
+                      className="sr-only"
+                    />
                     <div
+                      aria-hidden="true"
                       className={`flex items-center justify-center w-6 h-6 rounded-md border-2 flex-shrink-0 mt-0.5 transition-all ${
                         waiverAccepted
                           ? "bg-success border-success text-white"
@@ -1238,7 +1313,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         all {riderCount} riders.
                       </p>
                     </div>
-                  </button>
+                  </label>
 
                   {/* Contact Info */}
                   <h3 className="font-bold text-lg mb-4">
@@ -1319,11 +1394,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         <div className="flex justify-between items-center pb-4 border-b border-sand/60">
                           <span className="text-sm text-ink-muted">Date</span>
                           <span className="font-semibold">
-                            {new Date(selectedDate).toLocaleDateString("en-US", {
-                              weekday: "long",
-                              month: "long",
-                              day: "numeric",
-                            })}
+                            {formatDate(new Date(selectedDate), "long")}
                           </span>
                         </div>
                         <div className="flex justify-between items-center pb-4 border-b border-sand/60">
@@ -1415,10 +1486,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                           </div>
                           {rentalSubtotal > 0 && (
                             <p className="text-xs text-ink-muted">
-                              Pay {rideSubtotal.toLocaleString()} THB now via
-                              PromptPay · Bike rental (
-                              {rentalSubtotal.toLocaleString()} THB) paid at
-                              track
+                              Pay <span className="font-semibold text-accent">{rideSubtotal.toLocaleString()} THB</span> now via PromptPay <span className="text-ink-muted/60">· Bike rental ({rentalSubtotal.toLocaleString()} THB) paid at track</span>
                             </p>
                           )}
                         </div>
@@ -1484,7 +1552,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                             >
                               <p className="font-semibold text-sm text-ink mb-2">Ready to book?</p>
                               <div className="text-xs text-ink-muted space-y-1 mb-3">
-                                <p>{selectedDate && new Date(selectedDate).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · {activeSlot?.label}</p>
+                                <p>{selectedDate && formatDate(new Date(selectedDate), "long")} · {activeSlot?.label}</p>
                                 <p>{activePackage?.name} · {riderCount} rider{riderCount > 1 ? "s" : ""}</p>
                                 <p className="font-semibold text-ink">Total: {rideSubtotal.toLocaleString()} THB</p>
                               </div>
@@ -1554,11 +1622,26 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
           {/* Live price summary */}
           {activePackage && STEPS[currentStep].id !== "review" && (
             <div className="text-right">
-              <p className="text-xs text-ink-muted">Estimated total</p>
-              <p className="text-lg font-bold text-ink">
-                <AnimatedNumber value={totalPrice} format="currency" />{" "}
-                <span className="text-sm font-normal text-ink-muted">THB</span>
-              </p>
+              {rentalSubtotal > 0 ? (
+                <>
+                  <p className="text-xs text-ink-muted">Pay now (PromptPay)</p>
+                  <p className="text-lg font-bold text-ink">
+                    <AnimatedNumber value={rideSubtotal} format="currency" />{" "}
+                    <span className="text-sm font-normal text-ink-muted">THB</span>
+                  </p>
+                  <p className="text-xs text-ink-muted">
+                    +{rentalSubtotal.toLocaleString()} THB bike rental at track
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-ink-muted">Estimated total</p>
+                  <p className="text-lg font-bold text-ink">
+                    <AnimatedNumber value={totalPrice} format="currency" />{" "}
+                    <span className="text-sm font-normal text-ink-muted">THB</span>
+                  </p>
+                </>
+              )}
             </div>
           )}
 

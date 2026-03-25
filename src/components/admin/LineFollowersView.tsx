@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { formatDate } from "@/lib/format";
 
 interface LineFollower {
   id: string;
@@ -72,14 +73,6 @@ export function LineFollowersView({
     return result;
   }, [followers, filter, search, sortBy]);
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
 
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -236,9 +229,9 @@ export function LineFollowersView({
                     {/* Date */}
                     <div className="text-right flex-shrink-0 hidden sm:block">
                       <p className="text-xs text-ink-muted">
-                        {formatDate(follower.followed_at)}
+                        {formatDate(follower.followed_at, "medium")}
                       </p>
-                      <p className="text-[10px] text-ink-muted/60 font-mono mt-0.5 truncate max-w-[120px]">
+                      <p className="text-xs text-ink-muted/60 font-mono mt-0.5 truncate max-w-[120px]">
                         {follower.line_user_id.substring(0, 12)}...
                       </p>
                     </div>
@@ -276,7 +269,7 @@ function StatCard({
           >
             {value}
           </p>
-          <p className="text-[11px] text-ink-muted">{label}</p>
+          <p className="text-xs text-ink-muted">{label}</p>
         </div>
       </div>
     </Card>

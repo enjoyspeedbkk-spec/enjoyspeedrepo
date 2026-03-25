@@ -188,7 +188,7 @@ export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
                     <p className="text-sm font-semibold">
                       What&apos;s your next step for cycling?
                     </p>
-                    <p className="text-[10px] text-ink-muted">
+                    <p className="text-xs text-ink-muted">
                       คุณจะมีก้าวต่อไป สำหรับ จักรยาน หรือไม่
                     </p>
                   </div>
@@ -341,7 +341,7 @@ function SurveyQuestion({
         <Icon className="h-4 w-4 text-accent" />
         <div>
           <p className="text-sm font-semibold">{question}</p>
-          <p className="text-[10px] text-ink-muted">{questionTh}</p>
+          <p className="text-xs text-ink-muted">{questionTh}</p>
         </div>
       </div>
       <div className="flex gap-2">

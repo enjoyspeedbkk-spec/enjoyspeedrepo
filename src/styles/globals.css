@@ -79,6 +79,23 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Global focus-visible ring for keyboard navigation */
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 0;
+  }
+
   html {
     scroll-behavior: smooth;
     font-family: var(--font-body);

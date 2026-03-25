@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import {
   Sun, CloudRain, XCircle, Users, Bike, CheckCircle2,
   Phone, AlertTriangle, ChevronDown, ChevronUp,
-  UserCheck, Clock, Shirt, AlertCircle, ImageIcon, X,
+  UserCheck, Clock, Shirt, AlertCircle, ImageIcon, X, Loader2,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 import { TIME_SLOTS } from "@/lib/constants";
 import {
   checkInRider, bulkCheckInBooking, bulkWeatherCancel, adminCancelBooking, verifyPayment,
@@ -89,6 +90,7 @@ const weatherColors: Record<string, string> = {
 
 export function TodayRides({ slots }: TodayRidesProps) {
   const router = useRouter();
+  const toast = useToast();
   const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
   const [cancelModal, setCancelModal] = useState<{ type: "weather" | "booking"; slotId?: string; bookingId?: string } | null>(null);
   const [cancelReason, setCancelReason] = useState("");
@@ -117,6 +119,13 @@ export function TodayRides({ slots }: TodayRidesProps) {
     const result = await checkWeatherNow();
     if (result.success) {
       setWeatherAlerts(result.alerts.filter((a) => a.severity !== "clear"));
+      if (result.alerts.length === 0) {
+        toast.success("Weather looks clear for all sessions");
+      } else {
+        toast.warning(`${result.alerts.filter(a => a.severity !== "clear").length} weather alert(s) found`);
+      }
+    } else {
+      toast.error("Weather check failed. Please try again.");
     }
     setCheckingWeather(false);
   };
@@ -130,6 +139,9 @@ export function TodayRides({ slots }: TodayRidesProps) {
     );
     if (result.success) {
       setAlertsSent((prev) => new Set(prev).add(sessionId));
+      toast.success("Weather alert sent to customers");
+    } else {
+      toast.error("Failed to send weather alert. Please try again.");
     }
     setSendingAlert(null);
   };
@@ -153,7 +165,12 @@ export function TodayRides({ slots }: TodayRidesProps) {
 
   const handleCheckIn = async (riderId: string, value: boolean) => {
     setLocalUpdates((prev) => ({ ...prev, [riderId]: value }));
-    await checkInRider(riderId, value);
+    const result = await checkInRider(riderId, value);
+    if (result?.success) {
+      toast.success(value ? "Rider checked in" : "Rider check-in removed");
+    } else if (result?.success === false) {
+      toast.error(value ? "Failed to check in rider" : "Failed to remove check-in");
+    }
   };
 
   const handleBulkCheckIn = async (bookingId: string) => {
@@ -162,36 +179,56 @@ export function TodayRides({ slots }: TodayRidesProps) {
     for (const rider of booking.riders) {
       setLocalUpdates((prev) => ({ ...prev, [rider.id]: true }));
     }
-    await bulkCheckInBooking(bookingId, true);
+    const result = await bulkCheckInBooking(bookingId, true);
+    if (result?.success) {
+      toast.success(`Checked in ${booking.riders.length} rider(s)`);
+    } else if (result?.success === false) {
+      toast.error("Failed to check in riders. Please try again.");
+    }
   };
 
   const handleWeatherCancel = async (slotIds: string[]) => {
     if (!cancelReason.trim()) return;
     setCancelling(true);
     const todayStr = new Date().toISOString().split("T")[0];
-    await bulkWeatherCancel(todayStr, slotIds, cancelReason);
+    const result = await bulkWeatherCancel(todayStr, slotIds, cancelReason);
     setCancelling(false);
-    setCancelModal(null);
-    setCancelReason("");
-    router.refresh();
+    if (result?.success) {
+      toast.success("Slot cancelled. Customers notified.");
+      setCancelModal(null);
+      setCancelReason("");
+      router.refresh();
+    } else if (result?.success === false) {
+      toast.error("Failed to cancel slot. Please try again.");
+    }
   };
 
   const handleAdminCancel = async (bookingId: string) => {
     if (!cancelReason.trim()) return;
     setCancelling(true);
-    await adminCancelBooking(bookingId, cancelReason, true);
+    const result = await adminCancelBooking(bookingId, cancelReason, true);
     setCancelling(false);
-    setCancelModal(null);
-    setCancelReason("");
-    router.refresh();
+    if (result?.success) {
+      toast.success("Booking cancelled. Customer notified.");
+      setCancelModal(null);
+      setCancelReason("");
+      router.refresh();
+    } else if (result?.success === false) {
+      toast.error("Failed to cancel booking. Please try again.");
+    }
   };
 
   const handleVerifyFromSlip = async (paymentId: string, bookingId: string) => {
     setVerifying(true);
-    await verifyPayment(paymentId, bookingId);
-    setVerifiedPayments((prev) => new Set(prev).add(paymentId));
+    const result = await verifyPayment(paymentId, bookingId);
+    if (result?.success) {
+      setVerifiedPayments((prev) => new Set(prev).add(paymentId));
+      toast.success("Payment verified successfully");
+      setSlipPreview(null);
+    } else if (result?.success === false) {
+      toast.error("Failed to verify payment. Please try again.");
+    }
     setVerifying(false);
-    setSlipPreview(null);
   };
 
   return (
@@ -227,8 +264,7 @@ export function TodayRides({ slots }: TodayRidesProps) {
           disabled={checkingWeather}
           className="text-sm"
         >
-          <CloudRain className={`h-4 w-4 mr-1.5 ${checkingWeather ? "animate-pulse" : ""}`} />
-          {checkingWeather ? "Checking..." : "Check Weather"}
+          {checkingWeather ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Checking…</> : <><CloudRain className="h-4 w-4 mr-1.5" /> Check Weather</>}
         </Button>
         {weatherAlerts.length > 0 && (
           <span className="text-xs text-ink-muted">
@@ -304,7 +340,7 @@ export function TodayRides({ slots }: TodayRidesProps) {
                           )
                         }
                       >
-                        {isSending ? "Sending..." : "Notify Riders"}
+                        {isSending ? <><Loader2 className="h-3.5 w-3.5 animate-spin inline mr-1" /> Sending…</> : "Notify Riders"}
                       </Button>
                     )}
                   </div>
@@ -388,7 +424,7 @@ export function TodayRides({ slots }: TodayRidesProps) {
                     <div className="flex items-center gap-3">
                       <div className="text-center leading-none">
                         <p className="text-lg font-bold">{slot.id}</p>
-                        <p className="text-[10px] text-ink-muted">{slot.startTime}</p>
+                        <p className="text-xs text-ink-muted">{slot.startTime}</p>
                       </div>
                       <div className="text-left">
                         <p className="text-sm font-semibold">{slot.label}</p>
@@ -493,7 +529,7 @@ export function TodayRides({ slots }: TodayRidesProps) {
                                   <p className="text-sm font-medium">
                                     {rider.nickname || rider.name}
                                   </p>
-                                  <div className="flex items-center gap-2 text-[10px] text-ink-muted">
+                                  <div className="flex items-center gap-2 text-xs text-ink-muted">
                                     <span className="flex items-center gap-0.5">
                                       <Bike className="h-3 w-3" />
                                       {rider.bike_preference}
@@ -511,7 +547,7 @@ export function TodayRides({ slots }: TodayRidesProps) {
                               {rider.emergency_contact_phone && (
                                 <a
                                   href={`tel:${rider.emergency_contact_phone}`}
-                                  className="text-[10px] text-ink-muted hover:text-ink transition-colors"
+                                  className="text-xs text-ink-muted hover:text-ink transition-colors"
                                   title={`Emergency: ${rider.emergency_contact_name}`}
                                 >
                                   SOS

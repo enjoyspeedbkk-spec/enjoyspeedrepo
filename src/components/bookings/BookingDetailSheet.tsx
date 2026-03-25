@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatDate } from "@/lib/format";
 import { motion } from "framer-motion";
 import {
   X,
@@ -130,18 +131,13 @@ export function BookingDetailSheet({
                 <span className="text-lg font-bold leading-none">
                   {rideDate.getDate()}
                 </span>
-                <span className="text-[10px] font-medium uppercase text-cream/60">
+                <span className="text-xs font-medium uppercase text-cream/60">
                   {rideDate.toLocaleDateString("en-US", { month: "short" })}
                 </span>
               </div>
               <div>
                 <p className="font-bold">
-                  {rideDate.toLocaleDateString("en-US", {
-                    weekday: "long",
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
+                  {formatDate(rideDate, "long")}
                 </p>
                 <div className="flex items-center gap-1.5 text-sm text-ink-muted mt-1">
                   <Clock className="h-3.5 w-3.5" />
@@ -227,7 +223,7 @@ export function BookingDetailSheet({
                       <p className="font-medium text-sm">
                         {rider.nickname || rider.name}
                       </p>
-                      <p className="text-[10px] text-ink-muted">
+                      <p className="text-xs text-ink-muted">
                         {rider.cycling_experience} ·{" "}
                         {rider.clothing_size || "No size"}
                       </p>
@@ -241,7 +237,7 @@ export function BookingDetailSheet({
                       </span>
                     </div>
                     {rider.bike_rental_price > 0 && (
-                      <p className="text-[10px] text-ink-muted">
+                      <p className="text-xs text-ink-muted">
                         {rider.bike_rental_price.toLocaleString()} THB
                       </p>
                     )}

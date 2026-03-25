@@ -14,10 +14,18 @@ import {
   Plus,
   Ban,
   Trash2,
+  Sunrise,
+  Sunset,
+  Check,
+  Eye,
+  EyeOff,
+  Loader2,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
   toggleSessionAvailability,
   updateWeatherStatus,
@@ -51,6 +59,10 @@ interface BlackoutDate {
   affects_slots: string[];
 }
 
+// Group slots by period for display
+const MORNING_SLOTS = TIME_SLOTS.filter((s) => s.period === "morning");
+const EVENING_SLOTS = TIME_SLOTS.filter((s) => s.period === "evening");
+
 export function AdminSlots({
   initialSessions,
   initialBookings,
@@ -60,6 +72,7 @@ export function AdminSlots({
   initialBookings: SessionBooking[];
   initialBlackouts: BlackoutDate[];
 }) {
+  const toast = useToast();
   const [sessions, setSessions] = useState(initialSessions);
   const [bookings] = useState(initialBookings);
   const [blackouts, setBlackouts] = useState(initialBlackouts);
@@ -69,12 +82,17 @@ export function AdminSlots({
   const [blackoutDate, setBlackoutDate] = useState("");
   const [blackoutReason, setBlackoutReason] = useState("");
   const [blackoutSlots, setBlackoutSlots] = useState<string[]>([]);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    blackoutId: string;
+    reason: string;
+    date: string;
+  } | null>(null);
 
   // Build date range for current week view
   const today = new Date();
   const startOfWeek = new Date(today);
   startOfWeek.setDate(today.getDate() + weekOffset * 7);
-  // Set to Monday
   const dayOfWeek = startOfWeek.getDay();
   startOfWeek.setDate(startOfWeek.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
 
@@ -120,6 +138,9 @@ export function AdminSlots({
           s.id === sessionId ? { ...s, is_available: !current } : s
         )
       );
+      toast.success(current ? "Slot disabled" : "Slot enabled");
+    } else {
+      toast.error("Failed to update slot availability");
     }
     setUpdating(null);
   };
@@ -139,6 +160,9 @@ export function AdminSlots({
             : s
         )
       );
+      toast.success(`Weather updated to ${status}`);
+    } else {
+      toast.error("Failed to update weather status");
     }
     setUpdating(null);
   };
@@ -165,6 +189,9 @@ export function AdminSlots({
       setBlackoutReason("");
       setBlackoutSlots([]);
       setShowBlackoutForm(false);
+      toast.success("Blackout date added");
+    } else {
+      toast.error("Failed to add blackout date");
     }
     setUpdating(null);
   };
@@ -174,27 +201,38 @@ export function AdminSlots({
     const result = await deleteBlackoutDate(id);
     if (result.success) {
       setBlackouts((prev) => prev.filter((b) => b.id !== id));
+      toast.success("Blackout date removed");
+    } else {
+      toast.error("Failed to remove blackout date");
     }
     setUpdating(null);
   };
 
-  const weatherIcons: Record<string, typeof Sun> = {
-    clear: Sun,
-    warning: CloudRain,
-    cancelled: XCircle,
-  };
-
   const isToday = (d: Date) => formatDateKey(d) === formatDateKey(today);
   const isPast = (d: Date) => formatDateKey(d) < formatDateKey(today);
+
+  // Get day summary stats
+  const getDaySummary = (dateKey: string) => {
+    const daySessions = sessionsByDate.get(dateKey) || [];
+    let totalBookings = 0;
+    let totalRiders = 0;
+    daySessions.forEach((s) => {
+      const sBookings = bookingsBySession.get(s.id) || [];
+      totalBookings += sBookings.length;
+      totalRiders += sBookings.reduce((sum, b) => sum + b.rider_count, 0);
+    });
+    const availableSlots = daySessions.filter((s) => s.is_available).length;
+    return { totalBookings, totalRiders, availableSlots, totalSlots: daySessions.length };
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Slots & Availability</h1>
+          <h1 className="text-2xl font-bold text-ink">Slots & Availability</h1>
           <p className="text-sm text-ink-muted mt-1">
-            Manage daily slots, weather, and blackout dates
+            Manage daily ride slots, weather status, and blackout dates
           </p>
         </div>
         <Button
@@ -209,34 +247,35 @@ export function AdminSlots({
 
       {/* Blackout form */}
       {showBlackoutForm && (
-        <Card padding="md">
-          <p className="font-semibold text-sm mb-3">Add Blackout Date</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Card padding="md" className="border-warning/30 bg-warning/5">
+          <p className="font-bold text-sm text-ink mb-3">Add Blackout Date</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="text-xs text-ink-muted mb-1 block">Date</label>
+              <label className="text-xs font-medium text-ink mb-1.5 block">Date</label>
               <input
                 type="date"
                 value={blackoutDate}
                 onChange={(e) => setBlackoutDate(e.target.value)}
                 min={formatDateKey(today)}
-                className="w-full px-3 py-2 rounded-lg border-2 border-sand/60 text-sm focus:border-ink focus:outline-none"
+                className="w-full px-3 py-2.5 rounded-lg border-2 border-sand/60 text-sm font-medium focus:border-ink focus:outline-none transition-colors"
               />
             </div>
             <div>
-              <label className="text-xs text-ink-muted mb-1 block">Reason</label>
+              <label className="text-xs font-medium text-ink mb-1.5 block">Reason</label>
               <input
                 type="text"
                 value={blackoutReason}
                 onChange={(e) => setBlackoutReason(e.target.value)}
                 placeholder="e.g. Holiday, Private event..."
-                className="w-full px-3 py-2 rounded-lg border-2 border-sand/60 text-sm focus:border-ink focus:outline-none"
+                className="w-full px-3 py-2.5 rounded-lg border-2 border-sand/60 text-sm focus:border-ink focus:outline-none transition-colors placeholder:text-ink-muted/60"
               />
             </div>
             <div>
-              <label className="text-xs text-ink-muted mb-1 block">
-                Affected Slots (leave empty for all)
+              <label className="text-xs font-medium text-ink mb-1.5 block">
+                Affected Slots
               </label>
-              <div className="flex gap-1.5 flex-wrap">
+              <p className="text-xs text-ink-muted mb-2">Leave empty to block all slots</p>
+              <div className="flex gap-2 flex-wrap">
                 {TIME_SLOTS.map((s) => (
                   <button
                     key={s.id}
@@ -247,25 +286,25 @@ export function AdminSlots({
                           : [...prev, s.id]
                       )
                     }
-                    className={`px-2 py-1 rounded text-[10px] font-semibold transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                       blackoutSlots.includes(s.id)
                         ? "bg-ink text-cream"
-                        : "bg-sand/30 text-ink-muted"
+                        : "bg-sand/40 text-ink-muted hover:bg-sand/60"
                     }`}
                   >
-                    {s.id}
+                    {s.id} — {s.label}
                   </button>
                 ))}
               </div>
             </div>
           </div>
-          <div className="flex gap-2 mt-3">
+          <div className="flex gap-2 mt-4">
             <Button
               size="sm"
               onClick={handleAddBlackout}
               disabled={!blackoutDate || !blackoutReason || updating === "blackout"}
             >
-              {updating === "blackout" ? "Adding..." : "Add Blackout"}
+              {updating === "blackout" ? <><Loader2 className="h-3.5 w-3.5 animate-spin inline mr-1" /> Adding…</> : "Add Blackout"}
             </Button>
             <Button
               variant="ghost"
@@ -279,22 +318,23 @@ export function AdminSlots({
       )}
 
       {/* Week navigation */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between bg-surface rounded-xl border border-sand/60 p-3">
         <button
           onClick={() => setWeekOffset((w) => w - 1)}
-          className="p-2 rounded-lg hover:bg-sand/30 transition-colors"
+          className="p-2 rounded-lg hover:bg-sand/40 transition-colors"
+          aria-label="Previous week"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-5 w-5 text-ink" />
         </button>
         <div className="text-center">
-          <p className="font-semibold text-sm">
+          <p className="font-bold text-ink">
             {days[0].toLocaleDateString("en-US", {
-              month: "short",
+              month: "long",
               day: "numeric",
             })}{" "}
             –{" "}
             {days[6].toLocaleDateString("en-US", {
-              month: "short",
+              month: "long",
               day: "numeric",
               year: "numeric",
             })}
@@ -302,246 +342,200 @@ export function AdminSlots({
           {weekOffset !== 0 && (
             <button
               onClick={() => setWeekOffset(0)}
-              className="text-xs text-sky hover:text-sky-dark"
+              className="text-xs font-medium text-accent hover:text-accent-dark mt-0.5"
             >
-              Back to this week
+              Jump to this week
             </button>
           )}
         </div>
         <button
           onClick={() => setWeekOffset((w) => w + 1)}
-          className="p-2 rounded-lg hover:bg-sand/30 transition-colors"
+          className="p-2 rounded-lg hover:bg-sand/40 transition-colors"
+          aria-label="Next week"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-5 w-5 text-ink" />
         </button>
       </div>
 
-      {/* Calendar grid */}
-      <div className="space-y-2">
+      {/* Legend */}
+      <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-ink-muted px-1">
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-success" /> Open with bookings
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-sand/80" /> Open, no bookings
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-ink/30" /> Disabled
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-warning" /> Blacked out
+        </span>
+      </div>
+
+      {/* Calendar grid — one card per day */}
+      <div className="space-y-3">
         {days.map((day) => {
           const dateKey = formatDateKey(day);
           const daySessions = sessionsByDate.get(dateKey) || [];
           const dayBlackouts = blackoutsByDate.get(dateKey) || [];
           const past = isPast(day);
-          const todayHighlight = isToday(day);
+          const todayHL = isToday(day);
+          const summary = getDaySummary(dateKey);
 
           return (
-            <Card
+            <div
               key={dateKey}
-              padding="sm"
-              className={`${
-                todayHighlight
-                  ? "ring-2 ring-accent/30 bg-accent/5"
+              className={`rounded-2xl border overflow-hidden transition-all ${
+                todayHL
+                  ? "border-accent/40 shadow-md"
                   : past
-                  ? "opacity-50"
-                  : ""
+                  ? "border-sand/40 opacity-50"
+                  : "border-sand/60"
               }`}
             >
-              <div className="flex items-start gap-3 p-2">
-                {/* Date column */}
-                <div className="w-14 flex-shrink-0 text-center">
-                  <p className="text-[10px] uppercase text-ink-muted font-semibold">
-                    {day.toLocaleDateString("en-US", { weekday: "short" })}
-                  </p>
-                  <p
-                    className={`text-xl font-bold ${
-                      todayHighlight ? "text-accent" : ""
+              {/* Day header bar */}
+              <div
+                className={`px-4 py-3 flex items-center justify-between ${
+                  todayHL ? "bg-accent/10" : "bg-ink/[0.03]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg ${
+                      todayHL
+                        ? "bg-accent text-cream"
+                        : "bg-sand/50 text-ink"
                     }`}
                   >
                     {day.getDate()}
-                  </p>
-                  <p className="text-[10px] text-ink-muted">
-                    {day.toLocaleDateString("en-US", { month: "short" })}
-                  </p>
-                </div>
-
-                {/* Slots */}
-                <div className="flex-1 min-w-0">
-                  {/* Blackout warnings */}
-                  {dayBlackouts.map((b) => (
-                    <div
-                      key={b.id}
-                      className="flex items-center justify-between p-2 mb-2 rounded-lg bg-warning/10 border border-warning/20 text-xs"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Ban className="h-3.5 w-3.5 text-warning" />
-                        <span className="font-medium text-warning">
-                          Blackout: {b.reason}
-                        </span>
-                        {b.affects_slots?.length > 0 && (
-                          <span className="text-ink-muted">
-                            (Slots: {b.affects_slots.join(", ")})
-                          </span>
-                        )}
-                      </div>
-                      {!past && (
-                        <button
-                          onClick={() => handleRemoveBlackout(b.id)}
-                          disabled={updating === b.id}
-                          className="text-ink-muted hover:text-warning transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-ink-muted"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                  </div>
+                  <div>
+                    <p className="font-bold text-ink text-sm">
+                      {day.toLocaleDateString("en-US", { weekday: "long" })}
+                      {todayHL && (
+                        <span className="ml-2 text-xs font-semibold text-accent">Today</span>
                       )}
-                    </div>
-                  ))}
-
-                  {/* Slot rows */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {TIME_SLOTS.map((slot) => {
-                      const session = daySessions.find(
-                        (s) => s.time_slot_id === slot.id
-                      );
-                      const sessionBookings = session
-                        ? bookingsBySession.get(session.id) || []
-                        : [];
-                      const totalRiders = sessionBookings.reduce(
-                        (sum, b) => sum + b.rider_count,
-                        0
-                      );
-                      const isBlackedOut = dayBlackouts.some(
-                        (b) =>
-                          b.affects_slots.length === 0 ||
-                          b.affects_slots.includes(slot.id)
-                      );
-                      const WeatherIcon =
-                        session?.weather_status
-                          ? weatherIcons[session.weather_status] || Sun
-                          : Sun;
-                      const hasBookings = sessionBookings.length > 0;
-
-                      return (
-                        <div
-                          key={slot.id}
-                          className={`p-2.5 rounded-lg border text-xs transition-all ${
-                            isBlackedOut
-                              ? "bg-warning/5 border-warning/20 opacity-60"
-                              : session && !session.is_available
-                              ? "bg-sand/20 border-sand/40 opacity-60"
-                              : hasBookings
-                              ? "bg-sky/5 border-sky/20"
-                              : "bg-surface border-sand/40"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-xs">
-                                {slot.id}
-                              </span>
-                              <span className="text-ink-muted text-xs">
-                                {slot.startTime}–{slot.endTime}
-                              </span>
-                            </div>
-                            {session && !past && (
-                              <button
-                                onClick={() =>
-                                  handleWeatherUpdate(
-                                    session.id,
-                                    (!session.weather_status || session.weather_status === "clear")
-                                      ? "warning"
-                                      : session.weather_status === "warning"
-                                      ? "cancelled"
-                                      : "clear"
-                                  )
-                                }
-                                disabled={updating === session.id}
-                                className="p-1 rounded hover:bg-sand/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                title={`Weather: ${
-                                  session.weather_status || "clear"
-                                }`}
-                              >
-                                <WeatherIcon
-                                  className={`h-3 w-3 ${
-                                    session.weather_status === "warning"
-                                      ? "text-warning"
-                                      : session.weather_status === "cancelled"
-                                      ? "text-red-500"
-                                      : "text-success"
-                                  }`}
-                                />
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Bookings under this slot */}
-                          {hasBookings ? (
-                            <div className="space-y-1">
-                              {sessionBookings.map((b, i) => (
-                                <div
-                                  key={i}
-                                  className="flex items-center justify-between"
-                                >
-                                  <span className="truncate">
-                                    {b.contact_name}
-                                  </span>
-                                  <div className="flex items-center gap-1 text-ink-muted">
-                                    <Users className="h-2.5 w-2.5" />
-                                    {b.rider_count}
-                                  </div>
-                                </div>
-                              ))}
-                              <p className="text-ink-muted text-[10px] mt-1">
-                                {totalRiders} total riders
-                              </p>
-                            </div>
-                          ) : (
-                            <p className="text-ink-muted/50 text-[10px]">
-                              {isBlackedOut
-                                ? "Blacked out"
-                                : session && !session.is_available
-                                ? "Disabled"
-                                : "No bookings"}
-                            </p>
-                          )}
-
-                          {/* Toggle availability */}
-                          {session && !past && !isBlackedOut && (
-                            <button
-                              onClick={() =>
-                                handleToggleAvailability(
-                                  session.id,
-                                  session.is_available
-                                )
-                              }
-                              disabled={updating === session.id}
-                              className={`mt-2 w-full py-1 rounded text-[10px] font-semibold transition-all ${
-                                session.is_available
-                                  ? "bg-sand/30 text-ink-muted hover:bg-sand/50"
-                                  : "bg-success/10 text-success hover:bg-success/20"
-                              }`}
-                            >
-                              {session.is_available ? "Disable" : "Enable"}
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
+                    </p>
+                    <p className="text-xs text-ink-muted">
+                      {day.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                    </p>
                   </div>
                 </div>
+
+                {/* Day summary badges */}
+                <div className="flex items-center gap-2">
+                  {summary.totalBookings > 0 && (
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-success/10 text-success text-xs font-bold">
+                      <Users className="h-3.5 w-3.5" />
+                      {summary.totalRiders} riders · {summary.totalBookings} booking{summary.totalBookings !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                  {dayBlackouts.length > 0 && (
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-warning/10 text-warning text-xs font-bold">
+                      <Ban className="h-3.5 w-3.5" />
+                      Blackout
+                    </span>
+                  )}
+                </div>
               </div>
-            </Card>
+
+              {/* Blackout banners */}
+              {dayBlackouts.map((b) => (
+                <div
+                  key={b.id}
+                  className="flex items-center justify-between px-4 py-2 bg-warning/10 border-b border-warning/20"
+                >
+                  <div className="flex items-center gap-2 text-sm">
+                    <Ban className="h-4 w-4 text-warning flex-shrink-0" />
+                    <span className="font-semibold text-warning">{b.reason}</span>
+                    {b.affects_slots?.length > 0 ? (
+                      <span className="text-ink-muted text-xs">
+                        — Affects: {b.affects_slots.map((sid) => {
+                          const slot = TIME_SLOTS.find((s) => s.id === sid);
+                          return slot ? `${sid} (${slot.label})` : sid;
+                        }).join(", ")}
+                      </span>
+                    ) : (
+                      <span className="text-ink-muted text-xs">— All slots</span>
+                    )}
+                  </div>
+                  {!past && (
+                    <button
+                      onClick={() => setConfirmDialog({ open: true, blackoutId: b.id, reason: b.reason, date: b.date })}
+                      disabled={updating === b.id}
+                      className="p-1.5 rounded-lg text-ink-muted hover:text-warning hover:bg-warning/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      aria-label="Remove blackout"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              {/* Slots body */}
+              <div className="p-4 space-y-4 bg-surface">
+                {/* Morning slots */}
+                {MORNING_SLOTS.length > 0 && (
+                  <SlotGroup
+                    label="Morning"
+                    icon={<Sunrise className="h-4 w-4 text-amber-500" />}
+                    slots={MORNING_SLOTS}
+                    daySessions={daySessions}
+                    bookingsBySession={bookingsBySession}
+                    dayBlackouts={dayBlackouts}
+                    past={past}
+                    updating={updating}
+                    onToggle={handleToggleAvailability}
+                    onWeather={handleWeatherUpdate}
+                  />
+                )}
+
+                {/* Evening slots */}
+                {EVENING_SLOTS.length > 0 && (
+                  <SlotGroup
+                    label="Evening"
+                    icon={<Sunset className="h-4 w-4 text-orange-500" />}
+                    slots={EVENING_SLOTS}
+                    daySessions={daySessions}
+                    bookingsBySession={bookingsBySession}
+                    dayBlackouts={dayBlackouts}
+                    past={past}
+                    updating={updating}
+                    onToggle={handleToggleAvailability}
+                    onWeather={handleWeatherUpdate}
+                  />
+                )}
+
+                {daySessions.length === 0 && (
+                  <p className="text-sm text-ink-muted text-center py-4">
+                    No sessions created for this date
+                  </p>
+                )}
+              </div>
+            </div>
           );
         })}
       </div>
 
       {/* Active blackouts summary */}
-      {blackouts.length > 0 && (
+      {blackouts.filter((b) => b.date >= formatDateKey(today)).length > 0 && (
         <div>
-          <p className="text-sm font-semibold text-ink-muted mb-2">
-            Active Blackout Dates
+          <p className="text-sm font-bold text-ink mb-3">
+            Upcoming Blackout Dates
           </p>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {blackouts
               .filter((b) => b.date >= formatDateKey(today))
               .sort((a, b) => a.date.localeCompare(b.date))
               .map((b) => (
                 <div
                   key={b.id}
-                  className="flex items-center justify-between p-2.5 rounded-lg bg-surface border border-sand/40 text-xs"
+                  className="flex items-center justify-between p-3 rounded-xl bg-surface border border-sand/60 text-sm"
                 >
-                  <div className="flex items-center gap-2">
-                    <Ban className="h-3.5 w-3.5 text-warning" />
-                    <span className="font-medium">
+                  <div className="flex items-center gap-3">
+                    <Ban className="h-4 w-4 text-warning flex-shrink-0" />
+                    <span className="font-bold text-ink">
                       {new Date(b.date + "T12:00").toLocaleDateString("en-US", {
                         weekday: "short",
                         month: "short",
@@ -556,17 +550,249 @@ export function AdminSlots({
                     )}
                   </div>
                   <button
-                    onClick={() => handleRemoveBlackout(b.id)}
+                    onClick={() => setConfirmDialog({ open: true, blackoutId: b.id, reason: b.reason, date: b.date })}
                     disabled={updating === b.id}
-                    className="text-ink-muted hover:text-warning transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-ink-muted"
+                    className="p-1.5 rounded-lg text-ink-muted hover:text-warning hover:bg-warning/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Remove blackout"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               ))}
           </div>
         </div>
       )}
+
+      {confirmDialog && (
+        <ConfirmDialog
+          open={confirmDialog.open}
+          title="Remove blackout date?"
+          description={`This will remove the blackout for ${new Date(confirmDialog.date + "T12:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}.`}
+          detail={`Reason was: "${confirmDialog.reason}". Slots will become available for bookings again.`}
+          variant="warning"
+          confirmLabel="Remove Blackout"
+          onConfirm={() => {
+            handleRemoveBlackout(confirmDialog.blackoutId);
+            setConfirmDialog(null);
+          }}
+          onCancel={() => setConfirmDialog(null)}
+        />
+      )}
     </div>
+  );
+}
+
+/* ─── Slot Group (Morning / Evening) ───────────────────────── */
+
+function SlotGroup({
+  label,
+  icon,
+  slots,
+  daySessions,
+  bookingsBySession,
+  dayBlackouts,
+  past,
+  updating,
+  onToggle,
+  onWeather,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  slots: typeof TIME_SLOTS;
+  daySessions: Session[];
+  bookingsBySession: Map<string, SessionBooking[]>;
+  dayBlackouts: BlackoutDate[];
+  past: boolean;
+  updating: string | null;
+  onToggle: (sessionId: string, current: boolean) => void;
+  onWeather: (sessionId: string, status: "clear" | "warning" | "cancelled", note?: string) => void;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-2">
+        {icon}
+        <p className="text-xs font-bold text-ink uppercase tracking-wider">{label}</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        {slots.map((slot) => {
+          const session = daySessions.find((s) => s.time_slot_id === slot.id);
+          const sessionBookings = session
+            ? bookingsBySession.get(session.id) || []
+            : [];
+          const totalRiders = sessionBookings.reduce(
+            (sum, b) => sum + b.rider_count,
+            0
+          );
+          const isBlackedOut = dayBlackouts.some(
+            (b) =>
+              b.affects_slots.length === 0 ||
+              b.affects_slots.includes(slot.id)
+          );
+          const hasBookings = sessionBookings.length > 0;
+          const isDisabled = session && !session.is_available;
+
+          // Determine the status color for the left border
+          let borderColor = "border-l-sand/80"; // default open, no bookings
+          let bgColor = "bg-surface";
+          if (isBlackedOut) {
+            borderColor = "border-l-warning";
+            bgColor = "bg-warning/5";
+          } else if (isDisabled) {
+            borderColor = "border-l-ink/20";
+            bgColor = "bg-sand/10";
+          } else if (hasBookings) {
+            borderColor = "border-l-success";
+            bgColor = "bg-success/5";
+          }
+
+          return (
+            <div
+              key={slot.id}
+              className={`rounded-xl border border-sand/40 border-l-4 ${borderColor} ${bgColor} overflow-hidden transition-all ${
+                isDisabled || isBlackedOut ? "opacity-60" : ""
+              }`}
+            >
+              {/* Slot header */}
+              <div className="px-3 py-2.5 flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-ink/5 flex items-center justify-center font-bold text-xs text-ink">
+                    {slot.id}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm text-ink truncate">{slot.label}</p>
+                    <p className="text-xs text-ink-muted flex items-center gap-1">
+                      <Clock className="h-3 w-3 flex-shrink-0" />
+                      {slot.startTime} – {slot.endTime}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Weather & availability controls */}
+                {session && !past && !isBlackedOut && (
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {/* Weather toggle */}
+                    <WeatherToggle
+                      status={session.weather_status}
+                      disabled={updating === session.id}
+                      onUpdate={(status) => onWeather(session.id, status)}
+                    />
+                    {/* Availability toggle */}
+                    <button
+                      onClick={() => onToggle(session.id, session.is_available)}
+                      disabled={updating === session.id}
+                      className={`p-1.5 rounded-lg transition-all ${
+                        session.is_available
+                          ? "text-success hover:bg-success/10"
+                          : "text-ink-muted hover:bg-sand/40"
+                      } disabled:opacity-40 disabled:cursor-not-allowed`}
+                      title={session.is_available ? "Slot is open — click to disable" : "Slot is disabled — click to enable"}
+                    >
+                      {session.is_available ? (
+                        <Eye className="h-4 w-4" />
+                      ) : (
+                        <EyeOff className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Status bar */}
+              {isBlackedOut && (
+                <div className="px-3 py-1.5 bg-warning/10 text-xs font-semibold text-warning">
+                  Blacked out
+                </div>
+              )}
+              {isDisabled && !isBlackedOut && (
+                <div className="px-3 py-1.5 bg-sand/20 text-xs font-semibold text-ink-muted">
+                  Slot disabled
+                </div>
+              )}
+              {session?.weather_status === "warning" && (
+                <div className="px-3 py-1.5 bg-amber-50 text-xs font-semibold text-amber-600 flex items-center gap-1.5">
+                  <CloudRain className="h-3 w-3" />
+                  Weather warning
+                </div>
+              )}
+              {session?.weather_status === "cancelled" && (
+                <div className="px-3 py-1.5 bg-red-50 text-xs font-semibold text-red-600 flex items-center gap-1.5">
+                  <XCircle className="h-3 w-3" />
+                  Cancelled — weather
+                </div>
+              )}
+
+              {/* Bookings */}
+              <div className="px-3 py-2 border-t border-sand/30">
+                {hasBookings ? (
+                  <div className="space-y-1.5">
+                    {sessionBookings.map((b, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <span className="font-medium text-ink truncate">
+                          {b.contact_name}
+                        </span>
+                        <span className="flex items-center gap-1 text-xs font-bold text-ink-muted flex-shrink-0 ml-2">
+                          <Users className="h-3 w-3" />
+                          {b.rider_count}
+                        </span>
+                      </div>
+                    ))}
+                    <p className="text-xs font-bold text-success pt-1 border-t border-sand/20">
+                      {totalRiders} total rider{totalRiders !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-ink-muted py-1">
+                    {isBlackedOut
+                      ? "Not available"
+                      : isDisabled
+                      ? "Not accepting bookings"
+                      : "No bookings yet"}
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Weather Toggle Button ───────────────────────────────── */
+
+function WeatherToggle({
+  status,
+  disabled,
+  onUpdate,
+}: {
+  status: string | null;
+  disabled: boolean;
+  onUpdate: (status: "clear" | "warning" | "cancelled") => void;
+}) {
+  const weatherOptions: { value: "clear" | "warning" | "cancelled"; icon: typeof Sun; label: string; color: string }[] = [
+    { value: "clear", icon: Sun, label: "Clear", color: "text-success" },
+    { value: "warning", icon: CloudRain, label: "Warning", color: "text-amber-500" },
+    { value: "cancelled", icon: XCircle, label: "Cancelled", color: "text-red-500" },
+  ];
+
+  const current = status || "clear";
+  const nextStatus =
+    current === "clear" ? "warning" : current === "warning" ? "cancelled" : "clear";
+  const nextOption = weatherOptions.find((o) => o.value === nextStatus)!;
+  const currentOption = weatherOptions.find((o) => o.value === current)!;
+  const CurrentIcon = currentOption.icon;
+
+  return (
+    <button
+      onClick={() => onUpdate(nextStatus)}
+      disabled={disabled}
+      className={`p-1.5 rounded-lg hover:bg-sand/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${currentOption.color}`}
+      title={`Weather: ${currentOption.label} — click to set ${nextOption.label}`}
+    >
+      <CurrentIcon className="h-4 w-4" />
+    </button>
   );
 }

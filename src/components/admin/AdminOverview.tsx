@@ -18,7 +18,10 @@ import {
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { useToast } from "@/components/ui/Toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { verifyPayment } from "@/lib/actions/admin";
+import { formatDate } from "@/lib/format";
 
 interface DashboardStats {
   todayBookings: number;
@@ -61,8 +64,16 @@ export function AdminOverview({
   pendingPayments: PendingPayment[];
   adminName: string;
 }) {
+  const toast = useToast();
   const [verifying, setVerifying] = useState<string | null>(null);
   const [verified, setVerified] = useState<Set<string>>(new Set());
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    paymentId: string;
+    bookingId: string;
+    contactName: string;
+    amount: number;
+  } | null>(null);
 
   const handleVerify = async (paymentId: string, bookingId: string) => {
     setVerifying(paymentId);
@@ -70,6 +81,9 @@ export function AdminOverview({
     setVerifying(null);
     if (result.success) {
       setVerified((prev) => new Set(prev).add(paymentId));
+      toast.success("Payment verified successfully");
+    } else {
+      toast.error("Failed to verify payment. Please try again.");
     }
   };
 
@@ -88,12 +102,7 @@ export function AdminOverview({
           {getGreeting()}, {adminName}
         </h1>
         <p className="text-sm text-ink-muted mt-1">
-          {new Date().toLocaleDateString("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          })}
+          {formatDate(new Date(), "long")}
         </p>
       </div>
 
@@ -214,23 +223,12 @@ export function AdminOverview({
                       </div>
                       <div className="text-xs text-ink-muted space-y-1">
                         <p className="font-medium">
-                          {rideDate.toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}{" "}
+                          {formatDate(rideDate, "short")}{" "}
                           · Slot {session.time_slot_id} · {booking.group_type}
                         </p>
                         <p>
                           {booking.rider_count} rider{booking.rider_count !== 1 ? "s" : ""} · Booked{" "}
-                          {new Date(payment.created_at).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                              hour: "numeric",
-                              minute: "2-digit",
-                            }
-                          )}
+                          {formatDate(payment.created_at, "datetime")}
                         </p>
                       </div>
 
@@ -255,7 +253,13 @@ export function AdminOverview({
                       {!isVerified && (
                         <button
                           onClick={() =>
-                            handleVerify(payment.id, booking.id)
+                            setConfirmDialog({
+                              open: true,
+                              paymentId: payment.id,
+                              bookingId: booking.id,
+                              contactName: booking.contact_name,
+                              amount: payment.amount,
+                            })
                           }
                           disabled={verifying === payment.id}
                           className="w-full px-3 py-1.5 rounded-lg bg-success text-white text-xs font-semibold hover:bg-success/90 transition-colors disabled:opacity-50"
@@ -300,6 +304,21 @@ export function AdminOverview({
           />
         </div>
       </div>
+
+      {confirmDialog && (
+        <ConfirmDialog
+          open={confirmDialog.open}
+          title="Verify this payment?"
+          description={`Confirm ${confirmDialog.amount.toLocaleString()} THB from ${confirmDialog.contactName}. This will mark the booking as confirmed.`}
+          variant="default"
+          confirmLabel="Verify Payment"
+          onConfirm={() => {
+            handleVerify(confirmDialog.paymentId, confirmDialog.bookingId);
+            setConfirmDialog(null);
+          }}
+          onCancel={() => setConfirmDialog(null)}
+        />
+      )}
     </div>
   );
 }

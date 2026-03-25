@@ -155,31 +155,35 @@ export function AuthForm() {
             <form onSubmit={handleRequestOtp} className="space-y-4">
               {/* Name (optional) */}
               <div>
-                <label className="block text-sm font-medium text-ink mb-1.5">
+                <label htmlFor="auth-name" className="block text-sm font-medium text-ink mb-1.5">
                   Your Name
                 </label>
                 <input
+                  id="auth-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="What should we call you?"
+                  autoComplete="name"
                   className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/70 focus:border-ink focus:outline-none transition-colors"
                 />
               </div>
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-ink mb-1.5">
+                <label htmlFor="auth-email" className="block text-sm font-medium text-ink mb-1.5">
                   Email Address
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" />
                   <input
+                    id="auth-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     required
+                    autoComplete="email"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/70 focus:border-ink focus:outline-none transition-colors"
                   />
                 </div>
@@ -222,6 +226,7 @@ export function AuthForm() {
                       onChange={(e) => handleOtpChange(i, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(i, e)}
                       onPaste={i === 0 ? handleOtpPaste : undefined}
+                      aria-label={`Digit ${i + 1} of 6`}
                       className="w-12 h-14 text-center text-xl font-bold rounded-xl border-2 border-sand/60 bg-surface text-ink focus:border-accent focus:outline-none transition-colors"
                     />
                   ))}

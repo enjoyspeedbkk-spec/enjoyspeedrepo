@@ -1,11 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 import { Sunrise, Sunset, Clock, MapPin } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Card } from "@/components/ui/Card";
-import { useSiteImage } from "@/lib/site-images-context";
+import { SiteImage } from "@/lib/site-images-context";
 
 const slots = [
   {
@@ -52,7 +51,6 @@ const slots = [
 ];
 
 export function TimeSlots() {
-  const groupRideSrc = useSiteImage("venue-group-ride", "/images/group-ride.jpg");
   const morningSlots = slots.filter((s) => s.period === "morning");
   const eveningSlots = slots.filter((s) => s.period === "evening");
 
@@ -72,11 +70,10 @@ export function TimeSlots() {
           viewport={{ once: true }}
           className="mb-12 rounded-2xl overflow-hidden h-36 lg:h-48 relative"
         >
-          <Image
-            src={groupRideSrc}
+          <SiteImage
+            imageKey="venue-group-ride"
+            fallback="/images/group-ride.jpg"
             alt="Group ride on the Skylane at sunset"
-            fill
-            className="object-cover"
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-navy/50 via-transparent to-transparent" />

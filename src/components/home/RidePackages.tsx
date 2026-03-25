@@ -10,45 +10,42 @@ const packages = [
   {
     name: "Duo",
     slug: "duo",
-    tagline: "The perfect pair",
-    riders: "2 riders",
+    tagline: "2 riders · Intimate guided ride",
+    minRiders: 2,
+    maxRiders: 2,
     icon: Star,
     price: 2500,
-    priceLabel: "per person",
-    total: "5,000 THB total",
     support: "1 Athlete Leader",
     description:
-      "Perfect for couples or friends who want a personal guided experience.",
+      "Couples or friends. One dedicated Athlete Leader for a fully personal ride.",
     color: "sky",
     popular: false,
   },
   {
     name: "The Squad",
     slug: "squad",
-    tagline: "Ride with your crew",
-    riders: "3–5 riders",
+    tagline: "3–5 riders · Best value per person",
+    minRiders: 3,
+    maxRiders: 5,
     icon: Zap,
     price: 2100,
-    priceLabel: "per person",
-    total: "6,300–10,500 THB",
     support: "1 Leader + 1 Hero",
     description:
-      "Our most popular format. Leader up front, Hero rider keeping everyone safe.",
+      "Most popular. Leader up front, Hero rider at the back keeping everyone safe.",
     color: "accent",
     popular: true,
   },
   {
     name: "The Peloton",
     slug: "peloton",
-    tagline: "Maximum energy",
-    riders: "6–8 riders",
+    tagline: "6–8 riders · Full crew support",
+    minRiders: 6,
+    maxRiders: 8,
     icon: Crown,
     price: 2000,
-    priceLabel: "per person",
-    total: "12,000–16,000 THB",
     support: "2 Leaders + 2 Heroes",
     description:
-      "Maximum support, maximum energy. The full experience.",
+      "Largest group, lowest price. Two Leaders and two Heroes for full 360° support.",
     color: "leaf",
     popular: false,
   },
@@ -109,7 +106,7 @@ export function RidePackages() {
                   >
                     {pkg.popular && (
                       <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-10">
-                        <span className="inline-flex items-center px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full bg-accent text-white shadow-md whitespace-nowrap">
+                        <span className="inline-flex items-center px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-accent text-white shadow-md whitespace-nowrap">
                           Most Popular
                         </span>
                       </div>
@@ -130,7 +127,11 @@ export function RidePackages() {
                       </div>
                       <div className="flex items-center gap-1.5 text-ink-muted">
                         <Users className="h-4 w-4" />
-                        <span className="text-sm font-medium">{pkg.riders}</span>
+                        <span className="text-sm font-medium">
+                          {pkg.minRiders === pkg.maxRiders
+                            ? `${pkg.minRiders} riders`
+                            : `${pkg.minRiders}–${pkg.maxRiders} riders`}
+                        </span>
                       </div>
                     </div>
 
@@ -156,10 +157,21 @@ export function RidePackages() {
                           {pkg.price.toLocaleString()}
                         </span>
                         <span className="text-sm text-ink-muted">
-                          THB {pkg.priceLabel}
+                          THB per person
                         </span>
                       </div>
-                      <p className="text-xs text-ink-muted mt-1">{pkg.total}</p>
+                      {pkg.minRiders === pkg.maxRiders ? (
+                        <p className="text-xs text-ink-muted mt-1">
+                          {(pkg.price * pkg.minRiders).toLocaleString()} THB for {pkg.minRiders} riders
+                        </p>
+                      ) : (
+                        <p className="text-xs text-ink-muted mt-1">
+                          {pkg.minRiders} riders = {(pkg.price * pkg.minRiders).toLocaleString()} THB · {pkg.maxRiders} riders = {(pkg.price * pkg.maxRiders).toLocaleString()} THB
+                        </p>
+                      )}
+                      <p className="text-xs text-ink-muted/70 mt-1">
+                        Bike rental separate if needed
+                      </p>
                     </div>
 
                     {/* CTA */}

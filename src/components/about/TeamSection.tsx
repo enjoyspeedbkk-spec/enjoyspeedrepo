@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Award, Shield, Heart, Star } from "lucide-react";
+import type { SiteImageData } from "@/lib/site-images-context";
 
 const team = [
   {
@@ -44,8 +45,26 @@ const credentials = [
   },
 ];
 
-export function TeamSection({ imageOverrides }: { imageOverrides?: Record<string, string> } = {}) {
-  const getImage = (key: string, fallback: string) => imageOverrides?.[key] || fallback;
+function resolveImage(overrides: Record<string, string | SiteImageData> | undefined, key: string, fallback: string) {
+  const val = overrides?.[key];
+  if (!val) return { src: fallback, style: {} as React.CSSProperties };
+  if (typeof val === "string") return { src: val, style: {} as React.CSSProperties };
+  const hasFilters = (val.brightness && val.brightness !== 1) || (val.contrast && val.contrast !== 1) || (val.saturate && val.saturate !== 1);
+  return {
+    src: val.url,
+    style: {
+      objectPosition: val.objectPosition || undefined,
+      ...(hasFilters ? { filter: `brightness(${val.brightness ?? 1}) contrast(${val.contrast ?? 1}) saturate(${val.saturate ?? 1})` } : {}),
+    } as React.CSSProperties,
+  };
+}
+
+export function TeamSection({ imageOverrides }: { imageOverrides?: Record<string, string | SiteImageData> } = {}) {
+  const getImage = (key: string, fallback: string) => {
+    const val = imageOverrides?.[key];
+    if (!val) return fallback;
+    return typeof val === "string" ? val : val.url;
+  };
   return (
     <section className="py-20 lg:py-28 bg-cream overflow-hidden">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -82,13 +101,20 @@ export function TeamSection({ imageOverrides }: { imageOverrides?: Record<string
             >
               {/* Photo */}
               <div className="relative aspect-[4/3] overflow-hidden">
-                <Image
-                  src={getImage(member.name === "Coach Pailin" ? "team-pailin-profile" : "team-udorn-profile", member.image)}
-                  alt={`${member.name} — ${member.role}`}
-                  fill
-                  className="object-cover object-top"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                />
+                {(() => {
+                  const key = member.name === "Coach Pailin" ? "team-pailin-profile" : "team-udorn-profile";
+                  const resolved = resolveImage(imageOverrides, key, member.image);
+                  return (
+                    <Image
+                      src={resolved.src}
+                      alt={`${member.name} — ${member.role}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      style={{ objectPosition: "50% 20%", ...resolved.style }}
+                    />
+                  );
+                })()}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
                 {/* Name overlay */}
                 <div className="absolute bottom-0 left-0 right-0 p-5">
@@ -131,13 +157,19 @@ export function TeamSection({ imageOverrides }: { imageOverrides?: Record<string
           className="mb-14"
         >
           <div className="relative aspect-[3/4] sm:aspect-[4/3] max-w-2xl mx-auto rounded-2xl overflow-hidden">
-            <Image
-              src={getImage("team-group-photo", "/images/team/team-dawn.jpg")}
-              alt="The En-Joy Speed team at dawn, ready to ride"
-              fill
-              className="object-cover object-center"
-              sizes="(max-width: 768px) 100vw, 700px"
-            />
+            {(() => {
+              const resolved = resolveImage(imageOverrides, "team-group-photo", "/images/team/team-dawn.jpg");
+              return (
+                <Image
+                  src={resolved.src}
+                  alt="The En-Joy Speed team at dawn, ready to ride"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 700px"
+                  style={{ objectPosition: "50% 50%", ...resolved.style }}
+                />
+              );
+            })()}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-8">
               <p className="text-white text-lg lg:text-xl font-bold drop-shadow-sm">

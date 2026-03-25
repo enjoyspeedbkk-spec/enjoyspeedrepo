@@ -25,7 +25,7 @@ const footerLinks: Record<string, FooterLink[]> = {
 };
 
 function FooterLink({ link }: { link: FooterLink }) {
-  const className = "text-sm text-cream/50 hover:text-cream transition-colors duration-200";
+  const className = "text-sm text-cream/70 hover:text-cream transition-colors duration-200";
   if (link.external) {
     return (
       <a href={link.href} target="_blank" rel="noopener noreferrer" className={className}>
@@ -60,12 +60,12 @@ export function Footer() {
                 <span className="font-heading text-base font-bold text-cream">
                   en-joy
                 </span>
-                <span className="font-heading text-xs font-semibold tracking-widest text-cream/50 uppercase">
+                <span className="font-heading text-xs font-semibold tracking-widest text-cream/70 uppercase">
                   speed
                 </span>
               </div>
             </div>
-            <p className="text-sm leading-relaxed text-cream/50 max-w-xs">
+            <p className="text-sm leading-relaxed text-cream/70 max-w-xs">
               Let us handle the speed. You enjoy the ride. Premium guided
               cycling experiences on Bangkok&apos;s Skylane.
             </p>
@@ -116,19 +116,19 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-cream/10 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-cream/30">
+          <p className="text-xs text-cream/50">
             &copy; {new Date().getFullYear()} En-Joy Speed. All rights reserved.
           </p>
           <div className="flex gap-6">
             <Link
               href="/privacy"
-              className="text-xs text-cream/30 hover:text-cream/60 transition-colors"
+              className="text-xs text-cream/50 hover:text-cream transition-colors"
             >
               Privacy
             </Link>
             <Link
               href="/terms"
-              className="text-xs text-cream/30 hover:text-cream/60 transition-colors"
+              className="text-xs text-cream/50 hover:text-cream transition-colors"
             >
               Terms
             </Link>

@@ -1,10 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 import { Camera, Package } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { useSiteImage } from "@/lib/site-images-context";
+import { SiteImage } from "@/lib/site-images-context";
 
 const highlights = [
   {
@@ -29,7 +28,6 @@ const EQUIPMENT_IMAGES = [
 ];
 
 function EquipmentImage({ imageKey, fallback, alt, index }: { imageKey: string; fallback: string; alt: string; index: number }) {
-  const src = useSiteImage(imageKey, fallback);
   return (
     <motion.div
       key={imageKey}
@@ -39,7 +37,7 @@ function EquipmentImage({ imageKey, fallback, alt, index }: { imageKey: string; 
       transition={{ delay: index * 0.1 }}
       className="relative aspect-square rounded-2xl overflow-hidden"
     >
-      <Image src={src} alt={alt} fill className="object-cover" sizes="(max-width: 640px) 50vw, 25vw" />
+      <SiteImage imageKey={imageKey} fallback={fallback} alt={alt} sizes="(max-width: 640px) 50vw, 25vw" />
     </motion.div>
   );
 }

@@ -121,7 +121,7 @@ export function AdminSidebar({ userName }: { userName: string }) {
           <Shield className="h-5 w-5 text-accent" />
           <div>
             <p className="font-bold text-sm text-ink">Admin Panel</p>
-            <p className="text-[10px] text-ink-muted truncate">{userName}</p>
+            <p className="text-xs text-ink-muted truncate">{userName}</p>
           </div>
         </div>
       </div>

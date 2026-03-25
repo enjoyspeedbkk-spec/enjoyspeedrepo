@@ -14,6 +14,7 @@ import {
   updateImageSettings,
   replaceImage,
 } from "@/lib/actions/site-images";
+import { useToast } from "@/components/ui/Toast";
 
 const CATEGORIES = [
   { id: "all", label: "All Images" },
@@ -25,6 +26,18 @@ const CATEGORIES = [
   { id: "booking", label: "Booking" },
   { id: "branding", label: "Branding" },
 ];
+
+// Maps each category to the aspect ratio used on the actual site
+// so admins see how the image will actually be cropped
+const CATEGORY_ASPECT_RATIOS: Record<string, { ratio: string; label: string }> = {
+  hero: { ratio: "aspect-[3/4]", label: "3:4 (Hero)" },
+  team: { ratio: "aspect-[4/3]", label: "4:3 (Profile)" },
+  gallery: { ratio: "aspect-square", label: "1:1 (Gallery)" },
+  equipment: { ratio: "aspect-square", label: "1:1 (Gallery)" },
+  venue: { ratio: "aspect-[4/3]", label: "4:3 (Venue)" },
+  booking: { ratio: "aspect-[16/9]", label: "16:9 (Banner)" },
+  branding: { ratio: "aspect-[16/9]", label: "16:9 (Banner)" },
+};
 
 export function SiteImageManager({ initialImages }: { initialImages: SiteImageSetting[] }) {
   const [images, setImages] = useState(initialImages);
@@ -110,6 +123,7 @@ function ImageCard({
   onEdit: () => void;
   onUpdate: (key: string, updates: Partial<SiteImageSetting>) => void;
 }) {
+  const toast = useToast();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [replacing, setReplacing] = useState(false);
@@ -121,22 +135,30 @@ function ImageCard({
 
   const handleSave = async () => {
     setSaving(true);
-    const result = await updateImageSettings(image.image_key, {
-      object_position: localPosition,
-      brightness: localBrightness,
-      contrast: localContrast,
-      saturate: localSaturate,
-    });
-    setSaving(false);
-    if (result.success) {
-      onUpdate(image.image_key, {
+    try {
+      const result = await updateImageSettings(image.image_key, {
         object_position: localPosition,
         brightness: localBrightness,
         contrast: localContrast,
         saturate: localSaturate,
       });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      if (result.success) {
+        onUpdate(image.image_key, {
+          object_position: localPosition,
+          brightness: localBrightness,
+          contrast: localContrast,
+          saturate: localSaturate,
+        });
+        toast.success("Image settings saved");
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      } else {
+        toast.error("Failed to save image settings");
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -144,14 +166,34 @@ function ImageCard({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image is too large. Maximum size is 10 MB.");
+      return;
+    }
+
     setReplacing(true);
     const reader = new FileReader();
     reader.onload = async () => {
-      const base64 = reader.result as string;
-      const result = await replaceImage(image.image_key, base64, file.name, file.type);
-      if (result.success && result.url) {
-        onUpdate(image.image_key, { current_url: result.url });
+      try {
+        const base64 = reader.result as string;
+        const result = await replaceImage(image.image_key, base64, file.name, file.type);
+        if (result.success && result.url) {
+          onUpdate(image.image_key, { current_url: result.url });
+          toast.success("Image replaced successfully");
+        } else {
+          toast.error("Failed to upload image. Please try again.");
+        }
+      } catch {
+        toast.error("Upload failed. Check your connection and try again.");
+      } finally {
+        setReplacing(false);
+        // Reset file input so same file can be selected again
+        if (fileInputRef.current) fileInputRef.current.value = "";
       }
+    };
+    reader.onerror = () => {
+      toast.error("Could not read the file. Please try a different image.");
       setReplacing(false);
     };
     reader.readAsDataURL(file);
@@ -188,7 +230,12 @@ function ImageCard({
 
         <div className="flex-1 text-left min-w-0">
           <p className="font-semibold text-sm truncate">{image.label}</p>
-          <p className="text-xs text-ink-muted truncate">{image.image_key}</p>
+          <p className="text-xs text-ink-muted truncate">
+            {image.image_key}
+            <span className="text-ink-muted/50 ml-1.5">
+              · {CATEGORY_ASPECT_RATIOS[image.category]?.label || "16:9"}
+            </span>
+          </p>
         </div>
 
         <Badge variant="default" className="flex-shrink-0">{image.category}</Badge>
@@ -205,10 +252,15 @@ function ImageCard({
         <div className="border-t border-sand/60 p-4 space-y-4">
           {/* Preview with position editor */}
           <div className="grid md:grid-cols-2 gap-4">
-            {/* Live preview */}
+            {/* Live preview — matches the actual aspect ratio used on site */}
             <div>
-              <p className="text-xs font-semibold text-ink-muted uppercase mb-2">Preview</p>
-              <div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-sand/20 border border-sand/40">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-ink-muted uppercase">Preview</p>
+                <span className="text-xs text-ink-muted bg-sand/30 px-2 py-0.5 rounded-full">
+                  {CATEGORY_ASPECT_RATIOS[image.category]?.label || "16:9"}
+                </span>
+              </div>
+              <div className={`relative ${CATEGORY_ASPECT_RATIOS[image.category]?.ratio || "aspect-[16/9]"} rounded-xl overflow-hidden bg-sand/20 border border-sand/40`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={image.current_url}
@@ -216,7 +268,7 @@ function ImageCard({
                   className="w-full h-full object-cover"
                   style={{ objectPosition: localPosition, ...filterStyle }}
                 />
-                <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/60 text-white text-[10px] font-mono">
+                <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/60 text-white text-xs font-mono">
                   {localPosition}
                 </div>
               </div>
@@ -310,11 +362,27 @@ function ImageCard({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={replacing}
+              onClick={() => {
+                if (replacing) {
+                  setReplacing(false);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                  toast.info("Upload cancelled");
+                } else {
+                  fileInputRef.current?.click();
+                }
+              }}
             >
-              {replacing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-              {replacing ? "Uploading..." : "Replace Image"}
+              {replacing ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Uploading... <span className="text-xs opacity-70 ml-1">(click to cancel)</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-3.5 w-3.5" />
+                  Replace Image
+                </>
+              )}
             </Button>
 
             <Button variant="outline" size="sm" onClick={handleReset}>

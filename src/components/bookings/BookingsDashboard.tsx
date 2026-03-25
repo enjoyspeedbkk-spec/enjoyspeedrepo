@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatDate } from "@/lib/format";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CalendarDays,
@@ -289,11 +290,7 @@ function BookingCard({
   const isWeatherWarning = booking.weather_status === "warning";
 
   const rideDate = new Date(booking.ride_date);
-  const dateStr = rideDate.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
+  const dateStr = formatDate(rideDate, "medium");
 
   return (
     <Card padding="md" hover className="relative" onClick={onViewDetails}>
@@ -323,7 +320,7 @@ function BookingCard({
               {rideDate.getDate()}
             </span>
             <span
-              className={`text-[10px] font-medium uppercase ${
+              className={`text-xs font-medium uppercase ${
                 isCompleted ? "text-accent/60" : "text-cream/60"
               }`}
             >
@@ -331,7 +328,7 @@ function BookingCard({
             </span>
           </div>
           {!isCompleted && daysUntil > 0 && (
-            <p className="text-[10px] text-ink-muted mt-1 font-medium">
+            <p className="text-xs text-ink-muted mt-1 font-medium">
               {daysUntil === 1 ? "Tomorrow" : `${daysUntil} days`}
             </p>
           )}
@@ -344,7 +341,7 @@ function BookingCard({
               {getSlotLabel(booking.time_slot_id)}
             </h3>
             <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${statusInfo.color}`}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${statusInfo.color}`}
             >
               <StatusIcon className="h-3 w-3" />
               {statusInfo.label}
@@ -377,7 +374,7 @@ function BookingCard({
               {booking.riders.map((r) => (
                 <span
                   key={r.id}
-                  className="inline-flex items-center gap-1 text-[10px] bg-sand/30 px-2 py-0.5 rounded-full"
+                  className="inline-flex items-center gap-1 text-xs bg-sand/30 px-2 py-0.5 rounded-full"
                 >
                   {r.nickname || r.name.split(" ")[0]}
                   <span className="text-ink-muted/60">
@@ -421,7 +418,7 @@ function BookingCard({
           <p className="font-bold text-base">
             {booking.ride_total.toLocaleString()}
           </p>
-          <p className="text-[10px] text-ink-muted">THB</p>
+          <p className="text-xs text-ink-muted">THB</p>
         </div>
       </div>
     </Card>

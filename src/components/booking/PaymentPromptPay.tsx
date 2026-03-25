@@ -16,9 +16,14 @@ import {
   Upload,
   MessageCircle,
   Gift,
+  AlertCircle,
+  RotateCcw,
+  Phone,
+  Bike,
 } from "lucide-react";
 import { STARTER_KIT, LINE_OA } from "@/lib/constants";
 import { SlipUpload } from "@/components/booking/SlipUpload";
+import Link from "next/link";
 
 interface PaymentPromptPayProps {
   bookingId: string;
@@ -74,13 +79,16 @@ export function PaymentPromptPay({
   );
 
   const [qrUrl, setQrUrl] = useState<string>("");
+  const [qrError, setQrError] = useState(false);
 
   useEffect(() => {
-    getPromptPayQRDataUrl(payload, 400).then(setQrUrl).catch(console.error);
+    getPromptPayQRDataUrl(payload, 400)
+      .then(setQrUrl)
+      .catch(() => setQrError(true));
   }, [payload]);
 
   const handleCopyAmount = () => {
-    navigator.clipboard.writeText(amount.toFixed(2));
+    navigator.clipboard.writeText(amount.toString());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -113,6 +121,39 @@ export function PaymentPromptPay({
           </p>
         </div>
 
+        {/* Payment breakdown — clear split between now vs track */}
+        {rentalAmount > 0 && (
+          <Card padding="md" className="mb-6">
+            <p className="text-xs font-bold uppercase tracking-wider text-ink-muted mb-3">Payment breakdown</p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-accent/5 border border-accent/20">
+                <div className="flex items-center gap-2">
+                  <QrCode className="h-4 w-4 text-accent" />
+                  <span className="text-sm font-semibold text-ink">Pay now via PromptPay</span>
+                </div>
+                <span className="text-sm font-bold text-accent">{amount.toLocaleString()} THB</span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-sky/5 border border-sky/20">
+                <div className="flex items-center gap-2">
+                  <Bike className="h-4 w-4 text-sky" />
+                  <div>
+                    <span className="text-sm font-semibold text-ink">Bike rental — pay at track</span>
+                    <p className="text-xs text-ink-muted">Paid to HHBL on ride day</p>
+                  </div>
+                </div>
+                <span className="text-sm font-bold text-sky">{rentalAmount.toLocaleString()} THB</span>
+              </div>
+              <div className="space-y-2 pt-2 border-t border-sand/40">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-ink">Total for your ride</span>
+                  <span className="text-sm font-bold text-ink">{(amount + rentalAmount).toLocaleString()} THB</span>
+                </div>
+                <p className="text-xs text-ink-muted">Split into two payments</p>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* QR Code */}
         <Card padding="lg" className="text-center mb-6">
           <Badge variant="accent" className="mb-4">
@@ -128,9 +169,33 @@ export function PaymentPromptPay({
                 height={280}
                 className="mx-auto"
               />
+            ) : qrError ? (
+              <div className="w-[280px] h-[280px] mx-auto flex flex-col items-center justify-center gap-3 px-6">
+                <AlertCircle className="h-10 w-10 text-error/60" />
+                <p className="text-sm font-medium text-ink text-center">
+                  QR code failed to load
+                </p>
+                <p className="text-xs text-ink-muted text-center">
+                  Use the account details below to transfer manually via your banking app.
+                </p>
+                <button
+                  onClick={() => {
+                    setQrError(false);
+                    setQrUrl("");
+                    getPromptPayQRDataUrl(payload, 400)
+                      .then(setQrUrl)
+                      .catch(() => setQrError(true));
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-dark transition-colors"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Try again
+                </button>
+              </div>
             ) : (
-              <div className="w-[280px] h-[280px] mx-auto flex items-center justify-center">
+              <div className="w-[280px] h-[280px] mx-auto flex flex-col items-center justify-center gap-2">
                 <QrCode className="h-12 w-12 text-sand animate-pulse" />
+                <p className="text-xs text-ink-muted">Generating QR code...</p>
               </div>
             )}
           </div>
@@ -159,13 +224,13 @@ export function PaymentPromptPay({
           <div className="mt-4 pt-4 border-t border-sand/60 text-xs text-ink-muted space-y-2">
             <p>Open your banking app, scan this QR, and the amount will auto-fill.</p>
             <div className="bg-sand/20 rounded-lg p-3 text-left">
-              <p className="text-[10px] uppercase text-ink-muted/60 tracking-wide mb-1">Transfer to</p>
+              <p className="text-xs uppercase text-ink-muted/60 tracking-wide mb-1">Transfer to</p>
               <p className="text-sm font-semibold text-ink">En-Joy Speed — PromptPay</p>
               <div className="flex items-center justify-between mt-1">
                 <p className="font-mono text-sm text-ink-light">{promptPayTarget}</p>
                 <button
                   onClick={handleCopyAccount}
-                  className="inline-flex items-center gap-1 text-[10px] text-ink-muted hover:text-ink transition-colors"
+                  className="inline-flex items-center gap-1 text-xs text-ink-muted hover:text-ink transition-colors"
                 >
                   {copiedAccount ? (
                     <>
@@ -184,25 +249,65 @@ export function PaymentPromptPay({
           </div>
         </Card>
 
-        {/* Payment countdown timer */}
-        <div className={`flex items-center gap-3 p-3 rounded-xl border mb-6 ${
-          timerExpired ? "bg-error/5 border-error/20" : timerUrgent ? "bg-warning/10 border-warning/30" : "bg-warning/5 border-warning/20"
-        }`}>
-          <Clock className={`h-5 w-5 flex-shrink-0 ${timerExpired ? "text-error" : "text-warning"}`} />
-          <div className="flex-1">
-            <p className={`text-sm font-medium ${timerExpired ? "text-error" : "text-ink"}`}>
-              {timerExpired ? "Time expired" : "Complete payment"}
-            </p>
+        {/* Split payment reminder — only show if there's a rental */}
+        {rentalAmount > 0 && (
+          <div className="p-4 rounded-xl bg-sky/5 border border-sky/20 mb-6">
+            <p className="text-sm font-medium text-ink mb-1">Payment schedule</p>
             <p className="text-xs text-ink-muted">
-              {timerExpired
-                ? "Your slot may have been released. Please try booking again."
-                : "Your booking is held while you complete payment."}
+              After paying <span className="font-semibold text-ink">{amount.toLocaleString()} THB</span> now, you'll pay <span className="font-semibold text-ink">{rentalAmount.toLocaleString()} THB</span> for bike rental at the track on ride day.
             </p>
           </div>
-          {!timerExpired && (
-            <span className={`font-mono text-lg font-bold tabular-nums ${timerUrgent ? "text-warning" : "text-ink"}`}>
-              {timerMinutes}:{timerSeconds.toString().padStart(2, "0")}
-            </span>
+        )}
+
+        {/* Payment countdown timer */}
+        <div className={`p-4 rounded-xl border mb-6 ${
+          timerExpired ? "bg-error/5 border-error/20" : timerUrgent ? "bg-warning/10 border-warning/30" : "bg-sand/20 border-sand/40"
+        }`}>
+          <div className="flex items-center gap-3">
+            <Clock className={`h-5 w-5 flex-shrink-0 ${timerExpired ? "text-error" : timerUrgent ? "text-warning" : "text-ink-muted"}`} />
+            <div className="flex-1">
+              <p className={`text-sm font-bold ${timerExpired ? "text-error" : "text-ink"}`}>
+                {timerExpired ? "Payment window expired" : timerUrgent ? "Hurry — time is running out!" : "Complete payment to confirm"}
+              </p>
+              <p className="text-xs text-ink-muted mt-0.5">
+                {timerExpired
+                  ? "Your slot may have been released."
+                  : "Your booking is held while you complete payment."}
+              </p>
+            </div>
+            {!timerExpired && (
+              <span className={`font-mono text-lg font-bold tabular-nums ${timerUrgent ? "text-warning" : "text-ink"}`}>
+                {timerMinutes}:{timerSeconds.toString().padStart(2, "0")}
+              </span>
+            )}
+          </div>
+
+          {/* Recovery options when expired */}
+          {timerExpired && (
+            <div className="mt-4 pt-3 border-t border-error/10 space-y-2">
+              <p className="text-xs font-medium text-ink">What you can do:</p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Link
+                  href="/booking"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-dark transition-colors"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Book again
+                </Link>
+                <a
+                  href={`https://line.me/R/ti/p/${LINE_OA}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 border-ink/15 text-ink text-sm font-semibold hover:bg-sand/30 transition-colors"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Contact support
+                </a>
+              </div>
+              <p className="text-xs text-ink-muted">
+                Already paid? No worries — contact us on LINE and we&apos;ll confirm your booking manually.
+              </p>
+            </div>
           )}
         </div>
 
@@ -213,7 +318,7 @@ export function PaymentPromptPay({
               <Upload className="h-4 w-4 text-ink-muted" />
               <span className="text-sm font-semibold text-ink">Upload payment slip</span>
             </div>
-            <span className="text-[10px] font-medium text-ink-muted/70 bg-sand/30 px-2 py-0.5 rounded-full">Optional</span>
+            <span className="text-xs font-medium text-ink-muted/70 bg-sand/30 px-2 py-0.5 rounded-full">Optional</span>
           </div>
           <p className="text-xs text-ink-muted mb-3">Speeds up confirmation — not required.</p>
           <SlipUpload
@@ -222,14 +327,12 @@ export function PaymentPromptPay({
           />
         </Card>
 
-        {rentalAmount > 0 && (
-          <div className="p-3 rounded-xl bg-sky/5 border border-sky/20 mb-6">
-            <p className="text-sm font-medium text-ink">
-              Bike rental: {rentalAmount.toLocaleString()} THB
-            </p>
-            <p className="text-xs text-ink-muted mt-1">
-              Paid separately at the track to HHBL on ride day. No need to pay
-              now.
+        {/* Rental reminder for no-rental bookings */}
+        {rentalAmount === 0 && (
+          <div className="p-3 rounded-xl bg-success/5 border border-success/20 mb-6">
+            <p className="text-sm font-medium text-ink">No bike rental needed</p>
+            <p className="text-xs text-ink-muted mt-0.5">
+              You&apos;re bringing your own bike. Total cost is {amount.toLocaleString()} THB.
             </p>
           </div>
         )}

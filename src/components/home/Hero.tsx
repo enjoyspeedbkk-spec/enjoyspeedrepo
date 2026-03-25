@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Play, Pause, Shield, Camera, Users, Volume2, VolumeX, SkipForward } from "lucide-react";
 import { useSiteImage } from "@/lib/site-images-context";
+import { useToast } from "@/components/ui/Toast";
 
 const stats = [
   { icon: Shield, label: "Athlete-Led & Safe" },
@@ -44,6 +45,7 @@ const HERO_VIDEOS = [
 
 export function Hero() {
   const heroStill = useSiteImage("hero-still", "/images/hero-golden-hour-still.jpg");
+  const toast = useToast();
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -51,6 +53,7 @@ export function Hero() {
   const [prevIndex, setPrevIndex] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(true);
   const [posterReady, setPosterReady] = useState(false);
+  const [videoError, setVideoError] = useState(false);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -93,7 +96,10 @@ export function Hero() {
         const nextVideo = videoRefs.current[next];
         if (nextVideo) {
           nextVideo.currentTime = 0;
-          nextVideo.play().catch(() => {});
+          nextVideo.play().catch((error) => {
+            console.warn("Failed to play video at index", next, error);
+            setVideoError(true);
+          });
         }
         // After fade completes (400ms), pause old video and clear prevIndex
         if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
@@ -125,7 +131,12 @@ export function Hero() {
     const activeVideo = videoRefs.current[activeIndex];
     if (paused) {
       // Resume
-      if (activeVideo) activeVideo.play().catch(() => {});
+      if (activeVideo) {
+        activeVideo.play().catch((error) => {
+          console.warn("Failed to resume video:", error);
+          setVideoError(true);
+        });
+      }
       setPaused(false);
       scheduleNext();
     } else {
@@ -151,9 +162,12 @@ export function Hero() {
               setVideoPlaying(true);
               setPaused(false);
               setMuted(true);
+              setVideoError(false);
             })
-            .catch(() => {
-              console.warn("Video playback failed");
+            .catch((error) => {
+              console.warn("Video playback failed:", error);
+              setVideoError(true);
+              toast.warning("Video unavailable — showing the ride experience instead.");
             });
         } else {
           v.pause();
@@ -170,7 +184,10 @@ export function Hero() {
       const nextVideo = videoRefs.current[next];
       if (nextVideo) {
         nextVideo.currentTime = 0;
-        nextVideo.play().catch(() => {});
+        nextVideo.play().catch((error) => {
+          console.warn("Failed to play skipped video:", error);
+          setVideoError(true);
+        });
       }
       if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
       fadeTimerRef.current = setTimeout(() => {
@@ -236,7 +253,10 @@ export function Hero() {
           wasPlayingBeforeHide.current = false;
           const activeVideo = videoRefs.current[activeIndex];
           if (activeVideo) {
-            activeVideo.play().catch(() => {});
+            activeVideo.play().catch((error) => {
+              console.warn("Failed to resume video after scroll:", error);
+              setVideoError(true);
+            });
           }
         }
       },
@@ -271,14 +291,14 @@ export function Hero() {
             >
               <Link
                 href="/booking"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 mb-8 hover:bg-accent/15 transition-colors group"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-transparent border border-accent/30 mb-8 hover:bg-accent/5 transition-colors group"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-sm font-medium text-accent-dark">
+                <span className="text-sm font-medium text-ink-muted">
                   Limited spots available
                 </span>
-                <span className="text-xs text-accent font-semibold group-hover:translate-x-0.5 transition-transform">
-                  Book a ride →
+                <span className="text-xs text-accent font-medium group-hover:translate-x-0.5 transition-transform">
+                  →
                 </span>
               </Link>
             </motion.div>
@@ -498,7 +518,7 @@ export function Hero() {
                     transition={{ delay: 0.8 }}
                     className="absolute bottom-6 left-4 right-4 z-[25]"
                   >
-                    <Link href="/booking" className="block glass rounded-2xl p-4 border border-white/40 shadow-lg hover:shadow-xl hover:border-white/60 transition-all group">
+                    <div className="block glass rounded-2xl p-4 border border-white/30 shadow-lg">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs font-medium text-ink-muted uppercase tracking-wider">
@@ -521,9 +541,12 @@ export function Hero() {
                             {" "}THB
                           </span>
                         </span>
+                        <span className="text-xs text-ink-muted mt-1">
+                          Bike rental separate
+                        </span>
                       </div>
                     </div>
-                    </Link>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -537,16 +560,19 @@ export function Hero() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: 1 }}
-                  className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-accent text-white rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-lg max-w-[120px] sm:max-w-none z-[2]"
+                  className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white/90 text-navy rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-md backdrop-blur-sm max-w-[140px] sm:max-w-none z-[2]"
                 >
-                  <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider opacity-80">
+                  <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-ink-muted opacity-70">
                     From
                   </p>
-                  <p className="text-lg sm:text-2xl font-bold leading-tight">
+                  <p className="text-lg sm:text-xl font-bold leading-tight">
                     2,000
-                    <span className="text-xs sm:text-sm font-normal opacity-80"> THB</span>
+                    <span className="text-xs sm:text-sm font-normal text-ink-muted opacity-80"> THB</span>
                   </p>
-                  <p className="text-[10px] sm:text-xs opacity-80">per person</p>
+                  <p className="text-xs text-ink-muted">per person</p>
+                  <p className="text-xs text-ink-muted mt-1.5 pt-1.5 border-t border-navy/10">
+                    Leaders, photos, safety · Bike rental separate
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>

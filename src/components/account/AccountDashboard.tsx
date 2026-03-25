@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { formatDate } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -23,6 +24,7 @@ import {
   Phone,
   MessageCircle,
   Globe,
+  Loader2,
 } from "lucide-react";
 
 interface AccountUser {
@@ -162,7 +164,7 @@ export function AccountDashboard({
             title="Sign out"
           >
             {signingOut ? (
-              <div className="h-5 w-5 border-2 border-ink-muted/30 border-t-ink-muted rounded-full animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
               <LogOut className="h-5 w-5" />
             )}
@@ -231,7 +233,7 @@ export function AccountDashboard({
                       <div className="flex items-center gap-3 p-2">
                         {/* Date badge */}
                         <div className="w-14 h-14 rounded-xl bg-accent/5 flex flex-col items-center justify-center flex-shrink-0">
-                          <span className="text-[10px] font-semibold text-ink-muted uppercase">
+                          <span className="text-xs font-semibold text-ink-muted uppercase">
                             {rideDate.toLocaleDateString("en-US", {
                               month: "short",
                             })}
@@ -239,7 +241,7 @@ export function AccountDashboard({
                           <span className="text-xl font-bold text-ink leading-none">
                             {rideDate.getDate()}
                           </span>
-                          <span className="text-[9px] text-ink-muted">
+                          <span className="text-xs text-ink-muted">
                             {rideDate.toLocaleDateString("en-US", {
                               weekday: "short",
                             })}
@@ -370,8 +372,17 @@ export function AccountDashboard({
                   disabled={saving}
                   className="flex items-center gap-1 text-xs font-semibold text-white bg-accent hover:bg-accent-dark px-3 py-1.5 rounded-full transition-colors disabled:opacity-50"
                 >
-                  <Check className="h-3 w-3" />
-                  {saving ? "Saving..." : "Save"}
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Saving…
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-3 w-3" />
+                      Save
+                    </>
+                  )}
                 </button>
               </div>
             )}
@@ -419,7 +430,7 @@ export function AccountDashboard({
                   className="w-full px-3 py-2.5 rounded-xl border border-sand bg-surface text-sm font-medium focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-colors"
                 />
                 {profileForm.phone && profileForm.phone.replace(/\D/g, "").length > 0 && profileForm.phone.replace(/\D/g, "").length < 10 && (
-                  <p className="mt-1 text-[11px] text-ink-muted">10-digit Thai mobile number</p>
+                  <p className="mt-1 text-xs text-ink-muted">10-digit Thai mobile number</p>
                 )}
               </div>
               <div>
@@ -464,7 +475,7 @@ export function AccountDashboard({
                   <span className="text-ink-muted">Email</span>
                   <span className="font-medium text-ink-muted">{user.email}</span>
                 </div>
-                <p className="text-[11px] text-ink-muted/60 mt-1">
+                <p className="text-xs text-ink-muted/60 mt-1">
                   Email is managed through your sign-in provider
                 </p>
               </div>

@@ -63,6 +63,7 @@ function FAQItem({
     <div className="border-b border-sand/60 last:border-0">
       <button
         onClick={onClick}
+        aria-expanded={isOpen}
         className="flex items-center justify-between w-full py-5 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-lg px-2 -mx-2"
       >
         <span className="text-base font-semibold text-ink group-hover:text-accent transition-colors pr-4">

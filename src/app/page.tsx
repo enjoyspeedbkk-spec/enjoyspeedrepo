@@ -8,7 +8,18 @@ import { getSiteImageSettings } from "@/lib/actions/site-images";
 
 export default async function HomePage() {
   const images = await getSiteImageSettings();
-  const imageMap = Object.fromEntries(images.map((img) => [img.image_key, img.current_url]));
+  const imageMap = Object.fromEntries(
+    images.map((img) => [
+      img.image_key,
+      {
+        url: img.current_url,
+        objectPosition: img.object_position,
+        brightness: img.brightness,
+        contrast: img.contrast,
+        saturate: img.saturate,
+      },
+    ])
+  );
 
   return (
     <SiteImagesProvider images={imageMap}>

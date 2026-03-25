@@ -16,12 +16,16 @@ import {
   Phone,
   Mail,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { updateBookingStatus } from "@/lib/actions/admin";
 import { TIME_SLOTS } from "@/lib/constants";
+import { formatDate } from "@/lib/format";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All" },
@@ -46,11 +50,18 @@ const STATUS_BADGES: Record<string, { variant: "success" | "warning" | "accent" 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function AdminBookings({ initialBookings }: { initialBookings: any[] }) {
+  const toast = useToast();
   const [bookings, setBookings] = useState(initialBookings);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    bookingId: string;
+    newStatus: string;
+    contactName: string;
+  } | null>(null);
 
   const filtered = bookings.filter((b) => {
     if (statusFilter !== "all" && b.status !== statusFilter) return false;
@@ -73,6 +84,9 @@ export function AdminBookings({ initialBookings }: { initialBookings: any[] }) {
       setBookings((prev) =>
         prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b))
       );
+      toast.success(`Booking status updated to ${newStatus}`);
+    } else {
+      toast.error("Failed to update booking status");
     }
   };
 
@@ -146,11 +160,9 @@ export function AdminBookings({ initialBookings }: { initialBookings: any[] }) {
                     <span className="text-sm font-bold leading-none">
                       {session ? new Date(session.date).getDate() : "?"}
                     </span>
-                    <span className="text-[8px] uppercase text-cream/60">
+                    <span className="text-[10px] uppercase text-cream/70">
                       {session
-                        ? new Date(session.date).toLocaleDateString("en-US", {
-                            month: "short",
-                          })
+                        ? formatDate(session.date, "short").split(" ")[0]
                         : ""}
                     </span>
                   </div>
@@ -287,22 +299,39 @@ export function AdminBookings({ initialBookings }: { initialBookings: any[] }) {
                           "completed",
                           "cancelled",
                           "no_show",
-                        ].map((s) => (
-                          <button
-                            key={s}
-                            disabled={
-                              booking.status === s || updating === booking.id
-                            }
-                            onClick={() => handleStatusChange(booking.id, s)}
-                            className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${
-                              booking.status === s
-                                ? "bg-ink text-cream"
-                                : "bg-surface border border-sand/60 text-ink-muted hover:bg-sand/20 disabled:opacity-30"
-                            }`}
-                          >
-                            {s.replace("_", " ")}
-                          </button>
-                        ))}
+                        ].map((s) => {
+                          const isDestructive = s === "cancelled" || s === "no_show";
+                          const isUpdating = updating === booking.id;
+                          return (
+                            <button
+                              key={s}
+                              disabled={
+                                booking.status === s || updating === booking.id
+                              }
+                              onClick={() => {
+                                if (isDestructive) {
+                                  setConfirmDialog({
+                                    open: true,
+                                    bookingId: booking.id,
+                                    newStatus: s,
+                                    contactName: booking.contact_name,
+                                  });
+                                } else {
+                                  handleStatusChange(booking.id, s);
+                                }
+                              }}
+                              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                booking.status === s
+                                  ? "bg-ink text-cream"
+                                  : isDestructive
+                                    ? "bg-surface border border-error/30 text-error hover:bg-error/5 disabled:opacity-30"
+                                    : "bg-surface border border-sand/60 text-ink-muted hover:bg-sand/20 disabled:opacity-30"
+                              }`}
+                            >
+                              {isUpdating ? <><Loader2 className="h-3 w-3 animate-spin inline mr-1" /> {s.replace("_", " ")}</> : s.replace("_", " ")}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -323,6 +352,22 @@ export function AdminBookings({ initialBookings }: { initialBookings: any[] }) {
           })
         )}
       </div>
+
+      {confirmDialog && (
+        <ConfirmDialog
+          open={confirmDialog.open}
+          title={`Mark as ${confirmDialog.newStatus.replace("_", " ")}?`}
+          description={`This will change ${confirmDialog.contactName}'s booking status to "${confirmDialog.newStatus.replace("_", " ")}".`}
+          detail={confirmDialog.newStatus === "cancelled" ? "The customer will need to rebook if this is reversed." : undefined}
+          variant="danger"
+          confirmLabel={confirmDialog.newStatus === "cancelled" ? "Cancel Booking" : "Mark No Show"}
+          onConfirm={() => {
+            handleStatusChange(confirmDialog.bookingId, confirmDialog.newStatus);
+            setConfirmDialog(null);
+          }}
+          onCancel={() => setConfirmDialog(null)}
+        />
+      )}
     </div>
   );
 }

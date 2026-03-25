@@ -19,6 +19,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { CustomerWithStats } from "@/lib/actions/admin-customers";
 import { addCustomerNote, getCustomerNotes, updateCustomerTier } from "@/lib/actions/admin-customers";
+import { useToast } from "@/components/ui/Toast";
+import { formatDate } from "@/lib/format";
 
 interface CustomerDirectoryProps {
   customers: CustomerWithStats[];
@@ -27,6 +29,7 @@ interface CustomerDirectoryProps {
 type TierFilter = "all" | "vip" | "regular" | "new" | "lapsed";
 
 export function CustomerDirectory({ customers }: CustomerDirectoryProps) {
+  const toast = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [tierFilter, setTierFilter] = useState<TierFilter>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -112,6 +115,7 @@ export function CustomerDirectory({ customers }: CustomerDirectoryProps) {
     try {
       const result = await addCustomerNote(customerId, noteContent, "general");
       if (result.success) {
+        toast.success("Note added");
         setNoteContent("");
         const updatedNotes = await getCustomerNotes(customerId);
         setNotes((prev) => ({
@@ -119,10 +123,10 @@ export function CustomerDirectory({ customers }: CustomerDirectoryProps) {
           [customerId]: updatedNotes,
         }));
       } else {
-        console.error("Error adding note:", result.error);
+        toast.error("Failed to add note. Please try again.");
       }
     } catch (error) {
-      console.error("Error:", error);
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setAddingNote(null);
     }
@@ -131,9 +135,9 @@ export function CustomerDirectory({ customers }: CustomerDirectoryProps) {
   const handleChangeTier = async (customerId: string, newTier: "vip" | "regular" | "new" | "lapsed") => {
     try {
       await updateCustomerTier(customerId, newTier);
-      // Optionally reload or update UI
+      toast.success(`Customer tier updated to ${newTier}`);
     } catch (error) {
-      console.error("Error updating tier:", error);
+      toast.error("Failed to update customer tier");
     }
   };
 
@@ -185,8 +189,8 @@ export function CustomerDirectory({ customers }: CustomerDirectoryProps) {
       {/* Customers Table */}
       <div className="overflow-x-auto">
         <div className="min-w-full bg-cream rounded-lg border border-sand/60 overflow-hidden">
-          {/* Table header */}
-          <div className="grid grid-cols-7 gap-4 p-4 bg-sand/30 border-b border-sand/60 font-semibold text-sm text-ink sticky top-0">
+          {/* Table header - hidden on mobile */}
+          <div className="hidden md:grid grid-cols-7 gap-4 p-4 bg-ink/5 border-b border-sand/60 font-bold text-xs uppercase tracking-wider text-ink/70 sticky top-0">
             <div>Name</div>
             <div>Contact</div>
             <div className="text-center">Rides</div>
@@ -207,53 +211,105 @@ export function CustomerDirectory({ customers }: CustomerDirectoryProps) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: index * 0.02 }}
-                  className="border-b border-sand/30 last:border-b-0"
+                  className="border-b border-sand/30 last:border-b-0 md:border-b"
                 >
-                  {/* Main row */}
+                  {/* Mobile card layout */}
                   <button
                     onClick={() => handleExpandRow(customer.id)}
-                    className="w-full grid grid-cols-7 gap-4 p-4 hover:bg-sand/20 transition-colors text-left"
+                    className="w-full md:hidden p-4 text-left hover:bg-sand/20 transition-colors"
+                  >
+                    <div className="space-y-3">
+                      {/* Name and Line ID */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-ink truncate">{customer.full_name || "—"}</p>
+                          <p className="text-xs text-ink-light mt-0.5">{customer.line_id || "No Line ID"}</p>
+                        </div>
+                        <ChevronDown
+                          className={`h-5 w-5 text-ink-muted transition-transform flex-shrink-0 ${
+                            expandedId === customer.id ? "rotate-180" : ""
+                          }`}
+                        />
+                      </div>
+
+                      {/* Phone */}
+                      {customer.phone ? (
+                        <div className="flex items-center gap-2 text-sm text-ink">
+                          <Phone className="h-3.5 w-3.5 text-ink-light flex-shrink-0" />
+                          <span>{customer.phone}</span>
+                        </div>
+                      ) : null}
+
+                      {/* Tier Badge */}
+                      <div>
+                        <Badge variant={getTierColor(customer.customer_tier)}>
+                          {getTierLabel(customer.customer_tier)}
+                        </Badge>
+                      </div>
+
+                      {/* Quick stats row */}
+                      <div className="grid grid-cols-3 gap-2 pt-2">
+                        <div className="text-center">
+                          <p className="font-bold text-ink">{customer.stats.bookings}</p>
+                          <p className="text-xs text-ink-light">Rides</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="font-bold text-accent">{Math.round(customer.stats.spent).toLocaleString()} THB</p>
+                          <p className="text-xs text-ink-light">Spent</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="font-bold text-ink">{(notes[customer.id] || []).length}</p>
+                          <p className="text-xs text-ink-light">Notes</p>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Desktop table row */}
+                  <button
+                    onClick={() => handleExpandRow(customer.id)}
+                    className="hidden md:grid w-full grid-cols-7 gap-4 p-4 hover:bg-sand/20 transition-colors text-left"
                   >
                     {/* Name */}
                     <div>
-                      <p className="font-medium text-ink">{customer.full_name || "—"}</p>
-                      <p className="text-xs text-ink-muted">{customer.line_id || "No Line ID"}</p>
+                      <p className="font-bold text-ink">{customer.full_name || "—"}</p>
+                      <p className="text-xs text-ink-light mt-0.5">{customer.line_id || "No Line ID"}</p>
                     </div>
 
                     {/* Contact */}
                     <div className="space-y-1">
                       {customer.stats.lastEmail ? (
                         <div className="flex items-center gap-2 text-sm text-ink">
-                          <Mail className="h-3.5 w-3.5 text-ink-muted" />
+                          <Mail className="h-3.5 w-3.5 text-ink-light flex-shrink-0" />
                           <span className="truncate">{customer.stats.lastEmail}</span>
                         </div>
                       ) : null}
                       {customer.phone ? (
                         <div className="flex items-center gap-2 text-sm text-ink">
-                          <Phone className="h-3.5 w-3.5 text-ink-muted" />
+                          <Phone className="h-3.5 w-3.5 text-ink-light flex-shrink-0" />
                           <span>{customer.phone}</span>
                         </div>
                       ) : null}
                       {!customer.stats.lastEmail && !customer.phone ? (
-                        <p className="text-sm text-ink-muted">—</p>
+                        <p className="text-sm text-ink-light">—</p>
                       ) : null}
                     </div>
 
                     {/* Rides */}
                     <div className="text-center">
-                      <p className="font-semibold text-ink text-lg">{customer.stats.bookings}</p>
-                      <p className="text-xs text-ink-muted">{customer.stats.riders} riders</p>
+                      <p className="font-bold text-ink text-lg">{customer.stats.bookings}</p>
+                      <p className="text-xs text-ink-light">{customer.stats.riders} riders</p>
                     </div>
 
                     {/* Spent */}
                     <div className="text-center">
-                      <p className="font-semibold text-ink text-lg">
-                        ฿{(customer.stats.spent / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <p className="font-bold text-accent text-lg">
+                        {customer.stats.spent.toLocaleString()} THB
                       </p>
                     </div>
 
                     {/* Tier */}
-                    <div className="text-center">
+                    <div className="text-center flex items-center justify-center">
                       <Badge variant={getTierColor(customer.customer_tier)}>
                         {getTierLabel(customer.customer_tier)}
                       </Badge>
@@ -262,12 +318,12 @@ export function CustomerDirectory({ customers }: CustomerDirectoryProps) {
                     {/* Joined */}
                     <div className="text-center">
                       <p className="font-medium text-ink text-sm">
-                        {new Date(customer.created_at).toLocaleDateString()}
+                        {formatDate(customer.created_at, "medium")}
                       </p>
                     </div>
 
                     {/* Expand button */}
-                    <div className="flex justify-center items-center">
+                    <div className="hidden md:flex justify-center items-center">
                       <ChevronDown
                         className={`h-5 w-5 text-ink-muted transition-transform ${
                           expandedId === customer.id ? "rotate-180" : ""
@@ -295,7 +351,7 @@ export function CustomerDirectory({ customers }: CustomerDirectoryProps) {
                               </p>
                               <p className="font-semibold text-ink text-sm mt-1">
                                 {customer.last_ride_date
-                                  ? new Date(customer.last_ride_date).toLocaleDateString()
+                                  ? formatDate(customer.last_ride_date, "short")
                                   : "Never"}
                               </p>
                             </div>
@@ -312,7 +368,7 @@ export function CustomerDirectory({ customers }: CustomerDirectoryProps) {
                                 Total Spent
                               </p>
                               <p className="font-semibold text-ink text-sm mt-1">
-                                ฿{(customer.stats.spent / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {customer.stats.spent.toLocaleString()} THB
                               </p>
                             </div>
                             <div className="bg-cream rounded-lg p-3 border border-sand/40">
@@ -363,7 +419,7 @@ export function CustomerDirectory({ customers }: CustomerDirectoryProps) {
                                   <div key={note.id} className="bg-sand/20 rounded p-2 text-sm">
                                     <p className="text-ink">{note.content}</p>
                                     <p className="text-xs text-ink-muted mt-1">
-                                      {new Date(note.created_at).toLocaleDateString()}
+                                      {formatDate(note.created_at, "short")}
                                     </p>
                                   </div>
                                 ))}

@@ -1,5 +1,6 @@
 "use client";
 
+import { forwardRef } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
 
 type ButtonVariant = "primary" | "secondary" | "outline" | "ghost";
@@ -35,26 +36,31 @@ const sizes: Record<ButtonSize, string> = {
   lg: "px-8 py-4 text-base rounded-2xl gap-2",
 };
 
-export function Button({
-  variant = "primary",
-  size = "md",
-  loading = false,
-  arrow = false,
-  fullWidth = false,
-  className = "",
-  children,
-  disabled,
-  onClick,
-  type = "button",
-}: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    variant = "primary",
+    size = "md",
+    loading = false,
+    arrow = false,
+    fullWidth = false,
+    className = "",
+    children,
+    disabled,
+    onClick,
+    type = "button",
+  },
+  ref
+) {
   return (
     <button
+      ref={ref}
       type={type}
       onClick={onClick}
       className={`
         inline-flex items-center justify-center font-semibold
         transition-all duration-300
         hover:scale-[1.02] active:scale-[0.98]
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2
         disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
         ${variants[variant]}
         ${sizes[size]}
@@ -75,4 +81,4 @@ export function Button({
       )}
     </button>
   );
-}
+});

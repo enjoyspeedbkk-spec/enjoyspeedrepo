@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { TeamSection } from "@/components/about/TeamSection";
 import { getSiteImageSettingsBatch } from "@/lib/actions/site-images";
+import type { SiteImageData } from "@/lib/site-images-context";
 import { FAQ } from "@/components/home/FAQ";
 import { CTASection } from "@/components/home/CTASection";
 import Image from "next/image";
@@ -107,7 +108,13 @@ export default async function AboutPage() {
   const imageKeys = ["team-pailin-profile", "team-udorn-profile", "team-group-photo", "venue-meeting-point"];
   const imageBatch = await getSiteImageSettingsBatch(imageKeys);
   const imageOverrides = Object.fromEntries(
-    Object.entries(imageBatch).map(([key, img]) => [key, img.current_url])
+    Object.entries(imageBatch).map(([key, img]) => [key, {
+      url: img.current_url,
+      objectPosition: img.object_position,
+      brightness: img.brightness,
+      contrast: img.contrast,
+      saturate: img.saturate,
+    }])
   );
   return (
     <>
@@ -295,13 +302,24 @@ export default async function AboutPage() {
 
           <div className="grid md:grid-cols-2 gap-6 items-center">
             <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-sand/40">
-              <Image
-                src={imageOverrides["venue-meeting-point"] || "/images/venue/meeting-point.jpg"}
-                alt="Meeting point — Parking sign K and L at Skylane"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
+              {(() => {
+                const img = imageOverrides["venue-meeting-point"] as SiteImageData | undefined;
+                const src = img?.url || "/images/venue/meeting-point.jpg";
+                const hasFilters = img && ((img.brightness && img.brightness !== 1) || (img.contrast && img.contrast !== 1) || (img.saturate && img.saturate !== 1));
+                return (
+                  <Image
+                    src={src}
+                    alt="Meeting point — Parking sign K and L at Skylane"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    style={{
+                      objectPosition: img?.objectPosition || "50% 50%",
+                      ...(hasFilters ? { filter: `brightness(${img?.brightness ?? 1}) contrast(${img?.contrast ?? 1}) saturate(${img?.saturate ?? 1})` } : {}),
+                    }}
+                  />
+                );
+              })()}
             </div>
             <div className="space-y-4">
               <div className="flex gap-3">
