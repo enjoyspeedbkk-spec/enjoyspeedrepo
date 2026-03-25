@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Settings,
   Package,
@@ -75,6 +75,7 @@ export function AdminSettings({
   staff: any[];
   promos: any[];
 }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [activeSection, setActiveSection] = useState(
@@ -156,10 +157,10 @@ export function AdminSettings({
       const result = await createPackage(newPkg);
       setSaving(null);
       if (result.success) {
-        setLocalPackages((prev) => [...prev, { ...newPkg, id: crypto.randomUUID() }]);
         setShowNewForm(false);
         setNewPkg({ type: "", name: "", min_riders: 2, max_riders: 4, price_per_person: 2000, leaders_count: 1, heroes_count: 0, description: "", icon: "star", sort_order: (localPackages.length + 2) * 10, is_popular: false, is_active: true });
         showSaved("new");
+        router.refresh(); // Fetch real DB IDs
       }
     };
 
@@ -174,17 +175,28 @@ export function AdminSettings({
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <Field label="Name" value={pkg.name} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, name: v } : p))} />
-                      <Field label="Type (slug)" value={pkg.type} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, type: v } : p))} />
+                      <Field label="URL Key" value={pkg.type} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, type: v.toLowerCase().replace(/\s+/g, "_") } : p))} />
                       <Field label="Price/Person (THB)" type="number" value={pkg.price_per_person} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, price_per_person: Number(v) } : p))} />
                       <Field label="Min Riders" type="number" value={pkg.min_riders} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, min_riders: Number(v) } : p))} />
                       <Field label="Max Riders" type="number" value={pkg.max_riders} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, max_riders: Number(v) } : p))} />
                       <Field label="Leaders" type="number" value={pkg.leaders_count} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, leaders_count: Number(v) } : p))} />
                       <Field label="Heroes" type="number" value={pkg.heroes_count} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, heroes_count: Number(v) } : p))} />
-                      <Field label="Icon (star/zap/crown)" value={pkg.icon || ""} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, icon: v } : p))} />
+                      <div>
+                        <label className="text-[11px] text-ink-muted mb-1 block">Icon</label>
+                        <select
+                          value={pkg.icon || "star"}
+                          onChange={(e) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, icon: e.target.value } : p))}
+                          className="w-full px-3 py-2 rounded-lg border-2 border-sand/60 text-sm focus:border-ink focus:outline-none bg-surface"
+                        >
+                          <option value="star">Star</option>
+                          <option value="zap">Zap</option>
+                          <option value="crown">Crown</option>
+                        </select>
+                      </div>
                       <Field label="Sort Order" type="number" value={pkg.sort_order || 0} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, sort_order: Number(v) } : p))} />
                     </div>
                     <div>
-                      <label className="text-[10px] text-ink-muted mb-1 block">Description</label>
+                      <label className="text-[11px] text-ink-muted mb-1 block">Description</label>
                       <textarea
                         value={pkg.description || ""}
                         onChange={(e) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, description: e.target.value } : p))}
@@ -217,7 +229,12 @@ export function AdminSettings({
                         <Save className="h-3 w-3" />
                         {saving === pkg.id ? "Saving..." : "Save"}
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => { setEditingId(null); setLocalPackages(packages); }}>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        setEditingId(null);
+                        // Revert only this package, not all
+                        const original = packages.find((p) => p.id === pkg.id);
+                        if (original) setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? original : p));
+                      }}>
                         Cancel
                       </Button>
                     </div>
@@ -240,7 +257,7 @@ export function AdminSettings({
                       onClick={() => setEditingId(pkg.id)}
                       className="p-2 rounded-lg hover:bg-sand/30 transition-colors"
                     >
-                      <Edit3 className="h-4 w-4 text-ink-muted" />
+                      <Edit3 className="h-4 w-4 text-ink-muted" aria-hidden="true" /><span className="sr-only">Edit</span>
                     </button>
                   </div>
                 )}
@@ -253,18 +270,29 @@ export function AdminSettings({
           <Card padding="md">
             <p className="font-semibold text-sm mb-3">New Package</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <Field label="Type (slug, e.g. trio)" value={newPkg.type} onChange={(v) => setNewPkg((p) => ({ ...p, type: v.toLowerCase().replace(/\s+/g, "_") }))} />
+              <Field label="URL Key (e.g. trio)" value={newPkg.type} onChange={(v) => setNewPkg((p) => ({ ...p, type: v.toLowerCase().replace(/\s+/g, "_") }))} />
               <Field label="Display Name" value={newPkg.name} onChange={(v) => setNewPkg((p) => ({ ...p, name: v }))} />
               <Field label="Price/Person (THB)" type="number" value={newPkg.price_per_person} onChange={(v) => setNewPkg((p) => ({ ...p, price_per_person: Number(v) }))} />
               <Field label="Min Riders" type="number" value={newPkg.min_riders} onChange={(v) => setNewPkg((p) => ({ ...p, min_riders: Number(v) }))} />
               <Field label="Max Riders" type="number" value={newPkg.max_riders} onChange={(v) => setNewPkg((p) => ({ ...p, max_riders: Number(v) }))} />
               <Field label="Leaders" type="number" value={newPkg.leaders_count} onChange={(v) => setNewPkg((p) => ({ ...p, leaders_count: Number(v) }))} />
               <Field label="Heroes" type="number" value={newPkg.heroes_count} onChange={(v) => setNewPkg((p) => ({ ...p, heroes_count: Number(v) }))} />
-              <Field label="Icon (star/zap/crown)" value={newPkg.icon} onChange={(v) => setNewPkg((p) => ({ ...p, icon: v }))} />
+              <div>
+                <label className="text-[11px] text-ink-muted mb-1 block">Icon</label>
+                <select
+                  value={newPkg.icon}
+                  onChange={(e) => setNewPkg((p) => ({ ...p, icon: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border-2 border-sand/60 text-sm focus:border-ink focus:outline-none bg-surface"
+                >
+                  <option value="star">Star</option>
+                  <option value="zap">Zap</option>
+                  <option value="crown">Crown</option>
+                </select>
+              </div>
               <Field label="Sort Order" type="number" value={newPkg.sort_order} onChange={(v) => setNewPkg((p) => ({ ...p, sort_order: Number(v) }))} />
             </div>
             <div className="mt-3">
-              <label className="text-[10px] text-ink-muted mb-1 block">Description</label>
+              <label className="text-[11px] text-ink-muted mb-1 block">Description</label>
               <textarea
                 value={newPkg.description}
                 onChange={(e) => setNewPkg((p) => ({ ...p, description: e.target.value }))}
@@ -346,7 +374,7 @@ export function AdminSettings({
                   disabled={saving === slot.id}
                 >
                   <Save className="h-3 w-3" />
-                  {saving === slot.id ? "..." : "Save"}
+                  {saving === slot.id ? "Saving..." : "Save"}
                 </Button>
                 {saved === slot.id && <CheckCircle2 className="h-4 w-4 text-success" />}
               </div>
@@ -414,7 +442,11 @@ export function AdminSettings({
                         <Save className="h-3 w-3" />
                         {saving === bike.id ? "Saving..." : "Save"}
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => { setEditingBikeId(null); setLocalBikes(bikeRentals); }}>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        setEditingBikeId(null);
+                        const original = bikeRentals.find((b) => b.id === bike.id);
+                        if (original) setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? original : b));
+                      }}>
                         Cancel
                       </Button>
                     </div>
@@ -436,7 +468,7 @@ export function AdminSettings({
                       onClick={() => setEditingBikeId(bike.id)}
                       className="p-2 rounded-lg hover:bg-sand/30 transition-colors"
                     >
-                      <Edit3 className="h-4 w-4 text-ink-muted" />
+                      <Edit3 className="h-4 w-4 text-ink-muted" aria-hidden="true" /><span className="sr-only">Edit</span>
                     </button>
                   </div>
                 )}
@@ -505,10 +537,10 @@ export function AdminSettings({
                 const result = await createStarterKitItem({ name: newName, description: newDesc });
                 setSaving(null);
                 if (result.success) {
-                  setLocalKit((prev) => [...prev, { id: crypto.randomUUID(), name: newName, description: newDesc }]);
                   setShowNew(false);
                   setNewName("");
                   setNewDesc("");
+                  router.refresh();
                 }
               }} disabled={saving === "newkit" || !newName}>
                 {saving === "newkit" ? "Adding..." : "Add Item"}
@@ -549,7 +581,7 @@ export function AdminSettings({
                       <Field label="Name" value={member.name} onChange={(v) => setLocalStaff((prev) => prev.map((s) => s.id === member.id ? { ...s, name: v } : s))} />
                       <Field label="Nickname" value={member.nickname || ""} onChange={(v) => setLocalStaff((prev) => prev.map((s) => s.id === member.id ? { ...s, nickname: v } : s))} />
                       <div>
-                        <label className="text-[10px] text-ink-muted mb-1 block">Role</label>
+                        <label className="text-[11px] text-ink-muted mb-1 block">Role</label>
                         <select
                           value={member.role}
                           onChange={(e) => setLocalStaff((prev) => prev.map((s) => s.id === member.id ? { ...s, role: e.target.value } : s))}
@@ -587,9 +619,13 @@ export function AdminSettings({
                         setEditingId(null);
                       }} disabled={saving === member.id}>
                         <Save className="h-3 w-3" />
-                        {saving === member.id ? "..." : "Save"}
+                        {saving === member.id ? "Saving..." : "Save"}
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => { setEditingId(null); setLocalStaff(staff); }}>Cancel</Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        setEditingId(null);
+                        const original = staff.find((s) => s.id === member.id);
+                        if (original) setLocalStaff((prev) => prev.map((s) => s.id === member.id ? original : s));
+                      }}>Cancel</Button>
                     </div>
                   </div>
                 ) : (
@@ -614,7 +650,7 @@ export function AdminSettings({
                       </div>
                     </div>
                     <button onClick={() => setEditingId(member.id)} className="p-2 rounded-lg hover:bg-sand/30 transition-colors">
-                      <Edit3 className="h-4 w-4 text-ink-muted" />
+                      <Edit3 className="h-4 w-4 text-ink-muted" aria-hidden="true" /><span className="sr-only">Edit</span>
                     </button>
                   </div>
                 )}
@@ -630,7 +666,7 @@ export function AdminSettings({
               <Field label="Name" value={newMember.name} onChange={(v) => setNewMember((p) => ({ ...p, name: v }))} />
               <Field label="Nickname" value={newMember.nickname} onChange={(v) => setNewMember((p) => ({ ...p, nickname: v }))} />
               <div>
-                <label className="text-[10px] text-ink-muted mb-1 block">Role</label>
+                <label className="text-[11px] text-ink-muted mb-1 block">Role</label>
                 <select
                   value={newMember.role}
                   onChange={(e) => setNewMember((p) => ({ ...p, role: e.target.value }))}
@@ -642,6 +678,8 @@ export function AdminSettings({
                 </select>
               </div>
               <Field label="Phone" value={newMember.phone} onChange={(v) => setNewMember((p) => ({ ...p, phone: v }))} />
+              <Field label="Bio" value={newMember.bio} onChange={(v) => setNewMember((p) => ({ ...p, bio: v }))} />
+              <Field label="Max Sessions/Day" type="number" value={newMember.max_sessions_per_day} onChange={(v) => setNewMember((p) => ({ ...p, max_sessions_per_day: Number(v) }))} />
             </div>
             <div className="flex gap-2 mt-3">
               <Button size="sm" onClick={async () => {
@@ -649,9 +687,9 @@ export function AdminSettings({
                 const result = await createStaffMember(newMember);
                 setSaving(null);
                 if (result.success) {
-                  setLocalStaff((prev) => [...prev, { ...newMember, id: crypto.randomUUID() }]);
                   setShowNew(false);
                   setNewMember({ name: "", nickname: "", role: "leader", phone: "", bio: "", max_sessions_per_day: 2 });
+                  router.refresh();
                 }
               }} disabled={saving === "newstaff" || !newMember.name}>
                 {saving === "newstaff" ? "Adding..." : "Add Staff"}
@@ -707,7 +745,7 @@ export function AdminSettings({
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <Field label="Code" value={promo.code} onChange={(v) => setLocalPromos((prev) => prev.map((p) => p.id === promo.id ? { ...p, code: v.toUpperCase() } : p))} />
                       <div>
-                        <label className="text-[10px] text-ink-muted mb-1 block">Discount Type</label>
+                        <label className="text-[11px] text-ink-muted mb-1 block">Discount Type</label>
                         <select
                           value={promo.discount_type}
                           onChange={(e) => setLocalPromos((prev) => prev.map((p) => p.id === promo.id ? { ...p, discount_type: e.target.value } : p))}
@@ -745,9 +783,13 @@ export function AdminSettings({
                         setEditingId(null);
                       }} disabled={saving === promo.id}>
                         <Save className="h-3 w-3" />
-                        {saving === promo.id ? "..." : "Save"}
+                        {saving === promo.id ? "Saving..." : "Save"}
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => { setEditingId(null); setLocalPromos(promos); }}>Cancel</Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        setEditingId(null);
+                        const original = promos.find((p) => p.id === promo.id);
+                        if (original) setLocalPromos((prev) => prev.map((p) => p.id === promo.id ? original : p));
+                      }}>Cancel</Button>
                     </div>
                   </div>
                 ) : (
@@ -770,7 +812,7 @@ export function AdminSettings({
                       </p>
                     </div>
                     <button onClick={() => setEditingId(promo.id)} className="p-2 rounded-lg hover:bg-sand/30 transition-colors">
-                      <Edit3 className="h-4 w-4 text-ink-muted" />
+                      <Edit3 className="h-4 w-4 text-ink-muted" aria-hidden="true" /><span className="sr-only">Edit</span>
                     </button>
                   </div>
                 )}
@@ -785,7 +827,7 @@ export function AdminSettings({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <Field label="Code" value={newCode.code} onChange={(v) => setNewCode((p) => ({ ...p, code: v.toUpperCase() }))} />
               <div>
-                <label className="text-[10px] text-ink-muted mb-1 block">Discount Type</label>
+                <label className="text-[11px] text-ink-muted mb-1 block">Discount Type</label>
                 <select
                   value={newCode.discount_type}
                   onChange={(e) => setNewCode((p) => ({ ...p, discount_type: e.target.value as "percentage" | "fixed" }))}
@@ -806,9 +848,9 @@ export function AdminSettings({
                 const result = await createPromoCode(newCode);
                 setSaving(null);
                 if (result.success) {
-                  setLocalPromos((prev) => [...prev, { ...newCode, id: crypto.randomUUID(), times_used: 0 }]);
                   setShowNew(false);
                   setNewCode({ code: "", discount_type: "percentage", discount_value: 10, max_uses: 0, valid_from: "", valid_until: "", is_active: true });
+                  router.refresh();
                 }
               }} disabled={saving === "newpromo" || !newCode.code}>
                 {saving === "newpromo" ? "Creating..." : "Create Code"}
@@ -844,32 +886,6 @@ export function AdminSettings({
     setAdminsLoaded(true);
   };
 
-  const handleGrantAdmin = async () => {
-    if (!newAdminEmail.trim()) return;
-    setAdminActionLoading(true);
-    const result = await grantAdminAccess(newAdminEmail);
-    if (result.success) {
-      setSaved(result.message || "Admin access granted");
-      setNewAdminEmail("");
-      await loadAdmins();
-    } else {
-      setError(result.message || "Failed to grant access");
-    }
-    setAdminActionLoading(false);
-  };
-
-  const handleRevokeAdmin = async (email: string) => {
-    if (!confirm(`Revoke admin access for ${email}?`)) return;
-    setAdminActionLoading(true);
-    const result = await revokeAdminAccess(email);
-    if (result.success) {
-      setSaved(result.message || "Admin access revoked");
-      await loadAdmins();
-    } else {
-      setError(result.message || "Failed to revoke access");
-    }
-    setAdminActionLoading(false);
-  };
 
   const AdminAccessSection = () => {
     const [accessMessage, setAccessMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -881,18 +897,32 @@ export function AdminSettings({
 
     const onGrant = async () => {
       setAccessMessage(null);
-      await handleGrantAdmin();
-      if (error) {
-        setAccessMessage({ type: "error", text: error });
+      const emailToGrant = newAdminEmail.trim();
+      if (!emailToGrant) return;
+      setAdminActionLoading(true);
+      const result = await grantAdminAccess(emailToGrant);
+      if (result.success) {
+        setAccessMessage({ type: "success", text: `Admin access granted to ${emailToGrant}` });
+        setNewAdminEmail("");
+        await loadAdmins();
       } else {
-        setAccessMessage({ type: "success", text: `Admin access granted to ${newAdminEmail || "user"}` });
+        setAccessMessage({ type: "error", text: result.message || "Failed to grant access" });
       }
+      setAdminActionLoading(false);
     };
 
     const onRevoke = async (email: string) => {
+      if (!confirm(`Revoke admin access for ${email}?`)) return;
       setAccessMessage(null);
-      await handleRevokeAdmin(email);
-      setAccessMessage({ type: "success", text: `Admin access revoked for ${email}` });
+      setAdminActionLoading(true);
+      const result = await revokeAdminAccess(email);
+      if (result.success) {
+        setAccessMessage({ type: "success", text: `Admin access revoked for ${email}` });
+        await loadAdmins();
+      } else {
+        setAccessMessage({ type: "error", text: result.message || "Failed to revoke access" });
+      }
+      setAdminActionLoading(false);
     };
 
     return (
@@ -1065,7 +1095,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="text-[10px] text-ink-muted mb-1 block">{label}</label>
+      <label className="text-[11px] text-ink-muted mb-1 block">{label}</label>
       <input
         type={type}
         value={value}
