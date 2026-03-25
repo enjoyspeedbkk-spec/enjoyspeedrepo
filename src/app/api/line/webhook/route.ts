@@ -159,49 +159,76 @@ export async function POST(request: NextRequest) {
 }
 
 // ── Auto-reply logic ──────────────────────────
+// NOTE: Exact button labels are matched first (before keyword matching)
+// so button taps always get the right response regardless of phrasing.
+
+const PRICING_REPLY = `💰 En-Joy Speed Pricing:\n\n🔹 Duo (2 riders): 2,500 THB/person\n🔹 Squad (3–5 riders): 2,100 THB/person\n🔹 Peloton (6–8 riders): 2,000 THB/person\n\n🚲 Bike rental (paid at track):\n• Hybrid: 420 THB\n• Road: 720 THB\n• Own bike: Free\n\n🎁 Every rider gets a free Starter Kit (padded shorts, energy gel, eco bag)!\n\n👉 Book now: https://enjoyspeedbkk.com/booking`;
+
+const LOCATION_REPLY = `📍 Meeting point: Skylane (Happy & Healthy Bike Lane)\nNear Suvarnabhumi Airport, Bangkok.\n\nMap: https://maps.app.goo.gl/ZexMhiLu1BcSdCiJ9\n\nWe'll send you exact directions 24 hours before your ride. Look for our team in orange vests at the Skylane entrance!`;
+
+const WHAT_TO_BRING_REPLY = `📋 What to bring:\n\n✅ Sport shoes — closed-toe (mandatory)\n✅ Athletic socks\n✅ Breathable top\n✅ Sunscreen + sunglasses\n✅ Water bottle\n\n🎁 We provide:\nHelmet, bike (if renting), and your Starter Kit (padded liner shorts, energy gel, eco mesh bag)!\n\nNo cycling experience needed — your Athlete Leader handles everything. 🚴`;
+
+const BOOKING_REPLY = `🚴 Ready to ride?\n\nBook here (takes 2 minutes):\n👉 https://enjoyspeedbkk.com/booking\n\nChoose your date, time slot, and group size. Pay securely via PromptPay — no card needed!`;
 
 function getAutoReply(text: string): string | null {
+  // ── Exact button label matches (highest priority) ──────────────────
+  // These match the text sent when users tap rich menu / card buttons.
+  if (text === "pricing & packages" || text === "ราคาและแพ็กเกจ") {
+    return PRICING_REPLY;
+  }
+  if (text === "location" || text === "ที่ตั้ง") {
+    return LOCATION_REPLY;
+  }
+  if (text === "what to bring" || text === "สิ่งที่ต้องเตรียม") {
+    return WHAT_TO_BRING_REPLY;
+  }
+  if (text === "book a ride" || text === "จองเลย") {
+    return BOOKING_REPLY;
+  }
+
+  // ── Keyword matching (for freehand messages) ───────────────────────
+
   // Booking-related
   if (text.includes("book") || text.includes("reserve") || text.includes("จอง")) {
-    return `Ready to ride? 🚴\n\nBook here: https://enjoyspeedbkk.com/booking\n\nPick your date, time, and group size — takes about 2 minutes!`;
+    return BOOKING_REPLY;
   }
 
   // Pricing
   if (text.includes("price") || text.includes("pricing") || text.includes("package") || text.includes("cost") || text.includes("how much") || text.includes("ราคา") || text.includes("แพ็ค")) {
-    return `Our rides start at 2,000 THB/person 🚴\n\n• Duo (2 riders): 2,500 THB/person\n• Squad (3-5): 2,100 THB/person\n• Peloton (6-8): 2,000 THB/person\n\nEach rider gets a free Starter Kit (padded shorts, energy gel, eco bag)!\n\nBike rental: Hybrid 420 THB, Road 720 THB — or bring your own.\n\nBook: https://enjoyspeedbkk.com/booking`;
+    return PRICING_REPLY;
   }
 
   // Location / meeting point
-  if (text.includes("where") || text.includes("location") || text.includes("map") || text.includes("ที่ไหน") || text.includes("meeting")) {
-    return `📍 We meet at Skylane (Happy and Healthy Bike Lane) near Suvarnabhumi Airport.\n\nExact pin: https://maps.app.goo.gl/skylane\n\nWe'll send you detailed directions 24 hours before your ride!`;
+  if (text.includes("where") || text.includes("location") || text.includes("map") || text.includes("ที่ไหน") || text.includes("meeting") || text.includes("ที่ตั้ง")) {
+    return LOCATION_REPLY;
   }
 
   // Time / schedule
   if (text.includes("time") || text.includes("schedule") || text.includes("slot") || text.includes("เวลา")) {
-    return `⏰ We ride 5 time slots:\n\nMorning:\n• Early Bird — 06:15-08:15\n• Energy Booster — 06:30-08:30\n• Sunrise — 06:45-08:45\n\nEvening:\n• Golden Hour — 15:30-17:30\n• Sunset — 16:00-18:00\n\nBook: https://enjoyspeedbkk.com/booking`;
+    return `⏰ We ride 5 time slots:\n\n🌅 Morning:\n• Early Bird — 06:15–08:15\n• Energy Booster — 06:30–08:30\n\n🌇 Evening:\n• Light Chaser — 16:15–18:15\n• Golden Hour — 16:45–18:45\n• Twilight Finish — 17:15–19:15\n\n👉 Book: https://enjoyspeedbkk.com/booking`;
   }
 
   // Weather / rain policy
   if (text.includes("rain") || text.includes("weather") || text.includes("cancel") || text.includes("ฝน")) {
-    return `🌧️ Rain Policy:\n\nIf we cancel due to weather, you get:\n• Free reschedule to any date\n• Rain credit (valid 90 days)\n• Refund option\n\nWe monitor weather closely and notify you ASAP if conditions are unsafe.`;
+    return `🌧️ Rain Policy:\n\nIf we cancel due to weather, you get:\n• Free reschedule to any date\n• Rain credit (valid 90 days)\n• Full refund option\n\nWe monitor conditions closely and notify you as early as possible. Safety first!`;
   }
 
   // What to bring
   if (text.includes("bring") || text.includes("wear") || text.includes("what to") || text.includes("prepare") || text.includes("need to") || text.includes("เอาอะไร") || text.includes("เตรียม")) {
-    return `📋 What to bring:\n\n✅ Sport shoes (closed-toe, mandatory)\n✅ Athletic socks\n✅ Breathable top\n✅ Sunscreen + sunglasses\n✅ Water bottle\n\n🎁 We provide: helmet, bike (if renting), and your Starter Kit (padded shorts, energy gel, eco bag)!`;
+    return WHAT_TO_BRING_REPLY;
   }
 
   // Hello / greeting
   if (text === "hi" || text === "hello" || text === "hey" || text.includes("สวัสดี")) {
-    return `Hi there! 👋\n\nWelcome to En-Joy Speed! How can we help?\n\n🚴 Book a ride: https://enjoyspeedbkk.com/booking\n💰 See pricing: type "price"\n📍 Location: type "where"\n⏰ Time slots: type "time"\n📋 What to bring: type "bring"`;
+    return `Hi there! 👋 Welcome to En-Joy Speed!\n\nHow can we help?\n\n💰 Pricing → type "price"\n📍 Location → type "where"\n⏰ Time slots → type "time"\n📋 What to bring → type "bring"\n🚴 Book a ride → https://enjoyspeedbkk.com/booking`;
   }
 
   // Status check
   if (text.includes("status") || text.includes("my booking") || text.includes("สถานะ")) {
-    return `Check your booking status here:\nhttps://enjoyspeedbkk.com/bookings\n\nIf you have any issues, just describe them here and we'll get back to you!`;
+    return `Check your booking here:\n👉 https://enjoyspeedbkk.com/bookings\n\nIf something looks wrong, just reply and we'll sort it out!`;
   }
 
-  // Fallback — don't auto-reply, let admin handle it
+  // Fallback — let admin handle it manually
   return null;
 }
 
