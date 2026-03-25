@@ -255,6 +255,14 @@ export function Navbar() {
                             {user.isAdmin ? (
                               <>
                                 <Link
+                                  href="/admin/line-followers"
+                                  onClick={() => setShowUserMenu(false)}
+                                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm hover:bg-sand/30 transition-colors"
+                                >
+                                  <CalendarDays className="h-4 w-4 text-ink-muted" />
+                                  LINE Followers
+                                </Link>
+                                <Link
                                   href="/admin/messaging"
                                   onClick={() => setShowUserMenu(false)}
                                   className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm hover:bg-sand/30 transition-colors"

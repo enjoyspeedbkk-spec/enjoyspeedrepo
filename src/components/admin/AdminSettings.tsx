@@ -27,14 +27,19 @@ import {
   updateSiteConfig,
   updatePackage,
   createPackage,
+  deletePackage,
   updateTimeSlot,
   updateBikeRental,
+  deleteBikeRental,
   updateStarterKitItem,
   createStarterKitItem,
+  deleteStarterKitItem,
   updateStaffMember,
   createStaffMember,
+  deleteStaffMember,
   updatePromoCode,
   createPromoCode,
+  deletePromoCode,
   listAdmins,
   grantAdminAccess,
   revokeAdminAccess,
@@ -156,7 +161,18 @@ export function AdminSettings({
       is_active: true,
     });
 
+    const validatePkg = (pkg: any): string | null => {
+      if (!pkg.name?.trim()) return "Package name is required";
+      if (!pkg.type?.trim()) return "URL key is required";
+      if (pkg.min_riders < 1) return "Min riders must be at least 1";
+      if (pkg.max_riders < pkg.min_riders) return "Max riders cannot be less than min riders";
+      if (pkg.price_per_person < 0) return "Price cannot be negative";
+      return null;
+    };
+
     const handleSave = async (pkg: any) => {
+      const validationError = validatePkg(pkg);
+      if (validationError) { setError(validationError); return; }
       setSaving(pkg.id);
       setError(null);
       const result = await updatePackage(pkg.id, {
@@ -183,6 +199,8 @@ export function AdminSettings({
     };
 
     const handleCreate = async () => {
+      const validationError = validatePkg(newPkg);
+      if (validationError) { setError(validationError); return; }
       setSaving("new");
       const result = await createPackage(newPkg);
       setSaving(null);
@@ -254,19 +272,37 @@ export function AdminSettings({
                         Active
                       </label>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                       <Button size="sm" onClick={() => handleSave(pkg)} disabled={saving === pkg.id}>
                         <Save className="h-3 w-3" />
                         {saving === pkg.id ? "Saving..." : "Save"}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => {
                         setEditingId(null);
-                        // Revert only this package, not all
                         const original = packages.find((p) => p.id === pkg.id);
                         if (original) setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? original : p));
                       }}>
                         Cancel
                       </Button>
+                      <button
+                        className="ml-auto p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Delete package"
+                        onClick={async () => {
+                          if (!confirm(`Delete "${pkg.name}"? This cannot be undone.`)) return;
+                          setSaving(pkg.id);
+                          const result = await deletePackage(pkg.id);
+                          setSaving(null);
+                          if (result.success) {
+                            setLocalPackages((prev) => prev.filter((p) => p.id !== pkg.id));
+                            setEditingId(null);
+                          } else {
+                            setError(result.error || "Failed to delete");
+                          }
+                        }}
+                        disabled={saving === pkg.id}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -479,6 +515,23 @@ export function AdminSettings({
                       }}>
                         Cancel
                       </Button>
+                      <button
+                        className="ml-auto p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Delete bike"
+                        onClick={async () => {
+                          if (!confirm(`Delete "${bike.name}"? This cannot be undone.`)) return;
+                          setSaving(bike.id);
+                          const result = await deleteBikeRental(bike.id);
+                          setSaving(null);
+                          if (result.success) {
+                            setLocalBikes((prev) => prev.filter((b) => b.id !== bike.id));
+                            setEditingBikeId(null);
+                          } else setError(result.error || "Failed to delete");
+                        }}
+                        disabled={saving === bike.id}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -549,6 +602,21 @@ export function AdminSettings({
                 >
                   <Save className="h-3 w-3" />
                 </Button>
+                <button
+                  className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                  title="Delete item"
+                  onClick={async () => {
+                    if (!confirm(`Delete "${item.name}"?`)) return;
+                    setSaving(item.id);
+                    const result = await deleteStarterKitItem(item.id);
+                    setSaving(null);
+                    if (result.success) setLocalKit((prev) => prev.filter((k) => k.id !== item.id));
+                    else setError(result.error || "Failed to delete");
+                  }}
+                  disabled={saving === item.id}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
                 {saved === item.id && <CheckCircle2 className="h-4 w-4 text-success" />}
               </div>
             </div>
@@ -656,6 +724,21 @@ export function AdminSettings({
                         const original = staff.find((s) => s.id === member.id);
                         if (original) setLocalStaff((prev) => prev.map((s) => s.id === member.id ? original : s));
                       }}>Cancel</Button>
+                      <button
+                        className="ml-auto p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Delete staff member"
+                        onClick={async () => {
+                          if (!confirm(`Delete "${member.name}"? This cannot be undone.`)) return;
+                          setSaving(member.id);
+                          const result = await deleteStaffMember(member.id);
+                          setSaving(null);
+                          if (result.success) { setLocalStaff((prev) => prev.filter((s) => s.id !== member.id)); setEditingId(null); }
+                          else setError(result.error || "Failed to delete");
+                        }}
+                        disabled={saving === member.id}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -820,6 +903,21 @@ export function AdminSettings({
                         const original = promos.find((p) => p.id === promo.id);
                         if (original) setLocalPromos((prev) => prev.map((p) => p.id === promo.id ? original : p));
                       }}>Cancel</Button>
+                      <button
+                        className="ml-auto p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Delete promo code"
+                        onClick={async () => {
+                          if (!confirm(`Delete promo "${promo.code}"? This cannot be undone.`)) return;
+                          setSaving(promo.id);
+                          const result = await deletePromoCode(promo.id);
+                          setSaving(null);
+                          if (result.success) { setLocalPromos((prev) => prev.filter((p) => p.id !== promo.id)); setEditingId(null); }
+                          else setError(result.error || "Failed to delete");
+                        }}
+                        disabled={saving === promo.id}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 ) : (

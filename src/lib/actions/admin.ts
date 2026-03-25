@@ -643,6 +643,72 @@ export async function createPromoCode(
   return { success: !error };
 }
 
+// ========================================
+// DELETE ACTIONS
+// ========================================
+export async function deletePackage(
+  id: string
+): Promise<{ success: boolean; error?: string }> {
+  const { admin } = await requireAdmin();
+  const { error } = await admin.from("ride_packages_config").delete().eq("id", id);
+  if (error) return { success: false, error: error.message };
+  revalidatePath("/admin/settings");
+  return { success: true };
+}
+
+export async function deleteBikeRental(
+  id: string
+): Promise<{ success: boolean; error?: string }> {
+  const { admin } = await requireAdmin();
+  const { error } = await admin.from("bike_rentals").delete().eq("id", id);
+  if (error) return { success: false, error: error.message };
+  revalidatePath("/admin/settings");
+  return { success: true };
+}
+
+export async function deleteStarterKitItem(
+  id: string
+): Promise<{ success: boolean; error?: string }> {
+  const { admin } = await requireAdmin();
+  const { error } = await admin.from("starter_kit").delete().eq("id", id);
+  if (error) return { success: false, error: error.message };
+  revalidatePath("/admin/settings");
+  return { success: true };
+}
+
+export async function deleteStaffMember(
+  id: string
+): Promise<{ success: boolean; error?: string }> {
+  const { admin } = await requireAdmin();
+  const { error } = await admin.from("staff").delete().eq("id", id);
+  if (error) return { success: false, error: error.message };
+  revalidatePath("/admin/settings");
+  return { success: true };
+}
+
+export async function deletePromoCode(
+  id: string
+): Promise<{ success: boolean; error?: string }> {
+  const { admin } = await requireAdmin();
+  const { error } = await admin.from("promo_codes").delete().eq("id", id);
+  if (error) return { success: false, error: error.message };
+  revalidatePath("/admin/settings");
+  return { success: true };
+}
+
+// ========================================
+// LINE FOLLOWERS
+// ========================================
+export async function getLineFollowers() {
+  const { admin } = await requireAdmin();
+  const { data, error } = await admin
+    .from("line_users")
+    .select("*")
+    .order("followed_at", { ascending: false });
+  if (error) return [];
+  return data || [];
+}
+
 export async function deleteBlackoutDate(
   id: string
 ): Promise<{ success: boolean }> {
