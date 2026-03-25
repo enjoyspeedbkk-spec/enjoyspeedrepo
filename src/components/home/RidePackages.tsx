@@ -9,44 +9,41 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const packages = [
   {
-    name: "Duo",
+    nameKey: "packages.duo.name",
     slug: "duo",
-    tagline: "2 riders · Intimate guided ride",
+    taglineKey: "packages.duo.tagline",
     minRiders: 2,
     maxRiders: 2,
     icon: Star,
     price: 2500,
-    support: "1 Athlete Leader",
-    description:
-      "Couples or friends. One dedicated Athlete Leader for a fully personal ride.",
+    supportKey: "packages.duo.support",
+    descriptionKey: "packages.duo.description",
     color: "sky",
     popular: false,
   },
   {
-    name: "The Squad",
+    nameKey: "packages.squad.name",
     slug: "squad",
-    tagline: "3–5 riders · Best value per person",
+    taglineKey: "packages.squad.tagline",
     minRiders: 3,
     maxRiders: 5,
     icon: Zap,
     price: 2100,
-    support: "1 Leader + 1 Hero",
-    description:
-      "Most popular. Leader up front, Hero rider at the back keeping everyone safe.",
+    supportKey: "packages.squad.support",
+    descriptionKey: "packages.squad.description",
     color: "accent",
     popular: true,
   },
   {
-    name: "The Peloton",
+    nameKey: "packages.peloton.name",
     slug: "peloton",
-    tagline: "6–8 riders · Full crew support",
+    taglineKey: "packages.peloton.tagline",
     minRiders: 6,
     maxRiders: 8,
     icon: Crown,
     price: 2000,
-    support: "2 Leaders + 2 Heroes",
-    description:
-      "Largest group, lowest price. Two Leaders and two Heroes for full 360° support.",
+    supportKey: "packages.peloton.support",
+    descriptionKey: "packages.peloton.description",
     color: "leaf",
     popular: false,
   },
@@ -89,7 +86,7 @@ export function RidePackages() {
             const colors = colorMap[pkg.color];
             return (
               <motion.div
-                key={pkg.name}
+                key={pkg.slug}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -122,30 +119,28 @@ export function RidePackages() {
                         >
                           <pkg.icon className={`h-5 w-5 ${colors.text}`} />
                         </div>
-                        <h3 className="text-xl font-bold">{pkg.name}</h3>
+                        <h3 className="text-xl font-bold">{t(pkg.nameKey)}</h3>
                         <p className="text-sm text-ink-muted mt-0.5">
-                          {pkg.tagline}
+                          {t(pkg.taglineKey)}
                         </p>
                       </div>
                       <div className="flex items-center gap-1.5 text-ink-muted">
                         <Users className="h-4 w-4" />
                         <span className="text-sm font-medium">
-                          {pkg.minRiders === pkg.maxRiders
-                            ? `${pkg.minRiders} riders`
-                            : `${pkg.minRiders}–${pkg.maxRiders} riders`}
+                          {t(`packages.${pkg.slug}.riders`)}
                         </span>
                       </div>
                     </div>
 
                     {/* Description */}
                     <p className="text-sm text-ink-muted leading-relaxed flex-1">
-                      {pkg.description}
+                      {t(pkg.descriptionKey)}
                     </p>
 
                     {/* Support */}
                     <div className={`mt-6 rounded-xl ${colors.bg} border ${colors.border} px-4 py-3`}>
                       <p className="text-sm font-semibold text-ink">
-                        {pkg.support}
+                        {t(pkg.supportKey)}
                       </p>
                       <p className="text-xs text-ink-muted mt-0.5">
                         {t('packages.photographyIncluded')}
@@ -164,11 +159,11 @@ export function RidePackages() {
                       </div>
                       {pkg.minRiders === pkg.maxRiders ? (
                         <p className="text-xs text-ink-muted mt-1">
-                          {(pkg.price * pkg.minRiders).toLocaleString()} THB for {pkg.minRiders} riders
+                          {(pkg.price * pkg.minRiders).toLocaleString()} THB {t('packages.for')} {pkg.minRiders} {t('packages.riders')}
                         </p>
                       ) : (
                         <p className="text-xs text-ink-muted mt-1">
-                          {pkg.minRiders} riders = {(pkg.price * pkg.minRiders).toLocaleString()} THB · {pkg.maxRiders} riders = {(pkg.price * pkg.maxRiders).toLocaleString()} THB
+                          {pkg.minRiders} {t('packages.riders')} = {(pkg.price * pkg.minRiders).toLocaleString()} THB {t('packages.separator')} {pkg.maxRiders} {t('packages.riders')} = {(pkg.price * pkg.maxRiders).toLocaleString()} THB
                         </p>
                       )}
                       <p className="text-xs text-ink-muted/70 mt-1">
@@ -184,7 +179,7 @@ export function RidePackages() {
                           : "bg-sand/50 text-ink group-hover:bg-sand"
                       }`}
                     >
-                      {t('packages.bookNow', { name: pkg.name })}
+                      {t('packages.bookNow', { name: t(pkg.nameKey) })}
                     </div>
                   </Card>
                 </Link>

@@ -147,7 +147,7 @@ export function AuthForm() {
           </h1>
           <p className="mt-2 text-ink-muted text-sm">
             {step === "email"
-              ? "We'll send a verification code to your email."
+              ? t('auth.verificationCodeSent')
               : `We sent a 6-digit code to ${cleanEmail}`}
           </p>
         </div>

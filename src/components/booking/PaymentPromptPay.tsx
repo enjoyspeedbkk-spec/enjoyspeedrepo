@@ -269,7 +269,7 @@ export function PaymentPromptPay({
             <Clock className={`h-5 w-5 flex-shrink-0 ${timerExpired ? "text-error" : timerUrgent ? "text-warning" : "text-ink-muted"}`} />
             <div className="flex-1">
               <p className={`text-sm font-bold ${timerExpired ? "text-error" : "text-ink"}`}>
-                {timerExpired ? t('booking.timeExpired') : timerUrgent ? "Hurry — time is running out!" : t('payment.paymentCountdown')}
+                {timerExpired ? t('booking.timeExpired') : timerUrgent ? t('payment.hurryTimeRunningOut') : t('payment.paymentCountdown')}
               </p>
               <p className="text-xs text-ink-muted mt-0.5">
                 {timerExpired

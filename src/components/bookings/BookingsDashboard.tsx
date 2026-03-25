@@ -34,42 +34,45 @@ import type { BookingWithDetails } from "@/lib/actions/bookings";
 
 type TabId = "upcoming" | "completed" | "cancelled";
 
-const STATUS_CONFIG: Record<
-  string,
-  { label: string; color: string; icon: typeof CheckCircle2 }
-> = {
+interface StatusConfig {
+  labelKey: string;
+  color: string;
+  icon: typeof CheckCircle2;
+}
+
+const STATUS_CONFIG: Record<string, StatusConfig> = {
   pending: {
-    label: "Payment Pending",
+    labelKey: "bookings.pending",
     color: "text-warning bg-warning/10",
     icon: CreditCard,
   },
   confirmed: {
-    label: "Confirmed",
+    labelKey: "bookings.confirmed",
     color: "text-success bg-success/10",
     icon: CheckCircle2,
   },
   rider_details: {
-    label: "Rider Info Needed",
+    labelKey: "bookings.riderInfoNeeded",
     color: "text-sky bg-sky/10",
     icon: Users,
   },
   ready: {
-    label: "Ready to Ride",
+    labelKey: "bookings.readyToRide",
     color: "text-success bg-success/10",
     icon: Sparkles,
   },
   completed: {
-    label: "Completed",
+    labelKey: "bookings.statusCompleted",
     color: "text-accent bg-accent/10",
     icon: Star,
   },
   cancelled: {
-    label: "Cancelled",
+    labelKey: "bookings.statusCancelled",
     color: "text-error bg-error/10",
     icon: XCircle,
   },
   no_show: {
-    label: "No Show",
+    labelKey: "bookings.noShow",
     color: "text-ink-muted bg-sand/40",
     icon: AlertCircle,
   },
@@ -331,7 +334,7 @@ function BookingCard({
           </div>
           {!isCompleted && daysUntil > 0 && (
             <p className="text-xs text-ink-muted mt-1 font-medium">
-              {daysUntil === 1 ? "Tomorrow" : `${daysUntil} days`}
+              {daysUntil === 1 ? t("bookings.tomorrow") : `${daysUntil} ${t("bookings.days")}`}
             </p>
           )}
         </div>
@@ -346,7 +349,7 @@ function BookingCard({
               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${statusInfo.color}`}
             >
               <StatusIcon className="h-3 w-3" />
-              {statusInfo.label}
+              {t(statusInfo.labelKey)}
             </span>
           </div>
 
@@ -433,23 +436,23 @@ function EmptyState({ tab }: { tab: TabId }) {
   const config = {
     upcoming: {
       icon: CalendarDays,
-      title: "No upcoming rides",
-      desc: "Book a session and it will appear here.",
-      cta: "Book a Ride",
+      titleKey: "bookings.noUpcomingRides",
+      descKey: "bookings.bookSessionAppear",
+      ctaKey: null,
       href: "/booking",
     },
     completed: {
       icon: Star,
-      title: "No completed rides yet",
-      desc: "After your first ride, you'll see your stats and reviews here.",
-      cta: null,
+      titleKey: "bookings.noCompletedRides",
+      descKey: "bookings.completedRidesMessage",
+      ctaKey: null,
       href: null,
     },
     cancelled: {
       icon: XCircle,
-      title: "No cancelled bookings",
-      desc: "That's a good thing! All your rides are on track.",
-      cta: null,
+      titleKey: "bookings.noCancelledBookings",
+      descKey: "bookings.cancelledBookingsMessage",
+      ctaKey: null,
       href: null,
     },
   };
@@ -459,12 +462,12 @@ function EmptyState({ tab }: { tab: TabId }) {
   return (
     <div className="text-center py-12">
       <c.icon className="h-10 w-10 text-ink-muted/30 mx-auto mb-3" />
-      <h3 className="font-semibold text-ink mb-1">{c.title}</h3>
-      <p className="text-sm text-ink-muted mb-4">{c.desc}</p>
-      {c.cta && c.href && (
+      <h3 className="font-semibold text-ink mb-1">{t(c.titleKey)}</h3>
+      <p className="text-sm text-ink-muted mb-4">{t(c.descKey)}</p>
+      {c.ctaKey && c.href && (
         <a href={c.href}>
           <Button variant="secondary" size="sm" arrow>
-            {c.cta}
+            {t(c.ctaKey)}
           </Button>
         </a>
       )}

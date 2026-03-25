@@ -17,7 +17,8 @@
     "next": "ถัดไป",
     "bookmark": "บันทึก",
     "share": "แชร์",
-    "learn_more": "เรียนรู้เพิ่มเติม"
+    "learn_more": "เรียนรู้เพิ่มเติม",
+    "uploading": "กำลังอัปโหลด..."
   },
   "nav": {
     "home": "หน้าแรก",
@@ -49,7 +50,15 @@
     "spotsLeft": "ที่เหลือ",
     "from": "เริ่มต้นจาก",
     "perPerson": "ต่อคน",
-    "nextAvailable": "ตารางว่างถัดไป"
+    "nextAvailable": "ตารางว่างถัดไป",
+    "whatsIncluded": "หัวหน้าทีม รูปถ่าย ความปลอดภัย · จัดเช่าจักรยานแยกต่างหาก",
+    "videoLabels": {
+      "goldenHourMorning": "ชั่วมหัศจรรย์ตอนเช้า",
+      "frontFacing": "มองหน้า",
+      "sunriseSideView": "มุมข้างพระอาทิตย์ขึ้น",
+      "blueHour": "ชั่วมหัศจรรย์สีน้ำเงิน",
+      "wideAngle": "มุมกว้าง"
+    }
   },
   "packages": {
     "rideFormats": "รูปแบบการปั่น",
@@ -480,7 +489,24 @@
     "changeNumber": "เปลี่ยนอีเมล",
     "resendCode": "ส่งรหัสอีกครั้ง",
     "resendIn": "ส่งอีกครั้งใน {seconds} วินาที",
-    "verifing": "การยืนยัน..."
+    "verifing": "การยืนยัน...",
+    "staffPick": "ตัวเลือกของเจ้าหน้าที่",
+    "scenic": "ทัศนีย",
+    "riderNamePlaceholder": "คุณชื่ออะไร?",
+    "bikeOptionHybrid": "ไฮบริด",
+    "bikeOptionHybridDesc": "สะดวกสบาย เหมาะกับมือใหม่",
+    "bikeOptionRoad": "จักรยานเสือหมอบ",
+    "bikeOptionRoadDesc": "เร็วกว่า สไตล์สปอร์ต",
+    "bikeOptionOwn": "จักรยานของตัวเอง",
+    "bikeOptionOwnDesc": "นำมาเอง",
+    "bikeOptionOwnPrice": "ฟรี",
+    "male": "ชาย",
+    "female": "หญิง",
+    "emergencyContactNamePlaceholder": "เบอร์ติดต่อหลักสำหรับการจองนี้",
+    "ownBike": "จักรยานของตัวเอง",
+    "rentalSeparator": "เช่า —",
+    "submittingButton": "กำลังสร้าง...",
+    "submitButton": "ใช่ ดำเนินการชำระเงิน"
   },
   "payment": {
     "scanToPayQR": "สแกนเพื่อจ่ายเงิน",
@@ -498,7 +524,8 @@
     "step2": "คุณจะได้รับการยืนยันผ่าน LINE ({line}) ไม่มี LINE? เราจะอีเมลให้คุณด้วย",
     "step3": "เราส่งคำแนะนำการเตรียมการปั่นของคุณ 24 ชั่วโมงก่อน",
     "step4": "แสดงตัว ปั่น และเพลิดเพลิน!",
-    "contactUS": "มีคำถาม? แชทกับเราบน LINE"
+    "contactUS": "มีคำถาม? แชทกับเราบน LINE",
+    "hurryTimeRunningOut": "เร็วเข้า — เวลากำลังจะหมด!"
   },
   "account": {
     "myAccount": "บัญชีของฉัน",
@@ -547,7 +574,12 @@
     "dontHaveAccount": "ไม่มีบัญชี?",
     "alreadyHaveAccount": "มีบัญชีแล้ว?",
     "toggleMode": "ลงชื่อสมัครใช้",
-    "toggleSignIn": "เข้าสู่ระบบ"
+    "toggleSignIn": "เข้าสู่ระบบ",
+    "validEmail": "กรุณาป้อนที่อยู่อีเมลที่ถูกต้อง",
+    "verifying": "กำลังยืนยัน...",
+    "resendIn": "ส่งอีกครั้งใน {seconds} วินาที",
+    "resendCode": "ส่งรหัสอีกครั้ง",
+    "verificationCodeSent": "เราจะส่งรหัสยืนยันไปที่อีเมลของคุณ"
   },
   "bookings": {
     "myBookings": "การจองของฉัน",
@@ -566,8 +598,6 @@
     "pending": "รอการตรวจสอบการจ่ายเงิน",
     "riderInfoNeeded": "ต้องการข้อมูลผู้ปั่น",
     "readyToRide": "พร้อมที่จะปั่น",
-    "completed": "เสร็จสิ้น",
-    "cancelled": "ยกเลิก",
     "noShow": "ไม่โชว์",
     "cancel": "ยกเลิกการจอง",
     "cancelConfirm": "คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการจองนี้?",
@@ -577,7 +607,24 @@
     "viewDetails": "ดูรายละเอียด",
     "leaveReview": "ปล่อยให้รีวิว",
     "noBookings": "ยังไม่มีการจองใด ๆ",
-    "startBooking": "เริ่มการปั่นครั้งแรกของคุณ"
+    "startBooking": "เริ่มการปั่นครั้งแรกของคุณ",
+    "statusCompleted": "เสร็จสิ้น",
+    "statusCancelled": "ยกเลิกแล้ว",
+    "awaitingPayment": "รอการชำระเงิน",
+    "bookingCancelled": "ยกเลิกการจองแล้ว",
+    "couldNotCancel": "ไม่สามารถยกเลิกได้",
+    "weatherCancelledRide": "ยกเลิกการปั่นเนื่องจากสภาพอากาศ",
+    "weatherAdvisory": "แจ้งเตือนสภาพอากาศ",
+    "weatherMonitoring": "เรากำลังติดตามสภาพอากาศ คุณจะได้รับแจ้งผ่าน LINE หากมีผลกระทบ",
+    "tomorrow": "พรุ่งนี้",
+    "days": "วัน",
+    "noUpcomingRides": "ไม่มีการปั่นที่กำลังจะมาถึง",
+    "bookSessionAppear": "จองทริปปั่นแล้วจะแสดงที่นี่",
+    "noCompletedRides": "ยังไม่มีการปั่นที่เสร็จสิ้น",
+    "completedRidesMessage": "หลังจากปั่นครั้งแรก คุณจะเห็นสถิติและรีวิวที่นี่",
+    "noCancelledBookings": "ไม่มีการจองที่ยกเลิก",
+    "cancelledBookingsMessage": "ดีเลย! การจองทั้งหมดยังอยู่ในแผน",
+    "noUpcomingRidesReady": "ไม่มีการปั่นที่กำลังจะมาถึง — พร้อมจองไหม?"
   },
   "review": {
     "howWasYourRide": "การปั่นของคุณเป็นอย่างไรบ้าง?",
@@ -599,7 +646,16 @@
     "wouldYouRecommend": "คุณจะแนะนำเราให้เพื่อนหรือไม่?",
     "consentToPhotos": "ฉันยินดีให้แบ่งปันรูปถ่ายของฉันบนโซเชียลมีเดียและวัสดุการปฏิบัติการ",
     "submitReview": "ส่งรีวิว",
-    "submitting": "กำลังส่ง..."
+    "submitting": "กำลังส่ง...",
+    "enjoyedThisRide": "คุณสนุกกับการปั่นครั้งนี้ไหม?",
+    "learnedSkills": "คุณได้เรียนรู้ทักษะการปั่นใหม่ไหม?",
+    "regularSport": "คุณจะปั่นจักรยานเป็นกีฬาประจำไหม?",
+    "anotherRide": "จองทริปปั่นอีกครั้ง",
+    "ownBike": "ซื้อจักรยานของตัวเอง",
+    "cyclingGroup": "เข้าร่วมกลุ่มปั่น",
+    "longerRoute": "ลองเส้นทางที่ยาวกว่า",
+    "notSureYet": "ยังไม่แน่ใจ",
+    "other": "อื่นๆ"
   },
   "survey": {
     "howWasYourRide": "การปั่นของคุณเป็นอย่างไรบ้าง?",
@@ -623,10 +679,10 @@
     "rides": "การปั่น",
     "company": "บริษัท",
     "support": "การสนับสนุน",
-    "duoRide": "การปั่นแบบคู่",
-    "theSquad": "ปั่นเป็นทีม",
-    "thePeloton": "พลังงานสูงสุด",
-    "bookARide": "จองเลย",
+    "duoRide": "ปั่นคู่",
+    "theSquad": "ปั่นก๊วน",
+    "thePeloton": "ปั่นเพ่าส์",
+    "bookARide": "จองการปั่น",
     "aboutUs": "เกี่ยวกับเรา",
     "ourLeaders": "ผู้นำของเรา",
     "safety": "ความปลอดภัย",

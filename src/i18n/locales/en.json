@@ -17,7 +17,8 @@
     "next": "Next",
     "bookmark": "Bookmark",
     "share": "Share",
-    "learn_more": "Learn more"
+    "learn_more": "Learn more",
+    "uploading": "Uploading..."
   },
   "nav": {
     "home": "Home",
@@ -49,7 +50,15 @@
     "spotsLeft": "spots left",
     "from": "From",
     "perPerson": "per person",
-    "nextAvailable": "Next Available"
+    "nextAvailable": "Next Available",
+    "whatsIncluded": "Leaders, photos, safety · Bike rental separate",
+    "videoLabels": {
+      "goldenHourMorning": "Golden Hour Morning",
+      "frontFacing": "Front Facing",
+      "sunriseSideView": "Sunrise Side View",
+      "blueHour": "Blue Hour",
+      "wideAngle": "Wide Angle"
+    }
   },
   "packages": {
     "rideFormats": "Ride Formats",
@@ -88,7 +97,10 @@
     "road": "Road 700 THB",
     "bringYourOwn": "Or bring your own at no extra cost",
     "photographyIncluded": "Photography included",
-    "bookNow": "Book {name}"
+    "bookNow": "Book {name}",
+    "riders": "riders",
+    "for": "for",
+    "separator": "·"
   },
   "howItWorks": {
     "theExperience": "The Experience",
@@ -481,7 +493,24 @@
     "changeNumber": "Change email",
     "resendCode": "Resend code",
     "resendIn": "Resend in {seconds}s",
-    "verifing": "Verifying..."
+    "verifing": "Verifying...",
+    "staffPick": "Staff Pick",
+    "scenic": "Scenic",
+    "riderNamePlaceholder": "What should we call you?",
+    "bikeOptionHybrid": "Hybrid",
+    "bikeOptionHybridDesc": "Comfortable, beginner-friendly",
+    "bikeOptionRoad": "Road Bike",
+    "bikeOptionRoadDesc": "Faster, sportier feel",
+    "bikeOptionOwn": "Own Bike",
+    "bikeOptionOwnDesc": "Bring your own",
+    "bikeOptionOwnPrice": "Free",
+    "male": "Male",
+    "female": "Female",
+    "emergencyContactNamePlaceholder": "Primary contact for this booking",
+    "ownBike": "Own bike",
+    "rentalSeparator": "rental —",
+    "submittingButton": "Creating...",
+    "submitButton": "Yes, proceed to payment"
   },
   "payment": {
     "scanToPayQR": "Scan to Pay",
@@ -499,7 +528,8 @@
     "step2": "You'll get a confirmation via LINE ({line}). Don't have LINE? We'll email you too.",
     "step3": "We send your ride prep guide 24 hours before",
     "step4": "Show up, ride, and enjoy!",
-    "contactUS": "Questions? Chat with us on LINE"
+    "contactUS": "Questions? Chat with us on LINE",
+    "hurryTimeRunningOut": "Hurry — time is running out!"
   },
   "account": {
     "myAccount": "My Account",
@@ -548,7 +578,12 @@
     "dontHaveAccount": "Don't have an account?",
     "alreadyHaveAccount": "Already have an account?",
     "toggleMode": "Sign up",
-    "toggleSignIn": "Sign in"
+    "toggleSignIn": "Sign in",
+    "validEmail": "Please enter a valid email address",
+    "verifying": "Verifying...",
+    "resendIn": "Resend in {seconds}s",
+    "resendCode": "Resend code",
+    "verificationCodeSent": "We'll send a verification code to your email."
   },
   "bookings": {
     "myBookings": "My Bookings",
@@ -567,8 +602,6 @@
     "pending": "Payment Pending",
     "riderInfoNeeded": "Rider Info Needed",
     "readyToRide": "Ready to Ride",
-    "completed": "Completed",
-    "cancelled": "Cancelled",
     "noShow": "No Show",
     "cancel": "Cancel Booking",
     "cancelConfirm": "Are you sure you want to cancel this booking?",
@@ -578,7 +611,24 @@
     "viewDetails": "View Details",
     "leaveReview": "Leave Review",
     "noBookings": "No bookings yet.",
-    "startBooking": "Start your first ride"
+    "startBooking": "Start your first ride",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled",
+    "awaitingPayment": "Awaiting payment",
+    "bookingCancelled": "Booking cancelled.",
+    "couldNotCancel": "Could not cancel.",
+    "weatherCancelledRide": "Ride cancelled due to weather",
+    "weatherAdvisory": "Weather advisory",
+    "weatherMonitoring": "We're monitoring conditions. You'll be notified via LINE if the ride is affected.",
+    "tomorrow": "Tomorrow",
+    "days": "days",
+    "noUpcomingRides": "No upcoming rides",
+    "bookSessionAppear": "Book a session and it will appear here.",
+    "noCompletedRides": "No completed rides yet",
+    "completedRidesMessage": "After your first ride, you'll see your stats and reviews here.",
+    "noCancelledBookings": "No cancelled bookings",
+    "cancelledBookingsMessage": "That's a good thing! All your rides are on track.",
+    "noUpcomingRidesReady": "No upcoming rides — ready to book one?"
   },
   "review": {
     "howWasYourRide": "How was your ride?",
@@ -600,7 +650,16 @@
     "wouldYouRecommend": "Would you recommend us to a friend?",
     "consentToPhotos": "I consent to having my photos shared on social media and marketing materials.",
     "submitReview": "Submit Review",
-    "submitting": "Submitting..."
+    "submitting": "Submitting...",
+    "enjoyedThisRide": "Did you enjoy this ride?",
+    "learnedSkills": "Did you learn new cycling skills?",
+    "regularSport": "Will you make cycling a regular sport?",
+    "anotherRide": "Book another ride",
+    "ownBike": "Buy my own bike",
+    "cyclingGroup": "Join a cycling group",
+    "longerRoute": "Try a longer route",
+    "notSureYet": "Not sure yet",
+    "other": "Other"
   },
   "survey": {
     "howWasYourRide": "How was your ride?",

@@ -75,11 +75,6 @@ const packageIcons: Record<GroupType, typeof Star> = {
 
 // Clothing size options
 const SIZES: ClothingSize[] = ["XS", "S", "M", "L", "XL", "XXL"];
-const EXPERIENCE_OPTIONS: { value: CyclingExperience; label: string; desc: string }[] = [
-  { value: "beginner", label: "Beginner", desc: "First time or very few rides" },
-  { value: "intermediate", label: "Intermediate", desc: "Ride occasionally" },
-  { value: "experienced", label: "Experienced", desc: "Regular cyclist" },
-];
 
 function createEmptyRider(index: number): RiderInfo {
   return {
@@ -103,6 +98,31 @@ interface BookingFlowProps {
 
 export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFlowProps) {
   const { t } = useLanguage();
+  const experienceOptions: { value: CyclingExperience; label: string; desc: string }[] = [
+    { value: "beginner", label: t("booking.beginner"), desc: t("booking.firstTimeOrVeryFewRides") },
+    { value: "intermediate", label: t("booking.intermediate"), desc: t("booking.rideOccasionally") },
+    { value: "experienced", label: t("booking.experienced"), desc: t("booking.regularCyclist") },
+  ];
+  const bikeOptions: { value: BikePreference; label: string; price: string; desc: string }[] = [
+    {
+      value: "hybrid" as BikePreference,
+      label: t("booking.bikeOptionHybrid"),
+      price: "420 THB",
+      desc: t("booking.bikeOptionHybridDesc"),
+    },
+    {
+      value: "road" as BikePreference,
+      label: t("booking.bikeOptionRoad"),
+      price: "720 THB",
+      desc: t("booking.bikeOptionRoadDesc"),
+    },
+    {
+      value: "own" as BikePreference,
+      label: t("booking.bikeOptionOwn"),
+      price: t("booking.bikeOptionOwnPrice"),
+      desc: t("booking.bikeOptionOwnDesc"),
+    },
+  ];
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedSlot, setSelectedSlot] = useState<TimeSlotId | null>(null);
@@ -689,7 +709,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                                     : "bg-accent/10 text-accent-dark"
                                 }`}
                               >
-                                {slot.id === "C" ? "Staff Pick" : slot.id === "D" ? "Scenic" : `Slot ${slot.id}`}
+                                {slot.id === "C" ? t("booking.staffPick") : slot.id === "D" ? t("booking.scenic") : `Slot ${slot.id}`}
                               </span>
                               <p className={`font-semibold ${isSelected ? "text-cream" : "text-ink"}`}>{slot.label}</p>
                               <p
@@ -707,7 +727,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                       )}
                     </div>
                     <p className="mt-2 text-xs text-ink-muted">
-                      <strong>Staff Pick</strong> = most popular time. <strong>Scenic</strong> = best golden hour light.
+                      <strong>{t("booking.staffPick")}</strong> = most popular time. <strong>{t("booking.scenic")}</strong> = best golden hour light.
                     </p>
                   </div>
                 </div>
@@ -954,7 +974,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                               e.target.value
                             )
                           }
-                          placeholder="What should we call you?"
+                          placeholder={t("booking.riderNamePlaceholder")}
                           className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/70 focus:border-ink focus:outline-none transition-colors"
                         />
                       </div>
@@ -971,28 +991,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         own bike type. Helmet is included with every rental.
                       </p>
                       <div className="grid grid-cols-3 gap-3">
-                        {(
-                          [
-                            {
-                              value: "hybrid" as BikePreference,
-                              label: "Hybrid",
-                              price: "420 THB",
-                              desc: "Comfortable, beginner-friendly",
-                            },
-                            {
-                              value: "road" as BikePreference,
-                              label: "Road Bike",
-                              price: "720 THB",
-                              desc: "Faster, sportier feel",
-                            },
-                            {
-                              value: "own" as BikePreference,
-                              label: "Own Bike",
-                              price: "Free",
-                              desc: "Bring your own",
-                            },
-                          ]
-                        ).map((option) => (
+                        {bikeOptions.map((option) => (
                           <button
                             key={option.value}
                             onClick={() =>
@@ -1088,7 +1087,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                                     : "border-sand/60 bg-surface hover:border-ink/20"
                                 }`}
                               >
-                                {g === "male" ? "Male" : "Female"}
+                                {g === "male" ? t("booking.male") : t("booking.female")}
                               </button>
                             ))}
                           </div>
@@ -1105,7 +1104,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         Cycling Experience
                       </label>
                       <div className="grid grid-cols-3 gap-3">
-                        {EXPERIENCE_OPTIONS.map((opt) => (
+                        {experienceOptions.map((opt) => (
                           <button
                             key={opt.value}
                             onClick={() =>
@@ -1377,7 +1376,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         type="text"
                         value={contactName}
                         onChange={(e) => setContactName(e.target.value)}
-                        placeholder="Primary contact for this booking"
+                        placeholder={t("booking.emergencyContactNamePlaceholder")}
                         className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/70 focus:border-ink focus:outline-none transition-colors"
                       />
                     </div>
@@ -1482,8 +1481,8 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                                 </span>
                                 <span className="text-ink-muted">
                                   {rider.bikePreference === "own"
-                                    ? "Own bike"
-                                    : `${(rider.bikePreference || "hybrid") === "hybrid" ? "Hybrid" : "Road"} rental — ${BIKE_RENTAL_PRICES[rider.bikePreference || "hybrid"]} THB`}
+                                    ? t("booking.ownBike")
+                                    : `${(rider.bikePreference || "hybrid") === "hybrid" ? t("booking.bikeOptionHybrid") : t("booking.bikeOptionRoad")} ${t("booking.rentalSeparator")} ${BIKE_RENTAL_PRICES[rider.bikePreference || "hybrid"]} THB`}
                                 </span>
                               </div>
                             ))}
@@ -1616,7 +1615,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                                   }}
                                   loading={isSubmitting}
                                 >
-                                  {isSubmitting ? "Creating..." : "Yes, proceed to payment"}
+                                  {isSubmitting ? t("booking.submittingButton") : t("booking.submitButton")}
                                 </Button>
                                 <button
                                   onClick={() => setShowConfirmModal(false)}

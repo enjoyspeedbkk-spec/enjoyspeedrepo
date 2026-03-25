@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { uploadPaymentSlip } from "@/lib/actions/slip-upload";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface SlipUploadProps {
   bookingId: string;
@@ -20,6 +21,7 @@ interface SlipUploadProps {
 }
 
 export function SlipUpload({ bookingId, onUploaded }: SlipUploadProps) {
+  const { t } = useLanguage();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -220,7 +222,7 @@ export function SlipUpload({ bookingId, onUploaded }: SlipUploadProps) {
               disabled={uploading}
             >
               {uploading ? (
-                "Uploading..."
+                t('common.uploading')
               ) : (
                 <>
                   <Upload className="h-4 w-4" />

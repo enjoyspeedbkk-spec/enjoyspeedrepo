@@ -6,47 +6,15 @@ import { ChevronDown } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-const faqs = [
-  {
-    question: "Do I need to bring my own bike?",
-    answer:
-      "You can! But we also offer bike rentals through HHBL (Happy and Healthy Bike Lane). Hybrid bikes are 420 THB and road bikes are 720 THB per session. Helmet is included with every rental. All rental bikes are professionally maintained and ready to ride. Just select your preference when booking.",
-  },
-  {
-    question: "What fitness level do I need?",
-    answer:
-      "Our rides cover approximately 23.5 km on Bangkok's Skylane. You should be comfortable cycling for about 2 hours at a moderate pace. Our Leaders adjust the pace to the group.",
-  },
-  {
-    question: "What happens if it rains?",
-    answer:
-      "We monitor weather conditions closely. If rain is likely, we'll notify you in advance through LINE and offer options including rescheduling or a refund based on our weather policy.",
-  },
-  {
-    question: "Do I need cycling insurance?",
-    answer:
-      "We recommend riders have their own personal accident insurance or travel insurance for peace of mind. All rental bikes include insurance coverage provided by the rental shop. You'll complete a safety waiver during onboarding before your ride.",
-  },
-  {
-    question: "How far in advance should I book?",
-    answer:
-      "Bookings must be made at least 24 hours before the session. Sessions often fill up quickly, especially evening golden hour slots, so we recommend booking early.",
-  },
-  {
-    question: "What's included in the price?",
-    answer:
-      "Every ride includes Athlete Leader guidance, Hero support riders, ride photography, a Starter Kit (padded cycling liners, energy gel, eco mesh bag — 640 THB value, included), post-ride electrolyte drinks and recovery refreshments, safety briefing, and weather monitoring. Bike rental is the only additional cost. The Starter Kit does not include a bidon (cycling water bottle) — please bring your own or let us know in advance to arrange one (extra cost).",
-  },
-  {
-    question: "Can I cancel or reschedule?",
-    answer:
-      "Yes, through your account or via LINE. Cancellation and refund terms depend on timing and weather conditions. Full details are provided during booking.",
-  },
-  {
-    question: "What should I bring?",
-    answer:
-      "Comfortable cycling clothing, sunscreen, and a cycling bidon (water bottle) — normal bottles won't fit the bike holder. If renting a bike, a helmet is included. If bringing your own bike, you'll need your own helmet (required). We provide everything else in your Starter Kit.",
-  },
+const faqKeys = [
+  { questionKey: "faq.questions.0.q", answerKey: "faq.questions.0.a" },
+  { questionKey: "faq.questions.1.q", answerKey: "faq.questions.1.a" },
+  { questionKey: "faq.questions.2.q", answerKey: "faq.questions.2.a" },
+  { questionKey: "faq.questions.3.q", answerKey: "faq.questions.3.a" },
+  { questionKey: "faq.questions.4.q", answerKey: "faq.questions.4.a" },
+  { questionKey: "faq.questions.5.q", answerKey: "faq.questions.5.a" },
+  { questionKey: "faq.questions.6.q", answerKey: "faq.questions.6.a" },
+  { questionKey: "faq.questions.7.q", answerKey: "faq.questions.7.a" },
 ];
 
 function FAQItem({
@@ -111,11 +79,11 @@ export function FAQ() {
         />
 
         <div className="bg-surface rounded-2xl border border-sand/60 px-6 lg:px-8">
-          {faqs.map((faq, i) => (
+          {faqKeys.map((faq, i) => (
             <FAQItem
               key={i}
-              question={faq.question}
-              answer={faq.answer}
+              question={t(faq.questionKey)}
+              answer={t(faq.answerKey)}
               isOpen={openIndex === i}
               onClick={() => setOpenIndex(openIndex === i ? null : i)}
             />

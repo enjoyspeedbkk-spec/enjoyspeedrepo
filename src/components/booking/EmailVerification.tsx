@@ -45,7 +45,7 @@ export function EmailVerification({
 
   const handleSendOtp = async () => {
     if (!isValidEmail) {
-      setError("Please enter a valid email address");
+      setError(t('auth.validEmail'));
       return;
     }
 
@@ -239,7 +239,7 @@ export function EmailVerification({
               {verifying && (
                 <div className="flex items-center justify-center gap-2 text-sm text-ink-muted mb-4">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Verifying...
+                  {t('auth.verifying')}
                 </div>
               )}
 
@@ -270,7 +270,7 @@ export function EmailVerification({
                   }`}
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
-                  {countdown > 0 ? `Resend in ${countdown}s` : "Resend code"}
+                  {countdown > 0 ? t('auth.resendIn', { seconds: countdown }) : t('auth.resendCode')}
                 </button>
               </div>
             </Card>

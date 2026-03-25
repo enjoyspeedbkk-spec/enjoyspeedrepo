@@ -24,23 +24,23 @@ const CLIP_DURATION = 3; // seconds per clip
 const HERO_VIDEOS = [
   {
     src: `${SUPABASE_VIDEO_BASE}/video%20of%20cycling%20golden%20hour%20morning%20vertical.mp4`,
-    label: "Golden Hour Morning",
+    i18nKey: "hero.videoLabels.goldenHourMorning",
   },
   {
     src: `${SUPABASE_VIDEO_BASE}/front%20facing%20golden%20hour%20vertical.mp4`,
-    label: "Front Facing",
+    i18nKey: "hero.videoLabels.frontFacing",
   },
   {
     src: `${SUPABASE_VIDEO_BASE}/Side%20view%20of%20sunrise%20golden%20hour%20cycling%20video%20vertical.mp4`,
-    label: "Sunrise Side View",
+    i18nKey: "hero.videoLabels.sunriseSideView",
   },
   {
     src: `${SUPABASE_VIDEO_BASE}/Video%20of%20cycling%20in%20the%20morning%20blue%20hour%20vertical.mp4`,
-    label: "Blue Hour",
+    i18nKey: "hero.videoLabels.blueHour",
   },
   {
     src: `${SUPABASE_VIDEO_BASE}/wide%20angle%20blue%20hour%20morning%20vertical.mp4`,
-    label: "Wide Angle",
+    i18nKey: "hero.videoLabels.wideAngle",
   },
 ];
 
@@ -306,11 +306,7 @@ export function Hero() {
             </motion.div>
 
             <h1 className="text-balance">
-              <span className="block text-navy">Let us handle</span>
-              <span className="block text-navy">the speed.</span>
-              <span className="block mt-2 bg-gradient-to-r from-accent to-accent-light bg-clip-text text-transparent">
-                You enjoy the ride.
-              </span>
+              <span className="block text-navy">{t('common.heroTitle')}</span>
             </h1>
 
             <motion.p
@@ -463,7 +459,7 @@ export function Hero() {
                         exit={{ opacity: 0, y: -4 }}
                         className="text-xs text-white/80 font-medium mb-2 text-center"
                       >
-                        {HERO_VIDEOS[activeIndex].label} · {activeIndex + 1}/{HERO_VIDEOS.length}
+                        {t(HERO_VIDEOS[activeIndex].i18nKey)} · {activeIndex + 1}/{HERO_VIDEOS.length}
                       </motion.p>
                     </AnimatePresence>
 
@@ -563,15 +559,15 @@ export function Hero() {
                   className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white/90 text-navy rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-md backdrop-blur-sm max-w-[140px] sm:max-w-none z-[2]"
                 >
                   <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-ink-muted opacity-70">
-                    From
+                    {t('hero.from')}
                   </p>
                   <p className="text-lg sm:text-xl font-bold leading-tight">
                     2,000
                     <span className="text-xs sm:text-sm font-normal text-ink-muted opacity-80"> THB</span>
                   </p>
-                  <p className="text-xs text-ink-muted">per person</p>
+                  <p className="text-xs text-ink-muted">{t('hero.perPerson')}</p>
                   <p className="text-xs text-ink-muted mt-1.5 pt-1.5 border-t border-navy/10">
-                    Leaders, photos, safety · Bike rental separate
+                    {t('hero.whatsIncluded')}
                   </p>
                 </motion.div>
               )}

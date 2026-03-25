@@ -4,46 +4,48 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-const images = [
+const imageSlides = [
   {
     src: "/images/gallery/morning-ride.jpg",
-    alt: "Morning ride on the Skylane",
-    caption: "Guided rides every morning and evening",
+    altKey: "gallery.guidedRidesEveryMorningAndEvening",
+    captionKey: "gallery.guidedRidesEveryMorningAndEvening",
   },
   {
     src: "/images/gallery/ride-group-1.jpg",
-    alt: "Group of riders on the track",
-    caption: "Small groups, big experiences",
+    altKey: "gallery.smallGroupsBigExperiences",
+    captionKey: "gallery.smallGroupsBigExperiences",
   },
   {
     src: "/images/gallery/skylane-architecture.jpg",
-    alt: "Skylane elevated cycling track architecture",
-    caption: "World-class infrastructure on Bangkok's Skylane",
+    altKey: "gallery.worldClassInfrastructure",
+    captionKey: "gallery.worldClassInfrastructure",
   },
   {
     src: "/images/gallery/ride-action-1.jpg",
-    alt: "Riders in action on the Skylane",
-    caption: "Feel the rhythm of the road beneath you",
+    altKey: "gallery.feelTheRhythm",
+    captionKey: "gallery.feelTheRhythm",
   },
   {
     src: "/images/gallery/ride-group-2.jpg",
-    alt: "Cycling group enjoying the ride together",
-    caption: "Better together — every single time",
+    altKey: "gallery.betterTogether",
+    captionKey: "gallery.betterTogether",
   },
   {
     src: "/images/gallery/rider-portrait.jpg",
-    alt: "Rider on the Skylane at golden hour",
-    caption: "Your moment on the Skylane",
+    altKey: "gallery.yourMoment",
+    captionKey: "gallery.yourMoment",
   },
   {
     src: "/images/gallery/sunrise-2.jpg",
-    alt: "Sunrise view from the Skylane",
-    caption: "Catch the sunrise from 23.5 km above the city",
+    altKey: "gallery.catchTheSunrise",
+    captionKey: "gallery.catchTheSunrise",
   },
 ];
 
 export function GalleryCarousel() {
+  const { t } = useLanguage();
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -54,11 +56,11 @@ export function GalleryCarousel() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const next = useCallback(() => {
-    setCurrent((prev) => (prev + 1) % images.length);
+    setCurrent((prev) => (prev + 1) % imageSlides.length);
   }, []);
 
   const prev = useCallback(() => {
-    setCurrent((prev) => (prev - 1 + images.length) % images.length);
+    setCurrent((prev) => (prev - 1 + imageSlides.length) % imageSlides.length);
   }, []);
 
   // Auto-advance every 5 seconds, pauses on hover/touch
@@ -106,10 +108,10 @@ export function GalleryCarousel() {
           className="mb-10 lg:mb-14"
         >
           <p className="text-accent text-sm font-semibold uppercase tracking-wider mb-3">
-            The Experience
+            {t('gallery.theExperience')}
           </p>
           <h2 className="text-3xl lg:text-4xl font-bold text-white max-w-xl">
-            See what a ride looks like
+            {t('gallery.seeWhatARideLooksLike')}
           </h2>
         </motion.div>
 
@@ -124,7 +126,7 @@ export function GalleryCarousel() {
             onTouchEnd={handleTouchEnd}
           >
             {/* All images stacked — active one fades in via CSS transition */}
-            {images.map((img, i) => (
+            {imageSlides.map((img, i) => (
               <div
                 key={img.src}
                 className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
@@ -134,7 +136,7 @@ export function GalleryCarousel() {
               >
                 <Image
                   src={img.src}
-                  alt={img.alt}
+                  alt={t(img.altKey)}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 1200px"
@@ -153,7 +155,7 @@ export function GalleryCarousel() {
                 key={current}
                 className="text-white text-lg lg:text-xl font-medium transition-opacity duration-500"
               >
-                {images[current].caption}
+                {t(imageSlides[current].captionKey)}
               </p>
             </div>
 
@@ -165,7 +167,7 @@ export function GalleryCarousel() {
                 setTimeout(() => setPaused(false), 4000);
               }}
               className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-white/15 hover:bg-white/25 active:bg-white/35 text-white transition-colors backdrop-blur-sm z-30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              aria-label="Previous image"
+              aria-label={t('gallery.prevImage')}
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
@@ -176,7 +178,7 @@ export function GalleryCarousel() {
                 setTimeout(() => setPaused(false), 4000);
               }}
               className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-white/15 hover:bg-white/25 active:bg-white/35 text-white transition-colors backdrop-blur-sm z-30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              aria-label="Next image"
+              aria-label={t('gallery.nextImage')}
             >
               <ChevronRight className="h-5 w-5" />
             </button>
@@ -184,7 +186,7 @@ export function GalleryCarousel() {
 
           {/* Dot indicators */}
           <div className="flex justify-center gap-2 mt-5">
-            {images.map((_, i) => (
+            {imageSlides.map((_, i) => (
               <button
                 key={i}
                 onClick={() => {
@@ -197,7 +199,7 @@ export function GalleryCarousel() {
                     ? "w-8 bg-accent"
                     : "w-1.5 bg-white/30 hover:bg-white/50"
                 }`}
-                aria-label={`Go to image ${i + 1}`}
+                aria-label={t('gallery.goToImage', { number: i + 1 })}
                 aria-current={i === current ? "true" : undefined}
               />
             ))}

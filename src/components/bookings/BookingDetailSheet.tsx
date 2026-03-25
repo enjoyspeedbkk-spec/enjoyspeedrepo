@@ -68,9 +68,9 @@ export function BookingDetailSheet({
     const result = await cancelBooking(booking.id);
     setCancelling(false);
     if (result.success) {
-      setCancelResult(result.refundInfo || "Booking cancelled.");
+      setCancelResult(result.refundInfo || t("bookings.bookingCancelled"));
     } else {
-      setCancelResult(result.error || "Could not cancel.");
+      setCancelResult(result.error || t("bookings.couldNotCancel"));
     }
   };
 
@@ -174,12 +174,12 @@ export function BookingDetailSheet({
               <div>
                 <p className="font-semibold text-sm">
                   {booking.weather_status === "cancelled"
-                    ? "Ride cancelled due to weather"
-                    : "Weather advisory"}
+                    ? t("bookings.weatherCancelledRide")
+                    : t("bookings.weatherAdvisory")}
                 </p>
                 <p className="text-xs text-ink-muted mt-0.5">
                   {booking.weather_note ||
-                    "We're monitoring conditions. You'll be notified via LINE if the ride is affected."}
+                    t("bookings.weatherMonitoring")}
                 </p>
               </div>
             </div>
@@ -293,7 +293,7 @@ export function BookingDetailSheet({
                         <AlertCircle className="h-4 w-4 text-warning" />
                         <span className="text-sm text-warning font-medium">
                           {booking.payment.status === "pending"
-                            ? "Awaiting payment"
+                            ? t("bookings.awaitingPayment")
                             : `Payment ${booking.payment.status}`}
                         </span>
                       </>

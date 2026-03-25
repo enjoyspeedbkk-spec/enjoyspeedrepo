@@ -10,44 +10,44 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 const slots = [
   {
     id: "A1",
-    label: "Early Bird",
+    labelKey: "timeSlots.earlyBird.label",
     time: "06:15 — 08:15",
     period: "morning" as const,
-    mood: "Fresh air, quiet roads. Performance-focused.",
-    vibe: "Performance",
+    moodKey: "timeSlots.earlyBird.mood",
+    vibeKey: "timeSlots.earlyBird.vibe",
   },
   {
     id: "A2",
-    label: "Energy Booster",
+    labelKey: "timeSlots.energyBooster.label",
     time: "06:30 — 08:30",
     period: "morning" as const,
-    mood: "Catch the sunrise as Bangkok wakes up.",
-    vibe: "Energizing",
+    moodKey: "timeSlots.energyBooster.mood",
+    vibeKey: "timeSlots.energyBooster.vibe",
   },
   {
     id: "B",
-    label: "Light Chaser",
+    labelKey: "timeSlots.lightChaser.label",
     time: "16:15 — 18:15",
     period: "evening" as const,
-    mood: "Golden light as the heat breaks.",
-    vibe: "Scenic",
+    moodKey: "timeSlots.lightChaser.mood",
+    vibeKey: "timeSlots.lightChaser.vibe",
   },
   {
     id: "C",
-    label: "Golden Hour",
+    labelKey: "timeSlots.goldenHour.label",
     time: "16:45 — 18:45",
     period: "evening" as const,
-    mood: "The signature experience. Perfect light, perfect photos.",
-    vibe: "Staff Pick",
+    moodKey: "timeSlots.goldenHour.mood",
+    vibeKey: "timeSlots.goldenHour.vibe",
     staffPick: true,
   },
   {
     id: "D",
-    label: "Twilight Finish",
+    labelKey: "timeSlots.twilightFinish.label",
     time: "17:15 — 19:15",
     period: "evening" as const,
-    mood: "Cool evening breeze, sunset finish.",
-    vibe: "Chill",
+    moodKey: "timeSlots.twilightFinish.mood",
+    vibeKey: "timeSlots.twilightFinish.vibe",
   },
 ];
 
@@ -82,10 +82,10 @@ export function TimeSlots() {
           <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
             <div>
               <p className="text-white/80 text-sm font-medium">
-                Skylane &middot; Happy and Healthy Bike Lane
+                {t('timeSlots.rideLocation')}
               </p>
               <p className="text-white text-lg font-bold mt-0.5">
-                23.5 km &middot; Blue &amp; Purple lanes &middot; Suvarnabhumi
+                {t('timeSlots.routeDetails')}
               </p>
             </div>
             <div className="hidden sm:flex items-center gap-1.5 text-white/70 text-sm">
@@ -121,12 +121,12 @@ export function TimeSlots() {
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <span className="text-xs font-bold text-sky bg-sky/10 px-2 py-0.5 rounded-full">
-                        Slot {slot.id}
+                        {t('timeSlots.slotInfo', { id: slot.id })}
                       </span>
-                      <h4 className="text-base font-bold mt-2">{slot.label}</h4>
+                      <h4 className="text-base font-bold mt-2">{t(slot.labelKey)}</h4>
                     </div>
                     <span className="text-xs font-medium text-ink-muted bg-sand/50 px-2.5 py-1 rounded-full">
-                      {slot.vibe}
+                      {t(slot.vibeKey)}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-sm font-semibold text-ink mb-2">
@@ -134,7 +134,7 @@ export function TimeSlots() {
                     {slot.time}
                   </div>
                   <p className="text-sm text-ink-muted leading-relaxed flex-1">
-                    {slot.mood}
+                    {t(slot.moodKey)}
                   </p>
                 </Card>
               </motion.div>
@@ -168,16 +168,16 @@ export function TimeSlots() {
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <span className="text-xs font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full">
-                        Slot {slot.id}
+                        {t('timeSlots.slotInfo', { id: slot.id })}
                       </span>
-                      <h4 className="text-base font-bold mt-2">{slot.label}</h4>
+                      <h4 className="text-base font-bold mt-2">{t(slot.labelKey)}</h4>
                     </div>
                     <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                       slot.staffPick
                         ? "text-accent-dark bg-accent/10 font-bold"
                         : "text-ink-muted bg-sand/50"
                     }`}>
-                      {slot.vibe}
+                      {t(slot.vibeKey)}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-sm font-semibold text-ink mb-2">
@@ -185,7 +185,7 @@ export function TimeSlots() {
                     {slot.time}
                   </div>
                   <p className="text-sm text-ink-muted leading-relaxed flex-1">
-                    {slot.mood}
+                    {t(slot.moodKey)}
                   </p>
                 </Card>
               </motion.div>

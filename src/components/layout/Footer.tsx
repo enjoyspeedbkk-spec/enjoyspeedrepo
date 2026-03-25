@@ -4,28 +4,28 @@ import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-type FooterLink = { label: string; href: string; external?: boolean };
+type FooterLink = { label: string; href: string; external?: boolean; i18nKey?: string };
 
-const footerLinks: Record<string, FooterLink[]> = {
+const getFooterLinks = (t: any): Record<string, FooterLink[]> => ({
   rides: [
-    { label: "Duo Ride", href: "/packages#duo" },
-    { label: "The Squad", href: "/packages#squad" },
-    { label: "The Peloton", href: "/packages#peloton" },
-    { label: "Book a Ride", href: "/booking" },
+    { label: t('footer.duoRide'), href: "/packages#duo", i18nKey: 'footer.duoRide' },
+    { label: t('footer.theSquad'), href: "/packages#squad", i18nKey: 'footer.theSquad' },
+    { label: t('footer.thePeloton'), href: "/packages#peloton", i18nKey: 'footer.thePeloton' },
+    { label: t('footer.bookARide'), href: "/booking", i18nKey: 'footer.bookARide' },
   ],
   company: [
-    { label: "About Us", href: "/about" },
-    { label: "Our Leaders", href: "/about#leaders" },
-    { label: "Safety", href: "/about#safety" },
-    { label: "FAQ", href: "/about#faq" },
+    { label: t('footer.aboutUs'), href: "/about", i18nKey: 'footer.aboutUs' },
+    { label: t('footer.ourLeaders'), href: "/about#leaders", i18nKey: 'footer.ourLeaders' },
+    { label: t('footer.safety'), href: "/about#safety", i18nKey: 'footer.safety' },
+    { label: t('footer.faq'), href: "/about#faq", i18nKey: 'footer.faq' },
   ],
   support: [
-    { label: "Contact", href: "/contact" },
-    { label: "LINE @691gsvky", href: "https://line.me/ti/p/@691gsvky", external: true },
-    { label: "Cancellation Policy", href: "/about#cancellation" },
-    { label: "Weather Policy", href: "/about#weather" },
+    { label: t('footer.contact'), href: "/contact", i18nKey: 'footer.contact' },
+    { label: t('footer.lineOfficialAccount'), href: "https://line.me/ti/p/@691gsvky", external: true, i18nKey: 'footer.lineOfficialAccount' },
+    { label: t('footer.cancellationPolicy'), href: "/about#cancellation", i18nKey: 'footer.cancellationPolicy' },
+    { label: t('footer.weatherPolicy'), href: "/about#weather", i18nKey: 'footer.weatherPolicy' },
   ],
-};
+});
 
 function FooterLink({ link }: { link: FooterLink }) {
   const className = "text-sm text-cream/70 hover:text-cream transition-colors duration-200";
@@ -45,6 +45,8 @@ function FooterLink({ link }: { link: FooterLink }) {
 
 export function Footer() {
   const { t } = useLanguage();
+  const footerLinks = getFooterLinks(t);
+
   return (
     <footer className="bg-ink text-cream/70">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -120,7 +122,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-cream/10 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-cream/50">
-            &copy; {new Date().getFullYear()} En-Joy Speed. All rights reserved.
+            {t('footer.copyright', { year: new Date().getFullYear() })}
           </p>
           <div className="flex gap-6">
             <Link

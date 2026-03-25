@@ -165,8 +165,7 @@ export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
               {/* Q1: Did you enjoy the ride? */}
               <SurveyQuestion
                 icon={Sparkles}
-                question="Did you enjoy this ride?"
-                questionTh="คุณสนุกกับการปั่นในครั้งนี้ หรือไม่"
+                questionKey="review.enjoyedThisRide"
                 value={enjoyedRide}
                 onChange={setEnjoyedRide}
               />
@@ -174,8 +173,7 @@ export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
               {/* Q2: Did you gain cycling skills? */}
               <SurveyQuestion
                 icon={TrendingUp}
-                question="Did you learn new cycling skills?"
-                questionTh="คุุณได้ทักษะในการปั่นจักรยาน ทริปนี้ เพิ่มขึ้นหรือไม่"
+                questionKey="review.learnedSkills"
                 value={gainedSkills}
                 onChange={setGainedSkills}
               />
@@ -183,8 +181,7 @@ export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
               {/* Q3: Will you come back? */}
               <SurveyQuestion
                 icon={RotateCcw}
-                question="Will you make cycling a regular sport?"
-                questionTh="คุณคิดว่า คุณจะกลับมาปั่นจักรยาน เป็นกีฬา ประจำหรือไม่"
+                questionKey="review.regularSport"
                 value={willReturn}
                 onChange={setWillReturn}
               />
@@ -204,23 +201,23 @@ export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    "Book another ride",
-                    "Buy my own bike",
-                    "Join a cycling group",
-                    "Try a longer route",
-                    "Not sure yet",
-                    "Other",
+                    { key: "review.anotherRide", en: "Book another ride" },
+                    { key: "review.ownBike", en: "Buy my own bike" },
+                    { key: "review.cyclingGroup", en: "Join a cycling group" },
+                    { key: "review.longerRoute", en: "Try a longer route" },
+                    { key: "review.notSureYet", en: "Not sure yet" },
+                    { key: "review.other", en: "Other" },
                   ].map((option) => (
                     <button
-                      key={option}
-                      onClick={() => setNextSteps(option)}
+                      key={option.key}
+                      onClick={() => setNextSteps(t(option.key))}
                       className={`p-3 rounded-xl border-2 text-sm text-left transition-all ${
-                        nextSteps === option
+                        nextSteps === t(option.key)
                           ? "border-ink bg-ink/5 font-medium"
                           : "border-sand/60 hover:border-ink/20"
                       }`}
                     >
-                      {option}
+                      {t(option.key)}
                     </button>
                   ))}
                 </div>
@@ -333,14 +330,12 @@ export function ReviewForm({ bookingId, onClose }: ReviewFormProps) {
 // ======== Survey Question Component ========
 function SurveyQuestion({
   icon: Icon,
-  question,
-  questionTh,
+  questionKey,
   value,
   onChange,
 }: {
   icon: typeof Star;
-  question: string;
-  questionTh: string;
+  questionKey: string;
   value: boolean | null;
   onChange: (val: boolean) => void;
 }) {
@@ -350,8 +345,7 @@ function SurveyQuestion({
       <div className="flex items-center gap-2 mb-2">
         <Icon className="h-4 w-4 text-accent" />
         <div>
-          <p className="text-sm font-semibold">{question}</p>
-          <p className="text-xs text-ink-muted">{questionTh}</p>
+          <p className="text-sm font-semibold">{t(questionKey)}</p>
         </div>
       </div>
       <div className="flex gap-2">
