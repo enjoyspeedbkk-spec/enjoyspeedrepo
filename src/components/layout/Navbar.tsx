@@ -15,11 +15,11 @@ const customerLinks = [
   { href: "/about", label: "About" },
 ];
 
-// Admin sees a different nav — no customer booking items
+// Admin sees a different nav — focused on admin tasks
 const adminLinks = [
-  { href: "/", label: "Home" },
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/bookings", label: "Bookings" },
+  { href: "/admin/payments", label: "Payments" },
   { href: "/admin/customers", label: "Customers" },
   { href: "/admin/settings", label: "Settings" },
 ];
@@ -132,18 +132,23 @@ export function Navbar() {
         <nav className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="flex h-18 items-center justify-between">
             {/* Logo — typographic wordmark */}
-            <Link href="/" className="relative z-10 flex items-center gap-0">
+            <Link href={user?.isAdmin ? "/admin" : "/"} className="relative z-10 flex items-center gap-2">
               <span className="text-xl font-extrabold tracking-tight" style={{ fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)" }}>
                 <span className="text-ink">en</span>
                 <span className="text-accent">-</span>
                 <span className="text-ink">joy</span>
               </span>
               <span
-                className="ml-1 text-xl font-extrabold tracking-tight text-accent"
+                className="text-xl font-extrabold tracking-tight text-accent"
                 style={{ fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)" }}
               >
                 speed
               </span>
+              {user?.isAdmin && (
+                <span className="ml-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-accent/10 text-accent rounded-full">
+                  Admin
+                </span>
+              )}
             </Link>
 
             {/* Desktop Nav */}
@@ -175,13 +180,23 @@ export function Navbar() {
 
             {/* Desktop CTA / User — Book Now first, then account (rightmost) */}
             <div className="hidden md:flex items-center gap-3">
-              <Link
-                href={user?.isAdmin ? "/admin" : "/booking"}
-                className="group inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-accent-dark hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
-              >
-                {user?.isAdmin ? "Admin" : "Book a Ride"}
-                <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+              {user?.isAdmin ? (
+                <Link
+                  href="/"
+                  className="group inline-flex items-center gap-1.5 rounded-full border-2 border-sand/60 px-4 py-2 text-sm font-medium text-ink-light transition-all duration-200 hover:border-ink/30 hover:text-ink"
+                >
+                  View Site
+                  <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              ) : (
+                <Link
+                  href="/booking"
+                  className="group inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-accent-dark hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Book a Ride
+                  <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              )}
 
               {user ? (
                 <div className="relative">
@@ -238,14 +253,24 @@ export function Navbar() {
                               My Account
                             </Link>
                             {user.isAdmin ? (
-                              <Link
-                                href="/admin"
-                                onClick={() => setShowUserMenu(false)}
-                                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm hover:bg-sand/30 transition-colors"
-                              >
-                                <Shield className="h-4 w-4 text-ink-muted" />
-                                Admin Dashboard
-                              </Link>
+                              <>
+                                <Link
+                                  href="/admin/messaging"
+                                  onClick={() => setShowUserMenu(false)}
+                                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm hover:bg-sand/30 transition-colors"
+                                >
+                                  <CalendarDays className="h-4 w-4 text-ink-muted" />
+                                  LINE Messaging
+                                </Link>
+                                <Link
+                                  href="/admin/images"
+                                  onClick={() => setShowUserMenu(false)}
+                                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm hover:bg-sand/30 transition-colors"
+                                >
+                                  <User className="h-4 w-4 text-ink-muted" />
+                                  Site Images
+                                </Link>
+                              </>
                             ) : (
                               <Link
                                 href="/bookings"
@@ -393,7 +418,16 @@ export function Navbar() {
                   transition={{ delay: 0.3 }}
                   className="mt-6 pt-6 border-t border-sand"
                 >
-                  {!user?.isAdmin && (
+                  {user?.isAdmin ? (
+                    <Link
+                      href="/"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center justify-center gap-2 w-full rounded-full border-2 border-sand/60 px-6 py-3 text-base font-medium text-ink-light hover:text-ink transition-colors"
+                    >
+                      View Public Site
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  ) : (
                     <Link
                       href="/booking"
                       onClick={() => setIsOpen(false)}

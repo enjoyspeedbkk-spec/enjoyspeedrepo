@@ -100,6 +100,36 @@ export function AdminSettings({
   const [localStaff, setLocalStaff] = useState(staff);
   const [localPromos, setLocalPromos] = useState(promos);
 
+  // Detect unsaved changes per section
+  const hasUnsavedChanges = (section: string): boolean => {
+    switch (section) {
+      case "packages": return JSON.stringify(localPackages) !== JSON.stringify(packages);
+      case "slots": return JSON.stringify(localSlots) !== JSON.stringify(timeSlots);
+      case "bikes": return JSON.stringify(localBikes) !== JSON.stringify(bikeRentals);
+      case "kit": return JSON.stringify(localKit) !== JSON.stringify(starterKit);
+      case "staff": return JSON.stringify(localStaff) !== JSON.stringify(staff);
+      case "promos": return JSON.stringify(localPromos) !== JSON.stringify(promos);
+      default: return false;
+    }
+  };
+
+  const handleTabSwitch = (newTab: string) => {
+    if (newTab === activeSection) return;
+    if (hasUnsavedChanges(activeSection)) {
+      if (!confirm("You have unsaved changes. Switch tabs and lose them?")) return;
+      // Revert current section to server state
+      switch (activeSection) {
+        case "packages": setLocalPackages(packages); break;
+        case "slots": setLocalSlots(timeSlots); break;
+        case "bikes": setLocalBikes(bikeRentals); break;
+        case "kit": setLocalKit(starterKit); break;
+        case "staff": setLocalStaff(staff); break;
+        case "promos": setLocalPromos(promos); break;
+      }
+    }
+    setActiveSection(newTab);
+  };
+
   const showSaved = (id: string) => {
     setSaved(id);
     setTimeout(() => setSaved(null), 2000);
@@ -1045,20 +1075,24 @@ export function AdminSettings({
       {/* Section tabs */}
       <div className="border-b border-sand/60">
         <div className="flex gap-0 overflow-x-auto">
-          {SECTIONS.map((section) => (
-            <button
-              key={section.id}
-              onClick={() => setActiveSection(section.id)}
-              className={`flex items-center gap-2 px-4 py-3 font-medium whitespace-nowrap transition-all border-b-2 ${
-                activeSection === section.id
-                  ? "text-ink border-b-ink text-base"
-                  : "text-ink-muted border-b-transparent text-sm hover:text-ink hover:border-b-sand/60"
-              }`}
-            >
-              <section.icon className="h-4 w-4" />
-              {section.label}
-            </button>
-          ))}
+          {SECTIONS.map((section) => {
+            const unsaved = hasUnsavedChanges(section.id);
+            return (
+              <button
+                key={section.id}
+                onClick={() => handleTabSwitch(section.id)}
+                className={`flex items-center gap-2 px-4 py-3 font-medium whitespace-nowrap transition-all border-b-2 ${
+                  activeSection === section.id
+                    ? "text-ink border-b-ink text-base"
+                    : "text-ink-muted border-b-transparent text-sm hover:text-ink hover:border-b-sand/60"
+                }`}
+              >
+                <section.icon className="h-4 w-4" />
+                {section.label}
+                {unsaved && <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" title="Unsaved changes" />}
+              </button>
+            );
+          })}
         </div>
       </div>
 
