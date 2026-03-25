@@ -100,7 +100,9 @@
     "bookNow": "Book {name}",
     "riders": "riders",
     "for": "for",
-    "separator": "·"
+    "separator": "·",
+    "findTheRide": "Find the ride that fits",
+    "pageDescription": "Three curated formats. Every ride guided by Athlete Leaders with full safety support, photography, and post-ride recovery included."
   },
   "howItWorks": {
     "theExperience": "The Experience",

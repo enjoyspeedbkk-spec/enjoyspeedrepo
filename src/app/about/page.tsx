@@ -5,7 +5,7 @@ import type { SiteImageData } from "@/lib/site-images-context";
 import { FAQ } from "@/components/home/FAQ";
 import { CTASection } from "@/components/home/CTASection";
 import Image from "next/image";
-import { getTranslation, type Locale } from "@/lib/i18n";
+import { getTranslation, type Locale, messages } from "@/lib/i18n";
 import { headers } from "next/headers";
 import {
   Shield,
@@ -110,6 +110,8 @@ export default async function AboutPage() {
   const headersList = await headers();
   const locale = (headersList.get('x-locale') ?? 'en') as Locale;
   const t = (key: string) => getTranslation(locale, key);
+  // For array values, access the locale dict directly (getTranslation only resolves strings)
+  const dict = messages[locale] as Record<string, Record<string, unknown>>;
 
   const imageKeys = ["team-pailin-profile", "team-udorn-profile", "team-group-photo", "venue-meeting-point"];
   const imageBatch = await getSiteImageSettingsBatch(imageKeys);
@@ -174,19 +176,19 @@ export default async function AboutPage() {
             {[
               {
                 stepKey: "about.beforeTheRide",
-                itemsKey: "about.beforeItems",
+                itemsKey: "beforeItems",
               },
               {
                 stepKey: "about.duringTheRide",
-                itemsKey: "about.duringItems",
+                itemsKey: "duringItems",
               },
               {
                 stepKey: "about.afterTheRide",
-                itemsKey: "about.afterItems",
+                itemsKey: "afterItems",
               },
             ].map((phase) => {
               const step = t(phase.stepKey);
-              const items = (t(phase.itemsKey) as unknown) as string[];
+              const items = (dict.about?.[phase.itemsKey] as string[]) ?? [];
               return (
               <li key={step} className="bg-white rounded-2xl border border-sand/40 p-6 lg:p-8">
                 <h3 className="font-bold text-lg text-ink mb-3">{step}</h3>
