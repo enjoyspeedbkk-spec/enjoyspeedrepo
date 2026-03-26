@@ -12,14 +12,23 @@ interface MessageObject { [key: string]: MessageValue }
 type MessageArray = MessageValue[]
 
 /**
- * Resolve a dot-notation key against a nested object
+ * Resolve a dot-notation key against a nested object or array.
+ * Supports numeric indices for arrays: e.g. "faq.questions.0.q"
  */
 function resolve(obj: MessageObject, key: string): string | undefined {
   const parts = key.split('.')
   let current: MessageValue = obj
   for (const part of parts) {
-    if (current == null || typeof current !== 'object' || Array.isArray(current)) return undefined
-    current = (current as MessageObject)[part]
+    if (current == null) return undefined
+    if (Array.isArray(current)) {
+      const idx = parseInt(part, 10)
+      if (isNaN(idx) || idx < 0 || idx >= (current as MessageArray).length) return undefined
+      current = (current as MessageArray)[idx]
+    } else if (typeof current === 'object') {
+      current = (current as MessageObject)[part]
+    } else {
+      return undefined
+    }
   }
   return typeof current === 'string' ? current : typeof current === 'number' ? String(current) : undefined
 }

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BIKE_RENTAL_PRICES, RIDE_PACKAGES, TIME_SLOTS } from "@/lib/constants";
 import { notifyBookingConfirmation } from "@/lib/notifications";
+import { getTranslation } from "@/lib/i18n";
 import type { RiderInfo, GroupType, TimeSlotId } from "@/types";
 
 export interface CreateBookingInput {
@@ -275,19 +276,25 @@ export async function createBooking(
 
     // 11. Send booking confirmation notification (LINE → Email cascade)
     const slot = TIME_SLOTS.find((s) => s.id === input.timeSlotId);
+    // Use translated slot label for notifications
+    const notifyLocale = input.locale ?? "en";
+    const slotLabel = slot
+      ? (slot.labelKey ? getTranslation(notifyLocale, slot.labelKey) : slot.label)
+      : input.timeSlotId;
     try {
       await notifyBookingConfirmation(resolvedUserId, {
         bookingId: booking.id,
         contactName: input.contactName,
         contactEmail: input.contactEmail,
         date: input.date,
-        timeSlot: slot?.label || input.timeSlotId,
+        timeSlot: slotLabel,
         timeRange: slot ? `${slot.startTime} – ${slot.endTime}` : "",
         groupType: pkg.name,
         riderCount: input.riderCount,
         rideTotal,
         rentalTotal,
         totalPrice,
+        locale: input.locale,
       });
     } catch (notifyErr) {
       // Notification failure should never block the booking
