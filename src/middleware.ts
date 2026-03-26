@@ -2,17 +2,23 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getLocaleFromRequest } from "@/lib/i18n/getLocaleFromRequest";
 
-export async function middleware(request: NextRequest) {
-  // Detect locale at the start
-  const locale = getLocaleFromRequest(request);
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+// Protected paths that require Supabase auth check
+const PROTECTED_PATHS = ["/bookings", "/account/profile", "/admin"];
+const ADMIN_PATHS = ["/admin"];
 
-  // Pass locale to server components via header
+export async function middleware(request: NextRequest) {
+  // ── Step 1: Locale detection (runs on EVERY page) ──────────────────────
+  // This is fast (cookie read only) and must run everywhere so that server
+  // components on public pages (/about, /packages, /contact, etc.) receive
+  // the correct x-locale header instead of always defaulting to 'en'.
+  const locale = getLocaleFromRequest(request);
+
+  let supabaseResponse = NextResponse.next({ request });
+
+  // Forward locale to server components via a response header
   supabaseResponse.headers.set("x-locale", locale);
 
-  // Set cookie on first visit
+  // Persist locale cookie on first visit
   if (!request.cookies.get("lang")) {
     supabaseResponse.cookies.set("lang", locale, {
       path: "/",
@@ -21,7 +27,18 @@ export async function middleware(request: NextRequest) {
     });
   }
 
-  // Skip middleware if env vars are not set
+  // ── Step 2: Auth guard (only for protected paths) ──────────────────────
+  // Skip the Supabase round-trip entirely for public pages to keep them fast.
+  const { pathname } = request.nextUrl;
+  const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p));
+  const isAdmin = ADMIN_PATHS.some((p) => pathname.startsWith(p));
+
+  if (!isProtected && !isAdmin) {
+    // Public page — locale header already set, nothing else needed
+    return supabaseResponse;
+  }
+
+  // Skip auth if Supabase env vars aren't configured
   if (
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
     !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -42,9 +59,9 @@ export async function middleware(request: NextRequest) {
             cookiesToSet.forEach(({ name, value }) =>
               request.cookies.set(name, value)
             );
-            supabaseResponse = NextResponse.next({
-              request,
-            });
+            supabaseResponse = NextResponse.next({ request });
+            // Re-apply locale header after recreating the response
+            supabaseResponse.headers.set("x-locale", locale);
             cookiesToSet.forEach(({ name, value, options }) =>
               supabaseResponse.cookies.set(name, value, options)
             );
@@ -53,28 +70,22 @@ export async function middleware(request: NextRequest) {
       }
     );
 
-    // Refresh session if expired — required for Server Components
+    // Refresh session — required for Server Components
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    // Protected routes — redirect to sign in if not authenticated
-    // Note: /booking is intentionally NOT protected (book-first, verify-later flow)
-    const protectedPaths = ["/bookings", "/account/profile", "/admin"];
-    const isProtected = protectedPaths.some((path) =>
-      request.nextUrl.pathname.startsWith(path)
-    );
-
+    // Redirect unauthenticated users away from protected routes
+    // Note: /booking is intentionally NOT protected (book-first, verify-later)
     if (isProtected && !user) {
       const url = request.nextUrl.clone();
       url.pathname = "/account";
-      url.searchParams.set("next", request.nextUrl.pathname);
+      url.searchParams.set("next", pathname);
       return NextResponse.redirect(url);
     }
 
-    // Admin-only routes — only check if profiles table exists
-    // Skip if DB isn't set up yet to avoid crashing the middleware
-    if (request.nextUrl.pathname.startsWith("/admin") && user) {
+    // Admin-only gate
+    if (isAdmin && user) {
       try {
         const { data: profile } = await supabase
           .from("profiles")
@@ -86,24 +97,29 @@ export async function middleware(request: NextRequest) {
           return NextResponse.redirect(new URL("/", request.url));
         }
       } catch {
-        // profiles table may not exist yet — let through for now
         return NextResponse.redirect(new URL("/", request.url));
       }
     }
 
     return supabaseResponse;
   } catch {
-    // If anything goes wrong in middleware, don't block the request
-    return NextResponse.next({ request });
+    // Don't block the request if auth check fails
+    return supabaseResponse;
   }
 }
 
 export const config = {
   matcher: [
-    // Only match specific protected routes, not everything!
-    "/bookings/:path*",
-    "/account/:path*",
-    "/admin/:path*",
-    "/auth/:path*",
+    /*
+     * Match all request paths EXCEPT:
+     * - _next/static  (static files)
+     * - _next/image   (image optimisation)
+     * - favicon.ico
+     * - public assets (images, fonts, etc.)
+     *
+     * This ensures every page (including /about, /packages, /contact) receives
+     * the x-locale header so server components can render in the correct language.
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf|otf|eot|mp4|pdf)$).*)",
   ],
 };
