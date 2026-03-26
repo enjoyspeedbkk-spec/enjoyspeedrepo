@@ -171,6 +171,7 @@ export function AdminSettings({
     const [newPkg, setNewPkg] = useState({
       type: "",
       name: "",
+      name_th: "",
       min_riders: 2,
       max_riders: 4,
       price_per_person: 2000,
@@ -229,7 +230,7 @@ export function AdminSettings({
       setSaving(null);
       if (result.success) {
         setShowNewForm(false);
-        setNewPkg({ type: "", name: "", min_riders: 2, max_riders: 4, price_per_person: 2000, leaders_count: 1, heroes_count: 0, description: "", icon: "star", sort_order: (localPackages.length + 2) * 10, is_popular: false, is_active: true });
+        setNewPkg({ type: "", name: "", name_th: "", min_riders: 2, max_riders: 4, price_per_person: 2000, leaders_count: 1, heroes_count: 0, description: "", icon: "star", sort_order: (localPackages.length + 2) * 10, is_popular: false, is_active: true });
         showSaved("new");
         toast.success("Package created successfully");
         router.refresh(); // Fetch real DB IDs
@@ -249,6 +250,7 @@ export function AdminSettings({
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <Field label="Name" value={pkg.name} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, name: v } : p))} />
+                      <Field label="Thai Name" value={pkg.name_th || ""} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, name_th: v } : p))} />
                       <Field label="URL Key" value={pkg.type} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, type: v.toLowerCase().replace(/\s+/g, "_") } : p))} />
                       <Field label="Price/Person (THB)" type="number" value={pkg.price_per_person} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, price_per_person: Number(v) } : p))} />
                       <Field label="Min Riders" type="number" value={pkg.min_riders} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, min_riders: Number(v) } : p))} />
@@ -372,6 +374,7 @@ export function AdminSettings({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <Field label="URL Key (e.g. trio)" value={newPkg.type} onChange={(v) => setNewPkg((p) => ({ ...p, type: v.toLowerCase().replace(/\s+/g, "_") }))} />
               <Field label="Display Name" value={newPkg.name} onChange={(v) => setNewPkg((p) => ({ ...p, name: v }))} />
+              <Field label="Thai Name" value={newPkg.name_th || ""} onChange={(v) => setNewPkg((p) => ({ ...p, name_th: v }))} />
               <Field label="Price/Person (THB)" type="number" value={newPkg.price_per_person} onChange={(v) => setNewPkg((p) => ({ ...p, price_per_person: Number(v) }))} />
               <Field label="Min Riders" type="number" value={newPkg.min_riders} onChange={(v) => setNewPkg((p) => ({ ...p, min_riders: Number(v) }))} />
               <Field label="Max Riders" type="number" value={newPkg.max_riders} onChange={(v) => setNewPkg((p) => ({ ...p, max_riders: Number(v) }))} />

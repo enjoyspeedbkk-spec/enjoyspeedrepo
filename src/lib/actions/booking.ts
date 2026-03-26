@@ -19,6 +19,7 @@ export interface CreateBookingInput {
   specialRequests?: string;
   waiverAccepted: boolean;
   userId?: string; // For email-verified guest bookings
+  locale?: "en" | "th"; // Language at time of booking — used for notifications
 }
 
 export interface BookingResult {
@@ -220,6 +221,7 @@ export async function createBooking(
         contact_email: input.contactEmail || null,
         contact_line_id: input.contactLineId || null,
         special_requests: input.specialRequests || null,
+        locale: input.locale || "en",
         is_test: isTestBooking ? true : false,
       })
       .select("id")

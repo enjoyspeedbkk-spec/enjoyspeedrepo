@@ -142,6 +142,7 @@ export async function notifyBookingConfirmation(
     rideTotal: number;
     rentalTotal: number;
     totalPrice: number;
+    locale?: "en" | "th";
   }
 ): Promise<NotifyResult> {
   const contact = await resolveUserContact(userId);
@@ -159,12 +160,13 @@ export async function notifyBookingConfirmation(
             groupType: booking.groupType,
             riderCount: booking.riderCount,
             amount: booking.totalPrice,
+            locale: booking.locale,
           })
       : null,
     // Email
     booking.contactEmail
       ? () => {
-          const { subject, html } = bookingConfirmationEmail(booking);
+          const { subject, html } = bookingConfirmationEmail(booking, booking.locale);
           return sendEmail({ to: booking.contactEmail!, subject, html });
         }
       : null
@@ -181,13 +183,14 @@ export async function notifyPaymentPending(
     contactName: string;
     contactEmail?: string;
     amount: number;
+    locale?: "en" | "th";
   }
 ): Promise<NotifyResult> {
   const contact = await resolveUserContact(userId);
 
   // Payment pending — only email (LINE would be too aggressive for a 30-min window)
   if (booking.contactEmail) {
-    const { subject, html } = paymentPendingEmail(booking);
+    const { subject, html } = paymentPendingEmail(booking, booking.locale);
     const sent = await sendEmail({ to: booking.contactEmail, subject, html });
     return { channel: sent ? "email" : "none", success: sent };
   }
@@ -207,6 +210,7 @@ export async function notifyPreRideReminder(
     timeSlot: string;
     timeRange: string;
     meetingPoint: string;
+    locale?: "en" | "th";
   }
 ): Promise<NotifyResult> {
   const contact = await resolveUserContact(userId);
@@ -221,12 +225,13 @@ export async function notifyPreRideReminder(
             date: booking.date,
             timeSlot: booking.timeSlot,
             meetingPoint: booking.meetingPoint,
+            locale: booking.locale,
           })
       : null,
     // Email
     booking.contactEmail
       ? () => {
-          const { subject, html } = preRideReminderEmail(booking);
+          const { subject, html } = preRideReminderEmail(booking, booking.locale);
           return sendEmail({ to: booking.contactEmail!, subject, html });
         }
       : null
@@ -246,6 +251,7 @@ export async function notifyWeatherAlert(
     timeSlot: string;
     severity: "watch" | "warning";
     weatherMessage: string;
+    locale?: "en" | "th";
   }
 ): Promise<NotifyResult> {
   const contact = await resolveUserContact(userId);
@@ -261,12 +267,13 @@ export async function notifyWeatherAlert(
             timeSlot: booking.timeSlot,
             severity: booking.severity,
             weatherMessage: booking.weatherMessage,
+            locale: booking.locale,
           })
       : null,
     // Email
     booking.contactEmail
       ? () => {
-          const { subject, html } = weatherAlertEmail(booking);
+          const { subject, html } = weatherAlertEmail(booking, booking.locale);
           return sendEmail({ to: booking.contactEmail!, subject, html });
         }
       : null
@@ -284,6 +291,7 @@ export async function notifyWeatherCancellation(
     contactEmail?: string;
     date: string;
     timeSlot: string;
+    locale?: "en" | "th";
   }
 ): Promise<NotifyResult> {
   const contact = await resolveUserContact(userId);
@@ -297,12 +305,13 @@ export async function notifyWeatherCancellation(
             contactName: booking.contactName,
             date: booking.date,
             timeSlot: booking.timeSlot,
+            locale: booking.locale,
           })
       : null,
     // Email
     booking.contactEmail
       ? () => {
-          const { subject, html } = weatherCancellationEmail(booking);
+          const { subject, html } = weatherCancellationEmail(booking, booking.locale);
           return sendEmail({ to: booking.contactEmail!, subject, html });
         }
       : null
@@ -318,6 +327,7 @@ export async function notifyPostRide(
     bookingId: string;
     contactName: string;
     contactEmail?: string;
+    locale?: "en" | "th";
   }
 ): Promise<NotifyResult> {
   const contact = await resolveUserContact(userId);
@@ -330,12 +340,13 @@ export async function notifyPostRide(
           linePostRideThankYou(contact.lineUserId!, {
             contactName: booking.contactName,
             bookingId: booking.bookingId,
+            locale: booking.locale,
           })
       : null,
     // Email
     booking.contactEmail
       ? () => {
-          const { subject, html } = postRideEmail(booking);
+          const { subject, html } = postRideEmail(booking, booking.locale);
           return sendEmail({ to: booking.contactEmail!, subject, html });
         }
       : null

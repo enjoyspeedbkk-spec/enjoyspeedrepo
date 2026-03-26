@@ -232,7 +232,7 @@ export default async function AboutPage() {
                 return (
                   <Image
                     src={src}
-                    alt="Meeting point — Parking sign K and L at Skylane"
+                    alt={t('about.meetingPointAlt')}
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, 50vw"

@@ -10,8 +10,8 @@ import { messages } from "@/lib/i18n";
 const CREDENTIAL_ICONS = [Award, Shield, Heart, Star];
 
 const TEAM_IMAGES = [
-  { key: "team-pailin-profile", imageKey: "pailin", fallback: "/images/team/pailin-1.jpg", nameKey: "Coach Pailin", bioKey: "about.pailinBio", specialtiesKey: "pailinSpecialties" },
-  { key: "team-udorn-profile",  imageKey: "udorn",  fallback: "/images/team/udorn-1.jpg",  nameKey: "Coach Udorn",  bioKey: "about.udornBio",   specialtiesKey: "udornSpecialties" },
+  { key: "team-pailin-profile", imageKey: "pailin", fallback: "/images/team/pailin-1.jpg", nameKey: "about.pailinName", bioKey: "about.pailinBio", specialtiesKey: "pailinSpecialties" },
+  { key: "team-udorn-profile",  imageKey: "udorn",  fallback: "/images/team/udorn-1.jpg",  nameKey: "about.udornName",  bioKey: "about.udornBio",   specialtiesKey: "udornSpecialties" },
 ];
 
 function resolveImage(overrides: Record<string, string | SiteImageData> | undefined, key: string, fallback: string) {
@@ -74,7 +74,7 @@ export function TeamSection({ imageOverrides }: { imageOverrides?: Record<string
               <div className="relative aspect-[4/3] overflow-hidden">
                 <Image
                   src={resolved.src}
-                  alt={`${member.nameKey} — ${role}`}
+                  alt={`${t(member.nameKey)} — ${role}`}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 50vw"
@@ -82,7 +82,7 @@ export function TeamSection({ imageOverrides }: { imageOverrides?: Record<string
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <h3 className="text-xl font-bold text-white">{member.nameKey}</h3>
+                  <h3 className="text-xl font-bold text-white">{t(member.nameKey)}</h3>
                   <p className="text-sm text-white/80 font-medium">{role}</p>
                 </div>
               </div>

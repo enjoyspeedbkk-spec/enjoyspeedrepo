@@ -382,6 +382,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
       contactLineId: liffLineId || "",
       specialRequests: "",
       waiverAccepted,
+      locale: locale as "en" | "th",
       userId: userIdToUse, // Pass verified user ID for guest bookings
     });
 

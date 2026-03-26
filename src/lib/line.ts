@@ -53,12 +53,15 @@ export async function sendBookingConfirmation(
     groupType: string;
     riderCount: number;
     amount: number;
+    locale?: "en" | "th";
   }
 ) {
+  const isTh = booking.locale === "th";
+
   await linePush(lineUserId, [
     {
       type: "text",
-      text: `✅ Booking Confirmed!\n\nHi ${booking.contactName}!\n\n📅 ${booking.date}\n🕐 ${booking.timeSlot}\n👥 ${booking.groupType} (${booking.riderCount} riders)\n💰 ${booking.amount.toLocaleString()} THB\n\nBooking #${booking.bookingId.slice(0, 8).toUpperCase()}\n\n📋 What to bring:\n• Sport shoes (closed-toe)\n• Athletic socks & top\n• Sunscreen + sunglasses\n• Water bottle\n\n🎁 We'll have your Starter Kit ready!\n\nSee your booking: https://enjoyspeedbkk.com/bookings`,
+      text: `${isTh ? "✅ การจองยืนยันแล้ว!" : "✅ Booking Confirmed!"}\n\n${isTh ? "สวัสดี" : "Hi"} ${booking.contactName}!\n\n📅 ${booking.date}\n🕐 ${booking.timeSlot}\n👥 ${booking.groupType} (${booking.riderCount} ${isTh ? "ผู้ปั่น" : "riders"})\n💰 ${booking.amount.toLocaleString()} THB\n\n${isTh ? "การจอง" : "Booking"} #${booking.bookingId.slice(0, 8).toUpperCase()}\n\n📋 ${isTh ? "สิ่งที่ต้องนำมา:" : "What to bring:"}\n• ${isTh ? "รองเท้าสปอร์ต (ปิดปลาย)" : "Sport shoes (closed-toe)"}\n• ${isTh ? "ถุงเท้า & เสื้อกีฬา" : "Athletic socks & top"}\n• ${isTh ? "ครีมกันแดด + แว่นกันแดด" : "Sunscreen + sunglasses"}\n• ${isTh ? "กระติกน้ำ" : "Water bottle"}\n\n🎁 ${isTh ? "เราจะเตรียมสตาร์ทเตอร์คิทให้พร้อม!" : "We'll have your Starter Kit ready!"}\n\n${isTh ? "ดูการจองของคุณ" : "See your booking"}: https://enjoyspeedbkk.com/bookings`,
     },
   ]);
 }
@@ -73,12 +76,15 @@ export async function sendPreRideReminder(
     date: string;
     timeSlot: string;
     meetingPoint: string;
+    locale?: "en" | "th";
   }
 ) {
+  const isTh = booking.locale === "th";
+
   await linePush(lineUserId, [
     {
       type: "text",
-      text: `🚴 Ride Tomorrow!\n\nHi ${booking.contactName}, your ride is tomorrow!\n\n📅 ${booking.date}\n🕐 ${booking.timeSlot}\n📍 ${booking.meetingPoint}\n\n✅ Ready-to-Ride Checklist:\n☐ Sport shoes (closed-toe)\n☐ Athletic socks\n☐ Breathable athletic top\n☐ Sunscreen + sunglasses\n☐ Water bottle\n\nWe'll have your helmet & Starter Kit ready.\n\nSee you there! 🌅`,
+      text: `🚴 ${isTh ? "การปั่นพรุ่งนี้!" : "Ride Tomorrow!"}\n\n${isTh ? "สวัสดี" : "Hi"} ${booking.contactName}, ${isTh ? "การปั่นของคุณคือพรุ่งนี้!" : "your ride is tomorrow!"}\n\n📅 ${booking.date}\n🕐 ${booking.timeSlot}\n📍 ${booking.meetingPoint}\n\n✅ ${isTh ? "เช็คลิสต์ก่อนปั่น:" : "Ready-to-Ride Checklist:"}\n☐ ${isTh ? "รองเท้าสปอร์ต (ปิดปลาย)" : "Sport shoes (closed-toe)"}\n☐ ${isTh ? "ถุงเท้ากีฬา" : "Athletic socks"}\n☐ ${isTh ? "เสื้อกีฬาระบายอากาศ" : "Breathable athletic top"}\n☐ ${isTh ? "ครีมกันแดด + แว่นกันแดด" : "Sunscreen + sunglasses"}\n☐ ${isTh ? "กระติกน้ำ" : "Water bottle"}\n\n${isTh ? "เราจะเตรียมหมวก & สตาร์ทเตอร์คิทให้พร้อม" : "We'll have your helmet & Starter Kit ready."}\n\n${isTh ? "พบกันที่นั่น! 🌅" : "See you there! 🌅"}`,
     },
   ]);
 }
@@ -94,18 +100,20 @@ export async function sendWeatherAlert(
     timeSlot: string;
     severity: "watch" | "warning";
     weatherMessage: string;
+    locale?: "en" | "th";
   }
 ) {
+  const isTh = booking.locale === "th";
   const isWarning = booking.severity === "warning";
   const emoji = isWarning ? "⚠️" : "🌤️";
   const status = isWarning
-    ? "We're monitoring closely. If it worsens, we'll reach out about rescheduling."
-    : "Your ride is still on! We'll update you if conditions change.";
+    ? isTh ? "เรากำลังตรวจสอบอย่างใกล้ชิด หากเลวร้ายลง เราจะติดต่อคุณเกี่ยวกับการเลื่อนการปั่น" : "We're monitoring closely. If it worsens, we'll reach out about rescheduling."
+    : isTh ? "การปั่นของคุณยังคงดำเนินการ! เราจะแจ้งให้คุณทราบหากมีการเปลี่ยนแปลง" : "Your ride is still on! We'll update you if conditions change.";
 
   await linePush(lineUserId, [
     {
       type: "text",
-      text: `${emoji} Weather Update\n\nHi ${booking.contactName},\n\nHeads-up about your ride on ${booking.date} (${booking.timeSlot}):\n\n${booking.weatherMessage}\n\n${status}\n\n📋 View booking: https://enjoyspeedbkk.com/bookings`,
+      text: `${emoji} ${isTh ? "อัปเดตสภาพอากาศ" : "Weather Update"}\n\n${isTh ? "สวัสดี" : "Hi"} ${booking.contactName},\n\n${isTh ? "แจ้งเตือนเกี่ยวกับการปั่นของคุณเมื่อ" : "Heads-up about your ride on"} ${booking.date} (${booking.timeSlot}):\n\n${booking.weatherMessage}\n\n${status}\n\n📋 ${isTh ? "ดูการจอง" : "View booking"}: https://enjoyspeedbkk.com/bookings`,
     },
   ]);
 }
@@ -119,12 +127,15 @@ export async function sendWeatherCancellation(
     contactName: string;
     date: string;
     timeSlot: string;
+    locale?: "en" | "th";
   }
 ) {
+  const isTh = booking.locale === "th";
+
   await linePush(lineUserId, [
     {
       type: "text",
-      text: `🌧️ Weather Update\n\nHi ${booking.contactName},\n\nDue to weather conditions, your ride on ${booking.date} (${booking.timeSlot}) has been cancelled for safety.\n\n📋 Your options:\n• Reschedule to another date (free)\n• Rain credit (valid 90 days)\n• Refund per our rain policy\n\nReply here or visit:\nhttps://enjoyspeedbkk.com/bookings\n\nSorry for the inconvenience! 🙏`,
+      text: `🌧️ ${isTh ? "อัปเดตสภาพอากาศ" : "Weather Update"}\n\n${isTh ? "สวัสดี" : "Hi"} ${booking.contactName},\n\n${isTh ? "เนื่องจากสภาพอากาศ การปั่นของคุณเมื่อ" : "Due to weather conditions, your ride on"} ${booking.date} (${booking.timeSlot}) ${isTh ? "ถูกยกเลิกเพื่อความปลอดภัย" : "has been cancelled for safety."}\n\n📋 ${isTh ? "ตัวเลือกของคุณ:" : "Your options:"}\n• ${isTh ? "เลื่อนไปวันอื่น (ฟรี)" : "Reschedule to another date (free)"}\n• ${isTh ? "เครดิตฝน (ใช้ได้ 90 วัน)" : "Rain credit (valid 90 days)"}\n• ${isTh ? "คืนเงินตามนโยบายฝน" : "Refund per our rain policy"}\n\n${isTh ? "ตอบกลับที่นี่หรือเยี่ยมชม:" : "Reply here or visit:"}\nhttps://enjoyspeedbkk.com/bookings\n\n${isTh ? "ขออภัยสำหรับความไม่สะดวก! 🙏" : "Sorry for the inconvenience! 🙏"}`,
     },
   ]);
 }
@@ -137,12 +148,15 @@ export async function sendPostRideThankYou(
   booking: {
     contactName: string;
     bookingId: string;
+    locale?: "en" | "th";
   }
 ) {
+  const isTh = booking.locale === "th";
+
   await linePush(lineUserId, [
     {
       type: "text",
-      text: `🎉 Great Ride!\n\nThanks for riding with En-Joy Speed, ${booking.contactName}!\n\nWe'd love to hear how it went:\n👉 https://enjoyspeedbkk.com/bookings\n\nLeave a quick review — it helps us improve and helps other riders discover us.\n\nSee you on the next ride! 🚴‍♂️`,
+      text: `🎉 ${isTh ? "ปั่นสนุกมาก!" : "Great Ride!"}\n\n${isTh ? "ขอบคุณที่ปั่นกับ En-Joy Speed" : "Thanks for riding with En-Joy Speed"}, ${booking.contactName}!\n\n${isTh ? "เราอยากรู้ว่ามันเป็นอย่างไร:" : "We'd love to hear how it went:"}\n👉 https://enjoyspeedbkk.com/bookings\n\n${isTh ? "ให้คะแนนอย่างรวดเร็ว — ช่วยเราปรับปรุงและช่วยผู้ปั่นคนอื่นค้นพบเรา" : "Leave a quick review — it helps us improve and helps other riders discover us."}\n\n${isTh ? "พบกันในการปั่นครั้งต่อไป! 🚴‍♂️" : "See you on the next ride! 🚴‍♂️"}`,
     },
   ]);
 }
@@ -158,12 +172,15 @@ export async function sendPaymentIssueNotice(
     date: string;
     timeSlot: string;
     amount: number;
+    locale?: "en" | "th";
   }
 ) {
+  const isTh = booking.locale === "th";
+
   await linePush(lineUserId, [
     {
       type: "text",
-      text: `⚠️ Payment Issue\n\nHi ${booking.contactName},\n\nWe couldn't verify your payment for your En-Joy Speed booking.\n\n📅 ${booking.date} • ${booking.timeSlot}\nBooking #${booking.bookingId.slice(0, 8).toUpperCase()}\n💰 ฿${booking.amount.toLocaleString()}\n\nYour booking is still reserved! Please re-submit your payment:\n👉 https://www.enjoyspeedbkk.com/bookings/${booking.bookingId}/pay\n\nNeed help? Reply here or message us on LINE. We're here to assist! 🙏`,
+      text: `⚠️ ${isTh ? "ปัญหาการชำระเงิน" : "Payment Issue"}\n\n${isTh ? "สวัสดี" : "Hi"} ${booking.contactName},\n\n${isTh ? "เราไม่สามารถตรวจสอบการชำระเงินของคุณสำหรับการจอง En-Joy Speed ของคุณ" : "We couldn't verify your payment for your En-Joy Speed booking."}\n\n📅 ${booking.date} • ${booking.timeSlot}\n${isTh ? "การจอง" : "Booking"} #${booking.bookingId.slice(0, 8).toUpperCase()}\n💰 ฿${booking.amount.toLocaleString()}\n\n${isTh ? "การจองของคุณยังคงสงวนไว้! กรุณาส่งการชำระเงินของคุณใหม่:" : "Your booking is still reserved! Please re-submit your payment:"}\n👉 https://www.enjoyspeedbkk.com/bookings/${booking.bookingId}/pay\n\n${isTh ? "ต้องการความช่วยเหลือ? ตอบกลับที่นี่หรือส่งข้อความหาเราบน LINE เราพร้อมที่จะช่วยเหลือ! 🙏" : "Need help? Reply here or message us on LINE. We're here to assist! 🙏"}`,
     },
   ]);
 }
