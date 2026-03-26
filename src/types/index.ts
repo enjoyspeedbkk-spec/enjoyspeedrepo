@@ -26,7 +26,8 @@ export type ClothingSize = "XS" | "S" | "M" | "L" | "XL" | "XXL";
 
 export interface TimeSlot {
   id: TimeSlotId;
-  label: string;
+  label: string;       // English fallback label (kept for backwards compat)
+  labelKey?: string;   // i18n key e.g. "timeSlots.earlyBird.label"
   startTime: string;
   endTime: string;
   period: TimePeriod;
@@ -35,7 +36,8 @@ export interface TimeSlot {
 
 export interface RidePackage {
   type: GroupType;
-  name: string;
+  name: string;        // English fallback name (kept for backwards compat)
+  nameKey?: string;    // i18n key e.g. "packages.squad.name"
   minRiders: number;
   maxRiders: number;
   pricePerPerson: number;

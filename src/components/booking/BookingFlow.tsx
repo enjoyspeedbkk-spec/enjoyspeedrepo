@@ -53,6 +53,7 @@ import { createBooking } from "@/lib/actions/booking";
 import { PaymentPromptPay } from "@/components/booking/PaymentPromptPay";
 import { EmailVerification } from "@/components/booking/EmailVerification";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { messages } from "@/lib/i18n";
 
 // ------ Step definitions ------
 const STEPS = [
@@ -97,7 +98,10 @@ interface BookingFlowProps {
 }
 
 export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFlowProps) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const dict = messages[locale] as Record<string, Record<string, unknown>>;
+  const translatedStarterKit = (dict.booking?.starterKitItems as string[]) ?? STARTER_KIT;
+  const translatedReadyToRide = (dict.booking?.readyToRideItems as string[]) ?? READY_TO_RIDE;
   const experienceOptions: { value: CyclingExperience; label: string; desc: string }[] = [
     { value: "beginner", label: t("booking.beginner"), desc: t("booking.firstTimeOrVeryFewRides") },
     { value: "intermediate", label: t("booking.intermediate"), desc: t("booking.rideOccasionally") },
@@ -432,8 +436,8 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
           >
             <Zap className="h-5 w-5 text-warning flex-shrink-0" />
             <div className="flex-1">
-              <p className="font-semibold text-warning text-sm">TEST MODE ACTIVE</p>
-              <p className="text-xs text-warning/80 mt-0.5">This booking will expire in 10 minutes</p>
+              <p className="font-semibold text-warning text-sm">{t("booking.testModeActive")}</p>
+              <p className="text-xs text-warning/80 mt-0.5">{t("booking.testModeExpiry")}</p>
             </div>
             <Badge variant="warning">TEST</Badge>
           </motion.div>
@@ -441,12 +445,12 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
 
         {/* Header */}
         <div className="text-center mb-10">
-          <Badge variant="accent">Book Your Ride</Badge>
+          <Badge variant="accent">{t("booking.bookYourRideBadge")}</Badge>
           <h1 className="mt-4 text-3xl lg:text-4xl font-bold">
-            Let&apos;s set up your ride
+            {t("booking.setupTitle")}
           </h1>
           <p className="mt-2 text-ink-muted">
-            Six simple steps. Takes about 3 minutes.
+            {t("booking.setupSubtitle")}
           </p>
         </div>
 
@@ -455,7 +459,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
           {/* Mobile: current step indicator */}
           <div className="sm:hidden flex items-center justify-between mb-3 px-1">
             <p className="text-xs text-ink-muted font-medium">
-              Step {currentStep + 1} of {STEPS.length}
+              {t("booking.stepOf", { current: String(currentStep + 1), total: String(STEPS.length) })}
             </p>
             <p className="text-xs font-semibold text-ink">{t(STEPS[currentStep].labelKey)}</p>
           </div>
@@ -512,10 +516,9 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
               {/* ===================== STEP 1: Date ===================== */}
               {STEPS[currentStep].id === "date" && (
                 <div>
-                  <h2 className="text-xl font-bold mb-2">Pick your date</h2>
+                  <h2 className="text-xl font-bold mb-2">{t("booking.pickYourDate")}</h2>
                   <p className="text-sm text-ink-muted mb-6">
-                    Select a date for your ride. All dates are at least 24 hours
-                    from now.
+                    {t("booking.pickYourDateDesc")}
                   </p>
                   {/* Mobile: Horizontal carousel, Desktop: Calendar grid */}
                   {/* Mobile carousel */}
@@ -524,11 +527,12 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                       {availableDates.map((date) => {
                         const dateStr = date.toISOString().split("T")[0];
                         const isSelected = selectedDate === dateStr;
-                        const dayName = date.toLocaleDateString("en-US", {
+                        const dateLocale = locale === "th" ? "th-TH" : "en-US";
+                        const dayName = date.toLocaleDateString(dateLocale, {
                           weekday: "short",
                         });
                         const dayNum = date.getDate();
-                        const month = date.toLocaleDateString("en-US", {
+                        const month = date.toLocaleDateString(dateLocale, {
                           month: "short",
                         });
 
@@ -571,11 +575,12 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     {availableDates.map((date) => {
                       const dateStr = date.toISOString().split("T")[0];
                       const isSelected = selectedDate === dateStr;
-                      const dayName = date.toLocaleDateString("en-US", {
+                      const dateLocale = locale === "th" ? "th-TH" : "en-US";
+                      const dayName = date.toLocaleDateString(dateLocale, {
                         weekday: "short",
                       });
                       const dayNum = date.getDate();
-                      const month = date.toLocaleDateString("en-US", {
+                      const month = date.toLocaleDateString(dateLocale, {
                         month: "short",
                       });
 
@@ -611,7 +616,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     })}
                   </div>
                   <p className="mt-3 text-xs text-ink-muted text-center">
-                    Availability confirmed on the next step. Weekend slots fill up fast.
+                    {t("booking.availabilityNote")}
                   </p>
                 </div>
               )}
@@ -619,9 +624,9 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
               {/* ===================== STEP 2: Time Slot ===================== */}
               {STEPS[currentStep].id === "time" && (
                 <div>
-                  <h2 className="text-xl font-bold mb-2">Choose your time</h2>
+                  <h2 className="text-xl font-bold mb-2">{t("booking.chooseYourTime")}</h2>
                   <p className="text-sm text-ink-muted mb-6">
-                    Morning for performance. Evening for vibes.
+                    {t("booking.morningVibe")}
                   </p>
 
                   {/* Morning */}
@@ -629,7 +634,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     <div className="flex items-center gap-2 mb-3">
                       <Sunrise className="h-4 w-4 text-sky" />
                       <span className="text-sm font-semibold text-ink">
-                        Morning
+                        {t("booking.morning")}
                       </span>
                     </div>
                     <div className="grid sm:grid-cols-2 gap-3">
@@ -647,7 +652,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                               }`}
                             >
                               <div>
-                                <p className={`font-semibold ${isSelected ? "text-cream" : "text-ink"}`}>{slot.label}</p>
+                                <p className={`font-semibold ${isSelected ? "text-cream" : "text-ink"}`}>{slot.labelKey ? t(slot.labelKey) : slot.label}</p>
                                 <p
                                   className={`text-sm ${
                                     isSelected
@@ -665,7 +670,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                                     : "bg-sky/10 text-sky-dark"
                                 }`}
                               >
-                                Slot {slot.id}
+                                {t("booking.slotPrefix")} {slot.id}
                               </span>
                             </button>
                           );
@@ -674,7 +679,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     </div>
                     <p className="mt-2 text-xs text-sky-dark flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-sky" />
-                      Note: A1 and A2 overlap — you can book one morning session per day
+                      {t("booking.morningOverlapNote")}
                     </p>
                   </div>
 
@@ -683,7 +688,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     <div className="flex items-center gap-2 mb-3">
                       <Sunset className="h-4 w-4 text-accent" />
                       <span className="text-sm font-semibold text-ink">
-                        Evening
+                        {t("booking.evening")}
                       </span>
                     </div>
                     <div className="grid sm:grid-cols-3 gap-3">
@@ -709,9 +714,9 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                                     : "bg-accent/10 text-accent-dark"
                                 }`}
                               >
-                                {slot.id === "C" ? t("booking.staffPick") : slot.id === "D" ? t("booking.scenic") : `Slot ${slot.id}`}
+                                {slot.id === "C" ? t("booking.staffPick") : slot.id === "D" ? t("booking.scenic") : `${t("booking.slotPrefix")} ${slot.id}`}
                               </span>
-                              <p className={`font-semibold ${isSelected ? "text-cream" : "text-ink"}`}>{slot.label}</p>
+                              <p className={`font-semibold ${isSelected ? "text-cream" : "text-ink"}`}>{slot.labelKey ? t(slot.labelKey) : slot.label}</p>
                               <p
                                 className={`text-sm ${
                                   isSelected
@@ -737,11 +742,10 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
               {STEPS[currentStep].id === "package" && (
                 <div>
                   <h2 className="text-xl font-bold mb-2">
-                    Choose your ride type
+                    {t("booking.chooseYourRideType")}
                   </h2>
                   <p className="text-sm text-ink-muted mb-6">
-                    Each format comes with different group sizes, support levels,
-                    and pricing.
+                    {t("booking.chooseYourRideTypeDesc")}
                   </p>
                   <div className="grid sm:grid-cols-3 gap-4">
                     {RIDE_PACKAGES.map((pkg) => {
@@ -765,7 +769,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                                   : "bg-accent text-white shadow-sm"
                               }`}
                             >
-                              Most Popular
+                              {t("booking.mostPopular")}
                             </span>
                           )}
                           <Icon
@@ -773,7 +777,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                               isSelected ? "text-cream" : "text-accent"
                             }`}
                           />
-                          <h3 className={`text-lg font-bold ${isSelected ? "text-cream" : "text-ink"}`}>{pkg.name}</h3>
+                          <h3 className={`text-lg font-bold ${isSelected ? "text-cream" : "text-ink"}`}>{pkg.nameKey ? t(pkg.nameKey) : pkg.name}</h3>
                           <p
                             className={`text-sm mt-1 ${
                               isSelected ? "text-cream/90" : "text-ink-muted"
@@ -783,7 +787,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                             {pkg.maxRiders !== pkg.minRiders
                               ? `–${pkg.maxRiders}`
                               : ""}{" "}
-                            riders
+                            {t("booking.ridersUnit")}
                           </p>
                           <div className="mt-4 pt-4 border-t border-current/10">
                             <p className={`text-2xl font-bold ${isSelected ? "text-cream" : "text-ink"}`}>
@@ -795,7 +799,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                                     : "text-ink-muted"
                                 }`}
                               >
-                                THB/person
+                                {t("booking.thbPerPerson")}
                               </span>
                             </p>
                             <p
@@ -803,9 +807,9 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                                 isSelected ? "text-cream/90" : "text-ink-muted"
                               }`}
                             >
-                              {pkg.leadersCount} Leader
+                              {pkg.leadersCount} {t("booking.leaderLabel")}{pkg.leadersCount > 1 ? t("booking.leaderPluralSuffix") : ""}
                               {pkg.heroesCount > 0
-                                ? ` + ${pkg.heroesCount} Hero (sweep)`
+                                ? ` + ${pkg.heroesCount} ${t("booking.heroSweepLabel")}`
                                 : ""}
                             </p>
                           </div>
@@ -815,7 +819,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                   </div>
 
                   <p className="mt-3 text-xs text-ink-muted text-center">
-                    <strong>Leaders</strong> set the pace up front. <strong>Heroes</strong> ride sweep at the back — no one gets left behind.
+                    {t("booking.leadersNote")}
                   </p>
 
                   {/* Starter Kit callout */}
@@ -824,13 +828,13 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                       <Gift className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="font-semibold text-sm text-ink">
-                          Starter Kit included with every ride
+                          {t("booking.starterKitIncludedBadge")}
                         </p>
                         <p className="text-xs text-ink-muted mt-1">
-                          {STARTER_KIT.join(" · ")}
+                          {translatedStarterKit.join(" · ")}
                         </p>
                         <p className="text-xs text-ink-muted mt-1">
-                          Yours to keep — no extra charge.
+                          {t("booking.starterKitFree")}
                         </p>
                       </div>
                     </div>
@@ -842,11 +846,10 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
               {STEPS[currentStep].id === "riders" && activePackage && (
                 <div>
                   <h2 className="text-xl font-bold mb-2">
-                    Tell us about your riders
+                    {t("booking.tellUsAboutRiders")}
                   </h2>
                   <p className="text-sm text-ink-muted mb-6">
-                    Each rider can choose their own bike type. Most beginners
-                    love the hybrid — it&apos;s comfortable and easy to ride.
+                    {t("booking.tellUsAboutRidersDesc")}
                   </p>
 
                   {/* Rider count control */}
@@ -855,11 +858,11 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-semibold text-ink">
-                            Number of Riders
+                            {t("booking.numberOfRiders")}
                           </p>
                           <p className="text-sm text-ink-muted">
-                            {activePackage.name}: {activePackage.minRiders}–
-                            {activePackage.maxRiders} riders
+                            {activePackage.nameKey ? t(activePackage.nameKey) : activePackage.name}: {activePackage.minRiders}–
+                            {activePackage.maxRiders} {t("booking.ridersUnit")}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
@@ -924,7 +927,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         )}
                         {riders[i]?.name?.trim()
                           ? riders[i].nickname || riders[i].name.split(" ")[0]
-                          : `Rider ${i + 1}`}
+                          : t("booking.riderTabLabel", { n: String(i + 1) })}
                       </button>
                     ))}
                   </div>
@@ -937,10 +940,10 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                   <Card padding="lg" className="space-y-5">
                     <div className="flex items-center justify-between">
                       <h3 className="font-bold text-lg">
-                        Rider {activeRiderIndex + 1}
+                        {t("booking.riderCardTitle", { n: String(activeRiderIndex + 1) })}
                       </h3>
                       {riders[activeRiderIndex]?.name?.trim() && (
-                        <Badge variant="success">Info provided</Badge>
+                        <Badge variant="success">{t("booking.infoProvided")}</Badge>
                       )}
                     </div>
 
@@ -948,7 +951,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-ink mb-1.5">
-                          Full Name <span className="text-error">*</span>
+                          {t("booking.fullNameLabel")} <span className="text-error">*</span>
                         </label>
                         <input
                           type="text"
@@ -956,13 +959,13 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                           onChange={(e) =>
                             updateRider(activeRiderIndex, "name", e.target.value)
                           }
-                          placeholder="e.g. Somchai Jaidee"
+                          placeholder={t("booking.fullNamePlaceholder")}
                           className="w-full px-4 py-3 rounded-xl border-2 border-sand/60 bg-surface text-ink placeholder:text-ink-muted/70 focus:border-ink focus:outline-none transition-colors"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-ink mb-1.5">
-                          Nickname
+                          {t("booking.nicknameLabel")}
                         </label>
                         <input
                           type="text"
@@ -983,12 +986,10 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     {/* Bike Preference — PER RIDER */}
                     <div>
                       <label className="block text-sm font-medium text-ink mb-2">
-                        Bike Preference <span className="text-error">*</span>
+                        {t("booking.bikePreferenceLabel")} <span className="text-error">*</span>
                       </label>
                       <p className="text-xs text-ink-muted mb-3">
-                        Bike rental is paid separately at the track to HHBL
-                        (Happy and Healthy Bike Lane). Each rider can pick their
-                        own bike type. Helmet is included with every rental.
+                        {t("booking.bikeRentalNote")}
                       </p>
                       <div className="grid grid-cols-3 gap-3">
                         {bikeOptions.map((option) => (
@@ -1054,7 +1055,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                       <div className="grid sm:grid-cols-2 gap-4 p-4 rounded-xl bg-sky/5 border border-sky/20">
                         <div>
                           <label className="block text-sm font-medium text-ink mb-1.5">
-                            Height (cm) <span className="text-xs font-normal text-ink-muted">for bike setup</span>
+                            {t("booking.heightLabel")} <span className="text-xs font-normal text-ink-muted">{t("booking.forBikeSetup")}</span>
                           </label>
                           <input
                             type="number"
@@ -1072,7 +1073,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-ink mb-1.5">
-                            Gender <span className="text-xs font-normal text-ink-muted">for bike setup</span>
+                            {t("booking.genderLabel")} <span className="text-xs font-normal text-ink-muted">{t("booking.forBikeSetup")}</span>
                           </label>
                           <div className="flex gap-2">
                             {(["male", "female"] as const).map((g) => (
@@ -1093,7 +1094,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                           </div>
                         </div>
                         <p className="text-xs text-ink-muted sm:col-span-2">
-                          Height and gender help the rental shop prepare the right bike size for you.
+                          {t("booking.bikeSetupNote")}
                         </p>
                       </div>
                     )}
@@ -1101,7 +1102,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     {/* Experience */}
                     <div>
                       <label className="block text-sm font-medium text-ink mb-2">
-                        Cycling Experience
+                        {t("booking.cyclingExperienceLabel")}
                       </label>
                       <div className="grid grid-cols-3 gap-3">
                         {experienceOptions.map((opt) => (
@@ -1135,9 +1136,9 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     {/* Clothing Size (for padded liner shorts from starter kit) */}
                     <div>
                       <label className="block text-sm font-medium text-ink mb-1">
-                        Cycling Liner Shorts Size
+                        {t("booking.linerShortsSize")}
                         <span className="text-xs font-normal text-ink-muted ml-2">
-                          (from your Starter Kit — 640 THB value, included)
+                          {t("booking.linerShortsValue")}
                         </span>
                       </label>
                       <div className="flex items-start gap-3 mb-3 p-3 rounded-lg bg-sand/20 border border-sand/40">
@@ -1152,19 +1153,19 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                             className="w-full h-full object-cover"
                           />
                           <div className="absolute inset-0 bg-ink/40 flex items-center justify-center group-hover:bg-ink/50 transition-colors">
-                            <span className="text-xs font-bold text-cream uppercase tracking-wide">Size Guide</span>
+                            <span className="text-xs font-bold text-cream uppercase tracking-wide">{t("booking.sizeGuide")}</span>
                           </div>
                         </button>
                         <div className="flex-1">
                           <p className="text-xs text-ink-muted">
-                            Padded gel cycling liners — worn under your shorts for comfort. Size up if between sizes. Yours to keep.
+                            {t("booking.linerShortsDesc")}
                           </p>
                           <button
                             type="button"
                             onClick={() => setShowSizeChart(true)}
                             className="mt-1.5 text-xs font-semibold text-accent hover:text-accent-dark transition-colors underline underline-offset-2"
                           >
-                            View full size chart →
+                            {t("booking.viewFullSizeChart")}
                           </button>
                         </div>
                       </div>
@@ -1199,7 +1200,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         }
                         className="flex items-center gap-2 text-sm font-medium text-accent hover:text-accent-dark transition-colors mt-2"
                       >
-                        Next rider: Rider {activeRiderIndex + 2}
+                        {t("booking.nextRider", { n: String(activeRiderIndex + 2) })}
                         <ChevronRight className="h-4 w-4" />
                       </button>
                     )}
@@ -1209,7 +1210,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                   {riderCount > 1 && (
                     <div className="mt-4 p-3 rounded-xl bg-sand/20 border border-sand/40">
                       <p className="text-xs font-medium text-ink-muted mb-2">
-                        Bike breakdown:
+                        {t("booking.bikeBreakdown")}
                       </p>
                       <div className="flex flex-wrap gap-2 overflow-x-auto pb-2 -mb-2">
                         {riders.slice(0, riderCount).map((r, i) => (
@@ -1223,9 +1224,9 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                             <span className={`${r.bikePreference ? "text-ink-muted" : "text-ink-muted/40 italic"}`}>
                               {r.bikePreference
                                 ? r.bikePreference === "own"
-                                  ? "own bike"
+                                  ? t("booking.ownBikeShort")
                                   : r.bikePreference
-                                : "not set"}
+                                : t("booking.notSet")}
                             </span>
                           </span>
                         ))}
@@ -1239,11 +1240,10 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
               {STEPS[currentStep].id === "waiver" && (
                 <div>
                   <h2 className="text-xl font-bold mb-2">
-                    Safety waiver & contact
+                    {t("booking.safetyWaiverTitle")}
                   </h2>
                   <p className="text-sm text-ink-muted mb-6">
-                    For your safety and ours. One acceptance covers all riders in
-                    your group.
+                    {t("booking.safetyWaiverDesc")}
                   </p>
 
                   {/* LINE notifications consent — shown only when booking through LINE */}
@@ -1257,10 +1257,10 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-ink">
-                          LINE notifications connected
+                          {t("booking.lineNotificationsTitle")}
                         </p>
                         <p className="text-xs text-ink-muted mt-0.5">
-                          Hi {liff.profile.displayName?.split(" ")[0] || "there"}! Since you&apos;re booking through LINE, we&apos;ll send your booking confirmation, ride reminders, and weather updates directly to this chat — no extra steps needed.
+                          {t("booking.lineNotificationsDesc", { name: liff.profile.displayName?.split(" ")[0] || "there" })}
                         </p>
                       </div>
                     </div>
@@ -1270,7 +1270,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                   <Card padding="md" className="mb-6 relative">
                     <div className="max-h-48 overflow-y-auto text-xs text-ink-light leading-relaxed space-y-3 pr-2 scroll-smooth" style={{ scrollbarWidth: "thin" }}>
                       <p className="font-bold text-sm text-ink">
-                        Liability & Assumption of Risk Waiver
+                        {t("booking.waiverTitle")}
                       </p>
                       <p>
                         By booking a ride with En-Joy Speed, I acknowledge that
@@ -1353,24 +1353,22 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     </div>
                     <div>
                       <p className="font-semibold text-sm text-ink">
-                        I accept the liability waiver on behalf of all riders in
-                        my group
+                        {t("booking.acceptWaiverLabel")}
                       </p>
                       <p className="text-xs text-ink-muted mt-1">
-                        By checking this box, you agree to the terms above for
-                        all {riderCount} riders.
+                        {t("booking.acceptWaiverSub", { n: String(riderCount) })}
                       </p>
                     </div>
                   </label>
 
                   {/* Contact Info */}
                   <h3 className="font-bold text-lg mb-4">
-                    Group contact details
+                    {t("booking.groupContactTitle")}
                   </h3>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-ink mb-1.5">
-                        Contact Name <span className="text-error">*</span>
+                        {t("booking.contactNameLabel")} <span className="text-error">*</span>
                       </label>
                       <input
                         type="text"
@@ -1383,7 +1381,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-ink mb-1.5">
-                          Email <span className="text-error">*</span>
+                          {t("booking.emailLabel")} <span className="text-error">*</span>
                         </label>
                         <input
                           type="email"
@@ -1397,12 +1395,12 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                           }`}
                         />
                         {contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail) && (
-                          <p className="mt-1 text-xs text-error">Please enter a valid email address</p>
+                          <p className="mt-1 text-xs text-error">{t("booking.invalidEmailError")}</p>
                         )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-ink mb-1.5">
-                          Phone <span className="text-ink-muted text-xs font-normal">(optional — for ride-day contact)</span>
+                          {t("booking.phoneLabel")} <span className="text-ink-muted text-xs font-normal">{t("booking.phoneOptional")}</span>
                         </label>
                         <input
                           type="tel"
@@ -1431,42 +1429,42 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                 activeSlot && (
                   <div>
                     <h2 className="text-xl font-bold mb-2">
-                      Review your ride
+                      {t("booking.reviewTitle")}
                     </h2>
                     <p className="text-sm text-ink-muted mb-6">
-                      Everything look good? Confirm and pay via PromptPay.
+                      {t("booking.reviewDesc")}
                     </p>
 
                     <Card padding="lg" className="mb-6">
                       <div className="space-y-4">
                         <div className="flex justify-between items-center pb-4 border-b border-sand/60">
-                          <span className="text-sm text-ink-muted">Date</span>
+                          <span className="text-sm text-ink-muted">{t("booking.dateReviewLabel")}</span>
                           <span className="font-semibold">
                             {formatDate(new Date(selectedDate), "long")}
                           </span>
                         </div>
                         <div className="flex justify-between items-center pb-4 border-b border-sand/60">
                           <span className="text-sm text-ink-muted">
-                            Time Slot
+                            {t("booking.timeSlotReviewLabel")}
                           </span>
                           <span className="font-semibold">
-                            {activeSlot.label} ({activeSlot.startTime} —{" "}
+                            {activeSlot.labelKey ? t(activeSlot.labelKey) : activeSlot.label} ({activeSlot.startTime} —{" "}
                             {activeSlot.endTime})
                           </span>
                         </div>
                         <div className="flex justify-between items-center pb-4 border-b border-sand/60">
                           <span className="text-sm text-ink-muted">
-                            Ride Type
+                            {t("booking.rideTypeReviewLabel")}
                           </span>
                           <span className="font-semibold">
-                            {activePackage.name}
+                            {activePackage.nameKey ? t(activePackage.nameKey) : activePackage.name}
                           </span>
                         </div>
 
                         {/* Per-rider breakdown */}
                         <div className="pb-4 border-b border-sand/60">
                           <span className="text-sm text-ink-muted block mb-3">
-                            Riders & Bikes
+                            {t("booking.ridersAndBikes")}
                           </span>
                           <div className="space-y-2">
                             {riders.slice(0, riderCount).map((rider, i) => (
@@ -1494,11 +1492,11 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                           <div className="flex items-center gap-2 mb-1">
                             <Gift className="h-4 w-4 text-success" />
                             <span className="text-sm font-medium text-success">
-                              Starter Kit included for each rider
+                              {t("booking.starterKitIncludedEach")}
                             </span>
                           </div>
                           <p className="text-xs text-ink-muted pl-6">
-                            {STARTER_KIT.join(" · ")}
+                            {translatedStarterKit.join(" · ")}
                           </p>
                         </div>
 
@@ -1506,9 +1504,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         <div className="pt-2 space-y-2">
                           <div className="flex justify-between text-sm">
                             <span className="text-ink-muted">
-                              Ride ({riderCount} ×{" "}
-                              {activePackage.pricePerPerson.toLocaleString()}{" "}
-                              THB)
+                              {t("booking.rideBreakdown", { n: String(riderCount), price: activePackage.pricePerPerson.toLocaleString() })}
                             </span>
                             <span className="font-medium">
                               <AnimatedNumber value={rideSubtotal} format="currency" /> THB
@@ -1517,7 +1513,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                           {rentalSubtotal > 0 && (
                             <div className="flex justify-between text-sm">
                               <span className="text-ink-muted">
-                                Bike rentals (paid at track)
+                                {t("booking.bikeRentalsAtTrack")}
                               </span>
                               <span className="font-medium">
                                 {rentalSubtotal.toLocaleString()} THB
@@ -1526,7 +1522,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                           )}
                           <div className="flex justify-between pt-3 border-t border-sand/60">
                             <span className="font-bold text-lg">
-                              Total
+                              {t("booking.totalLabel")}
                             </span>
                             <span className="font-bold text-lg text-accent">
                               <AnimatedNumber value={totalPrice} format="currency" /> THB
@@ -1534,7 +1530,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                           </div>
                           {rentalSubtotal > 0 && (
                             <p className="text-xs text-ink-muted">
-                              Pay <span className="font-semibold text-accent">{rideSubtotal.toLocaleString()} THB</span> now via PromptPay <span className="text-ink-muted/60">· Bike rental ({rentalSubtotal.toLocaleString()} THB) paid at track</span>
+                              {t("booking.payNowViaPP", { amount: rideSubtotal.toLocaleString() })} <span className="text-ink-muted/60">· {t("booking.bikeRentalAtTrackNote", { rental: rentalSubtotal.toLocaleString() })}</span>
                             </p>
                           )}
                         </div>
@@ -1545,9 +1541,9 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     <div className="mb-4 flex items-center gap-3 p-3 rounded-xl bg-success/5 border border-success/20">
                       <ShieldCheck className="h-5 w-5 text-success flex-shrink-0" />
                       <div>
-                        <p className="text-sm font-medium text-ink">Safety first</p>
+                        <p className="text-sm font-medium text-ink">{t("booking.safetyFirstTitle")}</p>
                         <p className="text-xs text-ink-muted">
-                          Led by certified athletes. Group insurance included. Full safety briefing before every ride.
+                          {t("booking.safetyFirstDesc")}
                         </p>
                       </div>
                     </div>
@@ -1558,14 +1554,13 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                         <Package className="h-5 w-5 text-sky mt-0.5 flex-shrink-0" />
                         <div>
                           <p className="font-semibold text-sm text-ink">
-                            Ready-to-Ride checklist
+                            {t("booking.readyToRideChecklistTitle")}
                           </p>
                           <p className="text-xs text-ink-muted mt-1">
-                            {READY_TO_RIDE.join(" · ")}
+                            {translatedReadyToRide.join(" · ")}
                           </p>
                           <p className="text-xs text-ink-muted mt-1">
-                            We&apos;ll send the full prep guide via LINE after
-                            booking.
+                            {t("booking.prepGuideNote")}
                           </p>
                         </div>
                       </div>
@@ -1598,10 +1593,10 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                               exit={{ opacity: 0, y: 8 }}
                               className="mb-4 p-4 rounded-xl border-2 border-accent/30 bg-accent/5"
                             >
-                              <p className="font-semibold text-sm text-ink mb-2">Ready to book?</p>
+                              <p className="font-semibold text-sm text-ink mb-2">{t("booking.readyToBook")}</p>
                               <div className="text-xs text-ink-muted space-y-1 mb-3">
-                                <p>{selectedDate && formatDate(new Date(selectedDate), "long")} · {activeSlot?.label}</p>
-                                <p>{activePackage?.name} · {riderCount} rider{riderCount > 1 ? "s" : ""}</p>
+                                <p>{selectedDate && formatDate(new Date(selectedDate), "long")} · {activeSlot?.labelKey ? t(activeSlot.labelKey) : activeSlot?.label}</p>
+                                <p>{activePackage?.nameKey ? t(activePackage.nameKey) : activePackage?.name} · {riderCount} {t("booking.ridersUnit")}</p>
                                 <p className="font-semibold text-ink">Total: {rideSubtotal.toLocaleString()} THB</p>
                               </div>
                               <div className="flex gap-2">
@@ -1621,7 +1616,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                                   onClick={() => setShowConfirmModal(false)}
                                   className="px-4 py-2 text-sm font-medium text-ink-muted hover:text-ink transition-colors"
                                 >
-                                  Cancel
+                                  {t("common.cancel")}
                                 </button>
                               </div>
                             </motion.div>
@@ -1638,15 +1633,15 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                             className="text-base"
                           >
                             {emailVerified
-                              ? `Confirm & Pay ${rideSubtotal.toLocaleString()} THB`
-                              : `Verify Email & Pay ${rideSubtotal.toLocaleString()} THB`}
+                              ? t("booking.confirmAndPay", { amount: rideSubtotal.toLocaleString() })
+                              : t("booking.verifyEmailAndPay", { amount: rideSubtotal.toLocaleString() })}
                           </Button>
                         )}
                         <p className="mt-3 text-xs text-center text-ink-muted">
                           {emailVerified
-                            ? `You'll see a PromptPay QR code to scan with your banking app.`
-                            : `We'll verify your email, then show you a PromptPay QR code.`}
-                          {" "}Confirmation sent via LINE {LINE_OA}.
+                            ? t("booking.promptPayNote")
+                            : t("booking.verifyEmailNote")}
+                          {" "}{t("booking.confirmationVieLine", { line: LINE_OA })}
                         </p>
                       </>
                     )}
@@ -1663,18 +1658,18 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
             <div className="sm:order-2 text-left sm:text-right">
               {rentalSubtotal > 0 ? (
                 <>
-                  <p className="text-xs text-ink-muted">Pay now (PromptPay)</p>
+                  <p className="text-xs text-ink-muted">{t("booking.payNowPromptPay")}</p>
                   <p className="text-lg font-bold text-ink">
                     <AnimatedNumber value={rideSubtotal} format="currency" />{" "}
                     <span className="text-sm font-normal text-ink-muted">THB</span>
                   </p>
                   <p className="text-xs text-ink-muted line-clamp-1 sm:line-clamp-none">
-                    +{rentalSubtotal.toLocaleString()} THB bike rental
+                    {t("booking.bikeRentalExtra", { amount: rentalSubtotal.toLocaleString() })}
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="text-xs text-ink-muted">Estimated total</p>
+                  <p className="text-xs text-ink-muted">{t("booking.estimatedTotal")}</p>
                   <p className="text-lg font-bold text-ink">
                     <AnimatedNumber value={totalPrice} format="currency" />{" "}
                     <span className="text-sm font-normal text-ink-muted">THB</span>
@@ -1692,7 +1687,7 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
               className="flex items-center gap-1 text-sm font-medium text-ink-muted hover:text-ink disabled:opacity-0 transition-all"
             >
               <ChevronLeft className="h-4 w-4" />
-              Back
+              {t("common.back")}
             </button>
 
             {STEPS[currentStep].id !== "review" && (

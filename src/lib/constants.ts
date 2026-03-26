@@ -9,6 +9,7 @@ export const TIME_SLOTS: TimeSlot[] = [
   {
     id: "A1",
     label: "Early Bird",
+    labelKey: "timeSlots.earlyBird.label",
     startTime: "06:15",
     endTime: "08:15",
     period: "morning",
@@ -17,6 +18,7 @@ export const TIME_SLOTS: TimeSlot[] = [
   {
     id: "A2",
     label: "Energy Booster",
+    labelKey: "timeSlots.energyBooster.label",
     startTime: "06:30",
     endTime: "08:30",
     period: "morning",
@@ -25,6 +27,7 @@ export const TIME_SLOTS: TimeSlot[] = [
   {
     id: "B",
     label: "Light Chaser",
+    labelKey: "timeSlots.lightChaser.label",
     startTime: "16:15",
     endTime: "18:15",
     period: "evening",
@@ -33,6 +36,7 @@ export const TIME_SLOTS: TimeSlot[] = [
   {
     id: "C",
     label: "Golden Hour",
+    labelKey: "timeSlots.goldenHour.label",
     startTime: "16:45",
     endTime: "18:45",
     period: "evening",
@@ -41,6 +45,7 @@ export const TIME_SLOTS: TimeSlot[] = [
   {
     id: "D",
     label: "Twilight Finish",
+    labelKey: "timeSlots.twilightFinish.label",
     startTime: "17:15",
     endTime: "19:15",
     period: "evening",
@@ -52,6 +57,7 @@ export const RIDE_PACKAGES: RidePackage[] = [
   {
     type: "duo",
     name: "Duo",
+    nameKey: "packages.duo.name",
     minRiders: 2,
     maxRiders: 2,
     pricePerPerson: 2500,
@@ -61,6 +67,7 @@ export const RIDE_PACKAGES: RidePackage[] = [
   {
     type: "squad",
     name: "The Squad",
+    nameKey: "packages.squad.name",
     minRiders: 3,
     maxRiders: 5,
     pricePerPerson: 2100,
@@ -70,6 +77,7 @@ export const RIDE_PACKAGES: RidePackage[] = [
   {
     type: "peloton",
     name: "The Peloton",
+    nameKey: "packages.peloton.name",
     minRiders: 6,
     maxRiders: 8,
     pricePerPerson: 2000,
