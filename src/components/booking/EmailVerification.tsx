@@ -62,7 +62,7 @@ export function EmailVerification({
       setOtp(["", "", "", "", "", ""]);
       setTimeout(() => otpRefs.current[0]?.focus(), 100);
     } else {
-      setError(result.error || "Failed to send verification code");
+      setError(result.error || t('auth.sendOtpError'));
     }
   };
 
@@ -128,7 +128,7 @@ export function EmailVerification({
       onVerified(cleanEmail, result.userId);
     } else {
       setVerifying(false);
-      setError(result.error || "Invalid code. Please try again.");
+      setError(result.error || t('auth.invalidCode'));
       setOtp(["", "", "", "", "", ""]);
       otpRefs.current[0]?.focus();
     }
@@ -147,7 +147,7 @@ export function EmailVerification({
         </div>
         <h2 className="text-xl font-bold text-ink">{t('auth.email')}</h2>
         <p className="text-sm text-ink-muted mt-2">
-          We&apos;ll send a 6-digit code to confirm your booking and keep you updated about your ride.
+          {t('auth.emailVerifySubtitle')}
         </p>
       </div>
 
@@ -211,7 +211,7 @@ export function EmailVerification({
             transition={{ duration: 0.3 }}
           >
             <Card padding="lg">
-              <p className="text-sm text-ink-muted mb-1">Code sent to</p>
+              <p className="text-sm text-ink-muted mb-1">{t('auth.codeSentTo')}</p>
               <p className="font-semibold text-ink mb-4">{cleanEmail}</p>
 
               {/* OTP Input */}
@@ -277,11 +277,11 @@ export function EmailVerification({
 
             <div className="mt-4 flex items-center gap-2 justify-center text-xs text-ink-muted">
               <ShieldCheck className="h-3.5 w-3.5" />
-              Your code expires in 10 minutes
+              {t('auth.codeExpiresIn')}
             </div>
 
             <p className="mt-2 text-xs text-center text-ink-muted">
-              Check your spam folder if you don&apos;t see the email.
+              {t('auth.checkSpam')}
             </p>
           </motion.div>
         )}

@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, bookingConfirmationEmail, paymentRejectionEmail } from "@/lib/email";
 import { sendBookingConfirmation, sendPaymentIssueNotice } from "@/lib/line";
 import { TIME_SLOTS } from "@/lib/constants";
+import { getTranslation } from "@/lib/i18n";
 
 // ========================================
 // Auth guard — ensures user is admin
@@ -112,7 +113,7 @@ export async function getAllBookings(filters?: {
       profiles!bookings_user_id_fkey(full_name, phone, line_id),
       ride_sessions!inner(date, time_slot_id, weather_status),
       riders(id, name, nickname, bike_preference, bike_rental_price, waiver_accepted),
-      payments(id, amount, status, method, slip_image_url, verified_at)
+      payments(id, amount, status, method, slip_url, verified_at)
     `
     )
     .order("created_at", { ascending: false });
@@ -175,7 +176,7 @@ export async function verifyPayment(
       .from("bookings")
       .select(`
         id, contact_name, contact_email, contact_line_id,
-        group_type, rider_count, ride_total, rental_total, total_price,
+        group_type, rider_count, ride_total, rental_total, total_price, locale,
         ride_sessions!inner(date, time_slot_id)
       `)
       .eq("id", bookingId)
@@ -184,12 +185,18 @@ export async function verifyPayment(
     if (booking) {
       const session = (booking as any).ride_sessions;
       const slot = TIME_SLOTS.find((s) => s.id === session?.time_slot_id);
-      const dateStr = new Date(session.date + "T12:00").toLocaleDateString("en-US", {
+      const bookingLocale = (booking as any).locale as "en" | "th" | undefined;
+      const notifyLocale = bookingLocale ?? "en";
+      const dateLocale = notifyLocale === "th" ? "th-TH" : "en-US";
+      const dateStr = new Date(session.date + "T12:00").toLocaleDateString(dateLocale, {
         weekday: "long",
         month: "long",
         day: "numeric",
         year: "numeric",
       });
+      const slotLabel = slot
+        ? (slot.labelKey ? getTranslation(notifyLocale, slot.labelKey) : slot.label)
+        : session.time_slot_id;
 
       // Send confirmation email
       if (booking.contact_email) {
@@ -197,14 +204,14 @@ export async function verifyPayment(
           contactName: booking.contact_name,
           bookingId: booking.id,
           date: dateStr,
-          timeSlot: slot?.label || session.time_slot_id,
+          timeSlot: slotLabel,
           timeRange: slot ? `${slot.startTime}–${slot.endTime}` : "",
           groupType: booking.group_type,
           riderCount: booking.rider_count,
           rideTotal: booking.ride_total,
           rentalTotal: booking.rental_total || 0,
           totalPrice: booking.total_price,
-        });
+        }, notifyLocale);
         sendEmail({ to: booking.contact_email, ...email }).catch(console.error);
       }
 
@@ -222,10 +229,11 @@ export async function verifyPayment(
             bookingId: booking.id,
             contactName: booking.contact_name,
             date: dateStr,
-            timeSlot: slot?.label || session.time_slot_id,
+            timeSlot: slotLabel,
             groupType: booking.group_type,
             riderCount: booking.rider_count,
             amount: booking.ride_total,
+            locale: notifyLocale,
           }).catch(console.error);
         }
       }

@@ -329,9 +329,9 @@ export function AdminPayments({
                     </div>
 
                     {/* Payment slip */}
-                    {payment.slip_image_url && (
+                    {payment.slip_url && (
                       <a
-                        href={payment.slip_image_url}
+                        href={payment.slip_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-sky/10 text-sky text-xs font-medium hover:bg-sky/20 transition-colors"

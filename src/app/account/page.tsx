@@ -19,14 +19,19 @@ export default async function AccountPage() {
   }
 
   // Signed in — fetch profile and recent bookings (using RLS-scoped client)
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
 
+  if (profileError && profileError.code !== "PGRST116") {
+    // PGRST116 = "no rows" (new user with no profile yet) — that's fine
+    console.error("[account/page] profile fetch error:", profileError.message);
+  }
+
   // Get recent bookings with session info
-  const { data: bookings } = await supabase
+  const { data: bookings, error: bookingsError } = await supabase
     .from("bookings")
     .select(`
       id, status, group_type, rider_count, ride_total, total_price, created_at, contact_name,
@@ -35,6 +40,10 @@ export default async function AccountPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(5);
+
+  if (bookingsError) {
+    console.error("[account/page] bookings fetch error:", bookingsError.message);
+  }
 
   return (
     <AccountDashboard

@@ -44,7 +44,7 @@ export interface PaymentSummary {
   amount: number;
   status: string;
   method: string;
-  slip_image_url: string | null;
+  slip_url: string | null;
   verified_at: string | null;
   is_rain_credit: boolean;
   rain_credit_expires_at: string | null;
@@ -128,7 +128,7 @@ export async function getUserBookings(): Promise<{
         amount: p.amount,
         status: p.status,
         method: p.method,
-        slip_image_url: p.slip_image_url,
+        slip_url: p.slip_url,
         verified_at: p.verified_at,
         is_rain_credit: p.is_rain_credit,
         rain_credit_expires_at: p.rain_credit_expires_at,
@@ -231,7 +231,7 @@ export async function getBookingById(
           amount: payment.amount,
           status: payment.status,
           method: payment.method,
-          slip_image_url: payment.slip_image_url,
+          slip_url: payment.slip_url,
           verified_at: payment.verified_at,
           is_rain_credit: payment.is_rain_credit,
           rain_credit_expires_at: payment.rain_credit_expires_at,

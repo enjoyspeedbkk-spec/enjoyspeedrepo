@@ -260,7 +260,7 @@ export function AdminBookings({ initialBookings }: { initialBookings: any[] }) {
                         <p className="text-xs font-semibold text-ink-muted mb-2">
                           Payment
                         </p>
-                        {payments.map((p: { id: string; amount: number; status: string; method: string; slip_image_url: string | null; verified_at: string | null }) => (
+                        {payments.map((p: { id: string; amount: number; status: string; method: string; slip_url: string | null; verified_at: string | null }) => (
                           <div
                             key={p.id}
                             className="flex items-center justify-between p-2 rounded-lg bg-sand/20 text-xs"

@@ -55,14 +55,15 @@ interface Booking {
   };
 }
 
-const STATUS_STYLE: Record<string, { variant: "success" | "warning" | "accent" | "default" | "sky"; label: string }> = {
-  pending: { variant: "warning", label: "Payment Pending" },
-  confirmed: { variant: "success", label: "Confirmed" },
-  rider_details: { variant: "sky", label: "Details Needed" },
-  ready: { variant: "accent", label: "Ready to Ride" },
-  completed: { variant: "default", label: "Completed" },
-  cancelled: { variant: "default", label: "Cancelled" },
-  no_show: { variant: "default", label: "No Show" },
+// Status badge variant map — labels resolved via t() at render time
+const STATUS_VARIANT: Record<string, "success" | "warning" | "accent" | "default" | "sky"> = {
+  pending: "warning",
+  confirmed: "success",
+  rider_details: "sky",
+  ready: "accent",
+  completed: "default",
+  cancelled: "default",
+  no_show: "default",
 };
 
 export function AccountDashboard({
@@ -72,7 +73,8 @@ export function AccountDashboard({
   user: AccountUser;
   recentBookings: Booking[];
 }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const dateLocale = locale === "th" ? "th-TH" : "en-US";
   const [signingOut, setSigningOut] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -182,8 +184,8 @@ export function AccountDashboard({
                   <Bike className="h-5 w-5 text-accent" />
                 </div>
                 <div>
-                  <p className="font-semibold text-sm">Book a Ride</p>
-                  <p className="text-xs text-ink-muted">{t("account.editProfile")}</p>
+                  <p className="font-semibold text-sm">{t("account.bookARide")}</p>
+                  <p className="text-xs text-ink-muted">{t("account.bookARideDesc")}</p>
                 </div>
               </div>
             </Card>
@@ -198,7 +200,7 @@ export function AccountDashboard({
                   <p className="font-semibold text-sm">{t("account.recentBookings")}</p>
                   <p className="text-xs text-ink-muted">
                     {upcomingBookings.length > 0
-                      ? `${upcomingBookings.length} upcoming`
+                      ? t("account.upcomingCount", { count: upcomingBookings.length })
                       : t("account.viewAllBookings")}
                   </p>
                 </div>
@@ -225,8 +227,9 @@ export function AccountDashboard({
                 const slot = TIME_SLOTS.find(
                   (s) => s.id === session.time_slot_id
                 );
-                const status =
-                  STATUS_STYLE[booking.status] || STATUS_STYLE.pending;
+                const statusVariant =
+                  STATUS_VARIANT[booking.status] ?? STATUS_VARIANT.pending;
+                const statusKey = "account.status" + booking.status.replace(/_([a-z])/g, (_: string, c: string) => c.toUpperCase()).replace(/^[a-z]/, (c: string) => c.toUpperCase());
                 const rideDate = new Date(session.date + "T12:00");
 
                 return (
@@ -236,7 +239,7 @@ export function AccountDashboard({
                         {/* Date badge */}
                         <div className="w-14 h-14 rounded-xl bg-accent/5 flex flex-col items-center justify-center flex-shrink-0">
                           <span className="text-xs font-semibold text-ink-muted uppercase">
-                            {rideDate.toLocaleDateString("en-US", {
+                            {rideDate.toLocaleDateString(dateLocale, {
                               month: "short",
                             })}
                           </span>
@@ -244,7 +247,7 @@ export function AccountDashboard({
                             {rideDate.getDate()}
                           </span>
                           <span className="text-xs text-ink-muted">
-                            {rideDate.toLocaleDateString("en-US", {
+                            {rideDate.toLocaleDateString(dateLocale, {
                               weekday: "short",
                             })}
                           </span>
@@ -256,8 +259,8 @@ export function AccountDashboard({
                             <span className="font-semibold text-sm">
                               {slot?.label || session.time_slot_id}
                             </span>
-                            <Badge variant={status.variant}>
-                              {status.label}
+                            <Badge variant={statusVariant}>
+                              {t(statusKey)}
                             </Badge>
                           </div>
                           <p className="text-xs text-ink-muted mt-0.5">
@@ -266,8 +269,9 @@ export function AccountDashboard({
                               ? `${slot.startTime}–${slot.endTime}`
                               : session.time_slot_id}{" "}
                             · {booking.group_type} ·{" "}
-                            {booking.rider_count} rider
-                            {booking.rider_count > 1 ? "s" : ""}
+                            {booking.rider_count === 1
+                              ? `1 ${t("account.rider")}`
+                              : `${booking.rider_count} ${t("account.riders")}`}
                           </p>
                         </div>
 
@@ -291,7 +295,7 @@ export function AccountDashboard({
             </p>
             <Link href="/booking">
               <Button variant="secondary" size="sm" arrow>
-                Book a Ride
+                {t("account.bookARide")}
               </Button>
             </Link>
           </Card>
@@ -323,7 +327,7 @@ export function AccountDashboard({
                             {slot?.label || session.time_slot_id}
                           </span>
                           <p className="text-xs text-ink-muted">
-                            {rideDate.toLocaleDateString("en-US", {
+                            {rideDate.toLocaleDateString(dateLocale, {
                               month: "short",
                               day: "numeric",
                             })}{" "}
@@ -332,9 +336,7 @@ export function AccountDashboard({
                           </p>
                         </div>
                         <Badge variant="default">
-                          {booking.status === "completed"
-                            ? "Completed"
-                            : booking.status}
+                          {t("account.status" + booking.status.replace(/_([a-z])/g, (_: string, c: string) => c.toUpperCase()).replace(/^[a-z]/, (c: string) => c.toUpperCase()))}
                         </Badge>
                       </div>
                     </Card>
@@ -486,7 +488,7 @@ export function AccountDashboard({
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-ink-muted">{t("account.fullName")}</span>
-                <span className="font-medium">{user.fullName || "Not set"}</span>
+                <span className="font-medium">{user.fullName || t("account.notSet")}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-ink-muted">Email</span>
@@ -494,11 +496,11 @@ export function AccountDashboard({
               </div>
               <div className="flex justify-between">
                 <span className="text-ink-muted">{t("account.phone")}</span>
-                <span className="font-medium">{user.phone || "Not set"}</span>
+                <span className="font-medium">{user.phone || t("account.notSet")}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-ink-muted">{t("account.lineId")}</span>
-                <span className="font-medium">{user.lineId || "Not set"}</span>
+                <span className="font-medium">{user.lineId || t("account.notSet")}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-ink-muted">Language</span>
@@ -507,7 +509,7 @@ export function AccountDashboard({
               <div className="flex justify-between">
                 <span className="text-ink-muted">{t("account.createdAt").split("{date}")[0]}</span>
                 <span className="font-medium">
-                  {new Date(user.createdAt).toLocaleDateString("en-US", {
+                  {new Date(user.createdAt).toLocaleDateString(dateLocale, {
                     month: "long",
                     year: "numeric",
                   })}
