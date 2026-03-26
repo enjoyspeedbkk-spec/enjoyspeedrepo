@@ -93,7 +93,7 @@ export function LineFollowersView({
           LINE Followers
         </h1>
         <p className="text-sm text-ink-muted mt-1">
-          People who have followed your LINE Official Account (@691gsvky)
+          People who have followed your LINE Official Account (@enjoyspeed)
         </p>
       </div>
 

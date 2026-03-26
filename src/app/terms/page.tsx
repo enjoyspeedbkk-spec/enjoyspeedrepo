@@ -148,7 +148,7 @@ export default function TermsPage() {
               11. Contact
             </h2>
             <p>
-              For questions about these terms, reach us via LINE (@691gsvky)
+              For questions about these terms, reach us via LINE (@enjoyspeed)
               or email at enjoyspeed.bkk@gmail.com.
             </p>
           </section>

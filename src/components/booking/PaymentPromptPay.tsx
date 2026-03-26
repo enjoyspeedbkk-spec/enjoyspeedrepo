@@ -398,7 +398,7 @@ export function PaymentPromptPay({
             <div className="flex-1">
               <p className="text-sm font-semibold text-ink">{t('payment.nextSteps')}</p>
               <p className="text-xs text-ink-muted mt-0.5">
-                Follow @691gsvky for booking confirmations, ride-day reminders, weather alerts, and instant support.
+                Follow @enjoyspeed for booking confirmations, ride-day reminders, weather alerts, and instant support.
               </p>
               <a
                 href={`https://line.me/R/ti/p/${LINE_OA}`}
@@ -407,7 +407,7 @@ export function PaymentPromptPay({
                 className="inline-flex items-center gap-1.5 mt-2 px-4 py-2 rounded-lg bg-[#06C755] text-white text-xs font-semibold hover:bg-[#05b34e] transition-colors"
               >
                 <MessageCircle className="h-3.5 w-3.5" />
-                Add @691gsvky on LINE
+                Add @enjoyspeed on LINE
               </a>
             </div>
           </div>

@@ -136,7 +136,7 @@ export async function sendEmailOtp(
       console.warn(`📧 OTP for ${cleanEmail}: ${code} (email delivery FAILED — check Brevo dashboard)`);
       return {
         success: false,
-        error: "Email delivery failed. Please check your email address or try again. If this persists, contact us on LINE @691gsvky.",
+        error: "Email delivery failed. Please check your email address or try again. If this persists, contact us on LINE @enjoyspeed.",
       };
     }
 

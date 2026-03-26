@@ -17,7 +17,7 @@ const getContactMethods = (t: (key: string) => string) => [
     icon: MessageCircle,
     title: t('contact.lineOfficial'),
     value: t('contact.lineHandle'),
-    href: "https://line.me/ti/p/@691gsvky",
+    href: "https://line.me/ti/p/@enjoyspeed",
     desc: t('contact.lineDesc'),
     external: true,
   },

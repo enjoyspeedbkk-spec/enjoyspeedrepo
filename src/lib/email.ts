@@ -97,7 +97,7 @@ const emailWrapper = (content: string) => `
     </div>
     <div class="footer">
       <p>En-Joy Speed · Skylane (Happy and Healthy Bike Lane), Suvarnabhumi</p>
-      <p>LINE: @691gsvky · enjoyspeed.bkk@gmail.com</p>
+      <p>LINE: @enjoyspeed · enjoyspeed.bkk@gmail.com</p>
     </div>
   </div>
 </body>
@@ -161,7 +161,7 @@ export function bookingConfirmationEmail(
     </div>
 
     <div class="divider"></div>
-    <p class="muted">${isTh ? "มีคำถาม? ตอบกลับอีเมลนี้หรือส่งข้อความหาเราบน LINE (@691gsvky)" : "Questions? Reply to this email or message us on LINE (@691gsvky)."}</p>
+    <p class="muted">${isTh ? "มีคำถาม? ตอบกลับอีเมลนี้หรือส่งข้อความหาเราบน LINE (@enjoyspeed)" : "Questions? Reply to this email or message us on LINE (@enjoyspeed)."}</p>
   `;
 
   return {
@@ -197,7 +197,7 @@ export function paymentPendingEmail(
     </div>
 
     <div class="divider"></div>
-    <p class="muted">${isTh ? "มีปัญหา? ส่งข้อความหาเราบน LINE (@691gsvky) หรือตอบกลับอีเมลนี้" : "Having trouble? Message us on LINE (@691gsvky) or reply to this email."}</p>
+    <p class="muted">${isTh ? "มีปัญหา? ส่งข้อความหาเราบน LINE (@enjoyspeed) หรือตอบกลับอีเมลนี้" : "Having trouble? Message us on LINE (@enjoyspeed) or reply to this email."}</p>
   `;
 
   return {
@@ -249,7 +249,7 @@ export function preRideReminderEmail(
     </div>
 
     <div class="divider"></div>
-    <p class="muted">${isTh ? "สภาพอากาศไม่แน่นอน? เราจะแจ้งคุณหากมีเปลี่ยนแปลง ตรวจสอบ LINE (@691gsvky) เพื่อรับการอัปเดตแบบเรียลไทม์" : "Weather looking uncertain? We'll notify you if there are any changes. Check LINE (@691gsvky) for real-time updates."}</p>
+    <p class="muted">${isTh ? "สภาพอากาศไม่แน่นอน? เราจะแจ้งคุณหากมีเปลี่ยนแปลง ตรวจสอบ LINE (@enjoyspeed) เพื่อรับการอัปเดตแบบเรียลไทม์" : "Weather looking uncertain? We'll notify you if there are any changes. Check LINE (@enjoyspeed) for real-time updates."}</p>
   `;
 
   return {
@@ -429,7 +429,7 @@ export function paymentRejectionEmail(booking: {
     <div class="divider"></div>
 
     <h2>Need Help?</h2>
-    <p>Reply to this email or message us on LINE (@691gsvky). We're here to help!</p>
+    <p>Reply to this email or message us on LINE (@enjoyspeed). We're here to help!</p>
 
     <div class="divider"></div>
     <p class="muted">Your booking expires if payment isn't verified within 30 minutes. Please re-submit as soon as possible.</p>

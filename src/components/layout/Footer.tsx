@@ -21,7 +21,7 @@ const getFooterLinks = (t: any): Record<string, FooterLink[]> => ({
   ],
   support: [
     { label: t('footer.contact'), href: "/contact", i18nKey: 'footer.contact' },
-    { label: t('footer.lineOfficialAccount'), href: "https://line.me/ti/p/@691gsvky", external: true, i18nKey: 'footer.lineOfficialAccount' },
+    { label: t('footer.lineOfficialAccount'), href: "https://line.me/ti/p/@enjoyspeed", external: true, i18nKey: 'footer.lineOfficialAccount' },
     { label: t('footer.cancellationPolicy'), href: "/about#cancellation", i18nKey: 'footer.cancellationPolicy' },
     { label: t('footer.weatherPolicy'), href: "/about#weather", i18nKey: 'footer.weatherPolicy' },
   ],
