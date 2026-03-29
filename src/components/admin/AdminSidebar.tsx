@@ -22,6 +22,7 @@ import {
   MessageSquare,
   ImageIcon,
   Users,
+  Star,
 } from "lucide-react";
 
 interface NavItem {
@@ -69,6 +70,11 @@ const navItems: NavItem[] = [
     label: "Messaging",
     href: "/admin/messaging",
     icon: MessageSquare,
+  },
+  {
+    label: "Feedback",
+    href: "/admin/feedback",
+    icon: Star,
   },
   {
     label: "Site Images",
