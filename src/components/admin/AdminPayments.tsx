@@ -14,6 +14,11 @@ import {
   Eye,
   Filter,
   Loader2,
+  AlertTriangle,
+  ShieldCheck,
+  ScanLine,
+  UserCheck,
+  ImageOff,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -100,13 +105,15 @@ export function AdminPayments({
     }
   };
 
-  const handleVerifyConfirm = (paymentId: string, bookingId: string, contactName: string, amount: number) => {
+  const handleVerifyConfirm = (paymentId: string, bookingId: string, contactName: string, amount: number, hasSlip: boolean) => {
     setConfirmDialog({
       open: true,
-      title: "Verify this payment?",
-      description: `Confirm ${amount.toLocaleString()} THB from ${contactName}. This will mark the booking as confirmed.`,
-      variant: "default",
-      confirmLabel: "Verify Payment",
+      title: hasSlip ? "Verify this payment?" : "⚠️ No payment slip uploaded",
+      description: hasSlip
+        ? `Confirm ${amount.toLocaleString()} THB from ${contactName}. This will mark the booking as confirmed.`
+        : `${contactName} has NOT uploaded a payment slip. Verifying without a slip means you have no proof of payment. Are you sure?`,
+      variant: hasSlip ? "default" : "warning",
+      confirmLabel: hasSlip ? "Verify Payment" : "Verify Without Slip",
       onConfirm: async () => {
         await handleVerify(paymentId, bookingId);
       },
@@ -234,6 +241,24 @@ export function AdminPayments({
                         <Badge variant="warning">TEST</Badge>
                       )}
                       <Badge variant={badge.variant}>{badge.label}</Badge>
+                      {status === "pending" && !payment.slip_url && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-warning">
+                          <ImageOff className="h-3 w-3" />
+                          No slip
+                        </span>
+                      )}
+                      {payment.slip_qr_verified && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-success">
+                          <ScanLine className="h-3 w-3" />
+                          QR ✓
+                        </span>
+                      )}
+                      {payment.verification_method === "admin_no_slip" && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-warning">
+                          <AlertTriangle className="h-3 w-3" />
+                          No slip
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-ink-muted mt-0.5">
                       {session
@@ -261,7 +286,7 @@ export function AdminPayments({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleVerifyConfirm(payment.id, booking.id, booking?.contact_name || "Unknown", payment.amount);
+                            handleVerifyConfirm(payment.id, booking.id, booking?.contact_name || "Unknown", payment.amount, !!payment.slip_url);
                           }}
                           disabled={verifying === payment.id}
                           className="px-3 py-1.5 rounded-lg bg-success text-white text-xs font-semibold hover:bg-success/90 transition-colors disabled:opacity-50"
@@ -328,18 +353,70 @@ export function AdminPayments({
                       </div>
                     </div>
 
-                    {/* Payment slip */}
-                    {payment.slip_url && (
-                      <a
-                        href={payment.slip_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-sky/10 text-sky text-xs font-medium hover:bg-sky/20 transition-colors"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                        View Payment Slip
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
+                    {/* Payment slip + verification info */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {payment.slip_url ? (
+                        <a
+                          href={payment.slip_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-sky/10 text-sky text-xs font-medium hover:bg-sky/20 transition-colors"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          View Payment Slip
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-warning/10 text-warning text-xs font-medium">
+                          <ImageOff className="h-3.5 w-3.5" />
+                          No slip uploaded
+                        </span>
+                      )}
+                      {/* QR verification badge */}
+                      {payment.slip_qr_verified && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-success/10 text-success text-xs font-medium">
+                          <ScanLine className="h-3.5 w-3.5" />
+                          QR verified
+                        </span>
+                      )}
+                      {payment.slip_url && !payment.slip_qr_verified && status !== "pending" && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-sand/30 text-ink-muted text-xs">
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          QR not verified
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Verification method */}
+                    {payment.verification_method && (
+                      <div className="flex items-center gap-1.5 text-xs text-ink-muted">
+                        {payment.verification_method === "easyslip_auto" ? (
+                          <>
+                            <ShieldCheck className="h-3.5 w-3.5 text-success" />
+                            <span>Auto-verified by EasySlip</span>
+                            {payment.easyslip_txn_id && (
+                              <span className="font-mono text-[10px] text-ink-muted/60 ml-1">
+                                TXN: {payment.easyslip_txn_id}
+                              </span>
+                            )}
+                          </>
+                        ) : payment.verification_method === "admin_manual" ? (
+                          <>
+                            <UserCheck className="h-3.5 w-3.5 text-sky" />
+                            <span>Manually verified by admin (slip uploaded)</span>
+                          </>
+                        ) : payment.verification_method === "admin_no_slip" ? (
+                          <>
+                            <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+                            <span className="text-warning font-medium">Verified by admin WITHOUT slip</span>
+                          </>
+                        ) : (
+                          <>
+                            <UserCheck className="h-3.5 w-3.5" />
+                            <span>Verified by admin</span>
+                          </>
+                        )}
+                      </div>
                     )}
 
                     {/* Verify/Reject buttons (in expanded view too) */}
@@ -353,7 +430,7 @@ export function AdminPayments({
                           {rejecting === payment.id ? <><Loader2 className="h-3.5 w-3.5 animate-spin inline mr-1" /> Rejecting…</> : "✗ Reject Payment"}
                         </button>
                         <button
-                          onClick={() => handleVerifyConfirm(payment.id, booking.id, booking?.contact_name || "Unknown", payment.amount)}
+                          onClick={() => handleVerifyConfirm(payment.id, booking.id, booking?.contact_name || "Unknown", payment.amount, !!payment.slip_url)}
                           disabled={verifying === payment.id}
                           className="px-4 py-2 rounded-lg bg-success text-white text-sm font-semibold hover:bg-success/90 transition-colors disabled:opacity-50"
                         >

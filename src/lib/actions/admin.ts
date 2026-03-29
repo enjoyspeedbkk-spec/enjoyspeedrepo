@@ -143,9 +143,22 @@ export async function getAllBookings(filters?: {
 // ========================================
 export async function verifyPayment(
   paymentId: string,
-  bookingId: string
+  bookingId: string,
+  method?: "easyslip_auto" | "admin_manual" | "admin_no_slip"
 ): Promise<{ success: boolean; error?: string }> {
   const { userId, admin } = await requireAdmin();
+
+  // Determine verification method if not provided
+  let verificationMethod = method;
+  if (!verificationMethod) {
+    // Check if a slip was uploaded for this payment
+    const { data: paymentRecord } = await admin
+      .from("payments")
+      .select("slip_url")
+      .eq("id", paymentId)
+      .single();
+    verificationMethod = paymentRecord?.slip_url ? "admin_manual" : "admin_no_slip";
+  }
 
   const { error: paymentError } = await admin
     .from("payments")
@@ -153,6 +166,7 @@ export async function verifyPayment(
       status: "verified",
       verified_by: userId,
       verified_at: new Date().toISOString(),
+      verification_method: verificationMethod,
     })
     .eq("id", paymentId);
 

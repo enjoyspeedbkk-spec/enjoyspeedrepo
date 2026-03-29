@@ -174,10 +174,23 @@ export async function uploadPaymentSlip(
     const expectedAmount = payment?.amount || 0;
     const slipCheck = await verifySlipWithEasySlip(base64Data, expectedAmount);
 
+    // Store EasySlip results on the payment record (regardless of outcome)
+    if (payment?.id && slipCheck.transactionId) {
+      await admin
+        .from("payments")
+        .update({
+          easyslip_txn_id: slipCheck.transactionId,
+          easyslip_amount: slipCheck.amount,
+          slip_qr_verified: slipCheck.verified,
+        })
+        .eq("id", payment.id)
+        .then(() => {}, () => {}); // Non-blocking — don't fail upload
+    }
+
     if (slipCheck.verified && payment?.id) {
-      // Slip verified! Auto-confirm the payment + booking (same flow as admin verify)
+      // Slip verified! Auto-confirm the payment + booking
       console.log(`✅ Auto-verifying payment for booking ${bookingId}`);
-      const verifyResult = await verifyPayment(payment.id, bookingId);
+      const verifyResult = await verifyPayment(payment.id, bookingId, "easyslip_auto");
 
       if (verifyResult.success) {
         return { success: true, slipUrl, verification: "verified" };
@@ -189,7 +202,7 @@ export async function uploadPaymentSlip(
     return {
       success: true,
       slipUrl,
-      verification: slipCheck.error === "no_api_key" ? "pending" : "pending",
+      verification: "pending",
     };
   } catch (err) {
     console.error("Slip upload error:", err);
