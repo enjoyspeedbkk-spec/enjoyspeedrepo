@@ -198,13 +198,7 @@ export async function createBooking(
       }
     }
 
-    // 7. Check if this is a test booking (admin email)
-    const adminEmail = process.env.ADMIN_EMAIL;
-    const isTestBooking = adminEmail && input.contactEmail?.toLowerCase() === adminEmail.toLowerCase();
-
     // 8. Create the booking
-    // NOTE: The 'is_test' column must be added to the bookings table for this to persist:
-    // ALTER TABLE bookings ADD COLUMN is_test BOOLEAN DEFAULT false;
     const { data: booking, error: bookingError } = await admin
       .from("bookings")
       .insert({
@@ -223,7 +217,6 @@ export async function createBooking(
         contact_line_id: input.contactLineId || null,
         special_requests: input.specialRequests || null,
         locale: input.locale || "en",
-        is_test: isTestBooking ? true : false,
       })
       .select("id")
       .single();

@@ -555,6 +555,8 @@
     "evening": "Evening",
     "morningOverlapNote": "Note: A1 and A2 overlap — you can book one morning session per day",
     "slotPrefix": "Slot",
+    "slotBooked": "Already booked",
+    "slotFull": "Booked",
     "chooseYourRideType": "Choose your ride type",
     "chooseYourRideTypeDesc": "Each format comes with different group sizes, support levels, and pricing.",
     "mostPopular": "Most Popular",

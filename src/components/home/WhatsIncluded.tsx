@@ -67,10 +67,10 @@ export function WhatsIncluded() {
               </div>
               <div>
                 <h4 className="text-base font-bold text-ink mb-1">
-                  {((t(item.key) as unknown) as { title: string }).title}
+                  {t(`${item.key}.title`)}
                 </h4>
                 <p className="text-sm text-ink-muted leading-relaxed">
-                  {((t(item.key) as unknown) as { description: string }).description}
+                  {t(`${item.key}.description`)}
                 </p>
               </div>
             </motion.div>

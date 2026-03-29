@@ -551,6 +551,8 @@
     "evening": "เย็น",
     "morningOverlapNote": "หมายเหตุ: คิว A1 และ A2 ซ้อนทับกัน — จองได้เพียงหนึ่งคิวเช้าต่อวัน",
     "slotPrefix": "คิว",
+    "slotBooked": "จองแล้ว",
+    "slotFull": "เต็ม",
     "chooseYourRideType": "เลือกประเภทการปั่น",
     "chooseYourRideTypeDesc": "แต่ละรูปแบบมีขนาดกลุ่ม ระดับการสนับสนุน และราคาที่แตกต่างกัน",
     "mostPopular": "ยอดนิยม",

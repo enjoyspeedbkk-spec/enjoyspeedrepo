@@ -49,7 +49,7 @@ import type {
   CyclingExperience,
   ClothingSize,
 } from "@/types";
-import { createBooking } from "@/lib/actions/booking";
+import { createBooking, getAvailableSlots } from "@/lib/actions/booking";
 import { PaymentPromptPay } from "@/components/booking/PaymentPromptPay";
 import { EmailVerification } from "@/components/booking/EmailVerification";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -158,6 +158,10 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
   // Test mode state — set when admin email is verified
   const [isTestMode, setIsTestMode] = useState(false);
 
+  // Slot availability for selected date
+  const [bookedSlotIds, setBookedSlotIds] = useState<Set<string>>(new Set());
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
   // LINE LIFF integration — auto-populate if opened from LINE
   const liff = useLiff();
   const [liffLineId, setLiffLineId] = useState<string | null>(null);
@@ -232,6 +236,38 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
     const stepLabel = stepKey ? t(stepKey) : "";
     document.title = `${stepLabel} — Book a Ride | En-Joy Speed`;
   }, [currentStep, t]);
+
+  // Fetch booked slots when selected date changes
+  useEffect(() => {
+    if (!selectedDate) return;
+    let cancelled = false;
+    setLoadingSlots(true);
+    getAvailableSlots(selectedDate, selectedDate).then((result) => {
+      if (cancelled) return;
+      // Slots that already have a booking → blocked
+      const booked = new Set<string>();
+      for (const s of result.sessions) {
+        if (s.hasBooking) booked.add(s.time_slot_id);
+      }
+      // Also block overlapping periods: if any morning slot (A1/A2) is booked, block the other
+      // If any evening slot (B/C/D) is booked, block all evening slots
+      const morningIds = ["A1", "A2"];
+      const eveningIds = ["B", "C", "D"];
+      const hasMorningBooking = morningIds.some((id) => booked.has(id));
+      const hasEveningBooking = eveningIds.some((id) => booked.has(id));
+      if (hasMorningBooking) morningIds.forEach((id) => booked.add(id));
+      if (hasEveningBooking) eveningIds.forEach((id) => booked.add(id));
+      setBookedSlotIds(booked);
+      setLoadingSlots(false);
+      // If the currently selected slot is now blocked, deselect it
+      if (selectedSlot && booked.has(selectedSlot)) {
+        setSelectedSlot(null);
+      }
+    }).catch(() => {
+      if (!cancelled) setLoadingSlots(false);
+    });
+    return () => { cancelled = true; };
+  }, [selectedDate]);
 
   // Generate next 30 days
   const availableDates = useMemo(() => {
@@ -642,36 +678,44 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                       {TIME_SLOTS.filter((s) => s.period === "morning").map(
                         (slot) => {
                           const isSelected = selectedSlot === slot.id;
+                          const isBooked = bookedSlotIds.has(slot.id);
                           return (
                             <button
                               key={slot.id}
-                              onClick={() => setSelectedSlot(slot.id)}
+                              onClick={() => !isBooked && setSelectedSlot(slot.id)}
+                              disabled={isBooked}
                               className={`flex items-center justify-between p-4 rounded-xl border-2 text-left transition-all duration-200 ${
-                                isSelected
+                                isBooked
+                                  ? "border-sand/30 bg-sand/10 opacity-50 cursor-not-allowed"
+                                  : isSelected
                                   ? "border-ink bg-ink text-cream shadow-md"
                                   : "border-sand/60 bg-surface hover:border-ink/20"
                               }`}
                             >
                               <div>
-                                <p className={`font-semibold ${isSelected ? "text-cream" : "text-ink"}`}>{slot.labelKey ? t(slot.labelKey) : slot.label}</p>
+                                <p className={`font-semibold ${isBooked ? "text-ink-muted" : isSelected ? "text-cream" : "text-ink"}`}>{slot.labelKey ? t(slot.labelKey) : slot.label}</p>
                                 <p
                                   className={`text-sm ${
-                                    isSelected
+                                    isBooked
+                                      ? "text-ink-muted/60"
+                                      : isSelected
                                       ? "text-cream/90"
                                       : "text-ink-muted"
                                   }`}
                                 >
-                                  {slot.startTime} — {slot.endTime}
+                                  {isBooked ? t("booking.slotBooked") : `${slot.startTime} — ${slot.endTime}`}
                                 </p>
                               </div>
                               <span
                                 className={`text-xs font-medium px-2 py-1 rounded-full ${
-                                  isSelected
+                                  isBooked
+                                    ? "bg-sand/20 text-ink-muted/50"
+                                    : isSelected
                                     ? "bg-cream/25 text-cream"
                                     : "bg-sky/10 text-sky-dark"
                                 }`}
                               >
-                                {t("booking.slotPrefix")} {slot.id}
+                                {isBooked ? t("booking.slotFull") : `${t("booking.slotPrefix")} ${slot.id}`}
                               </span>
                             </button>
                           );
@@ -696,36 +740,44 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                       {TIME_SLOTS.filter((s) => s.period === "evening").map(
                         (slot) => {
                           const isSelected = selectedSlot === slot.id;
+                          const isBooked = bookedSlotIds.has(slot.id);
                           return (
                             <button
                               key={slot.id}
-                              onClick={() => setSelectedSlot(slot.id)}
+                              onClick={() => !isBooked && setSelectedSlot(slot.id)}
+                              disabled={isBooked}
                               className={`flex flex-col p-4 rounded-xl border-2 text-left transition-all duration-200 ${
-                                isSelected
+                                isBooked
+                                  ? "border-sand/30 bg-sand/10 opacity-50 cursor-not-allowed"
+                                  : isSelected
                                   ? "border-ink bg-ink text-cream shadow-md"
                                   : "border-sand/60 bg-surface hover:border-ink/20"
                               }`}
                             >
                               <span
                                 className={`text-xs font-medium px-2 py-0.5 rounded-full self-start mb-2 ${
-                                  isSelected
+                                  isBooked
+                                    ? "bg-sand/20 text-ink-muted/50"
+                                    : isSelected
                                     ? "bg-cream/25 text-cream"
                                     : slot.id === "C"
                                     ? "bg-accent/10 text-accent-dark"
                                     : "bg-accent/10 text-accent-dark"
                                 }`}
                               >
-                                {slot.id === "C" ? t("booking.staffPick") : slot.id === "D" ? t("booking.scenic") : `${t("booking.slotPrefix")} ${slot.id}`}
+                                {isBooked ? t("booking.slotFull") : slot.id === "C" ? t("booking.staffPick") : slot.id === "D" ? t("booking.scenic") : `${t("booking.slotPrefix")} ${slot.id}`}
                               </span>
-                              <p className={`font-semibold ${isSelected ? "text-cream" : "text-ink"}`}>{slot.labelKey ? t(slot.labelKey) : slot.label}</p>
+                              <p className={`font-semibold ${isBooked ? "text-ink-muted" : isSelected ? "text-cream" : "text-ink"}`}>{slot.labelKey ? t(slot.labelKey) : slot.label}</p>
                               <p
                                 className={`text-sm ${
-                                  isSelected
+                                  isBooked
+                                    ? "text-ink-muted/60"
+                                    : isSelected
                                     ? "text-cream/90"
                                     : "text-ink-muted"
                                 }`}
                               >
-                                {slot.startTime} — {slot.endTime}
+                                {isBooked ? t("booking.slotBooked") : `${slot.startTime} — ${slot.endTime}`}
                               </p>
                             </button>
                           );
@@ -1215,21 +1267,28 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                       </p>
                       <div className="flex flex-wrap gap-2 overflow-x-auto pb-2 -mb-2">
                         {riders.slice(0, riderCount).map((r, i) => (
-                          <span
+                          <button
                             key={i}
-                            className="inline-flex items-center gap-1 text-xs bg-surface px-2.5 py-1 rounded-full border border-sand/60 flex-shrink-0"
+                            onClick={() => setActiveRiderIndex(i)}
+                            className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border flex-shrink-0 transition-all ${
+                              activeRiderIndex === i
+                                ? "bg-ink text-cream border-ink shadow-sm"
+                                : "bg-surface border-sand/60 hover:border-ink/30 cursor-pointer"
+                            }`}
                           >
-                            <span className="font-medium">
+                            <span className={`font-medium ${activeRiderIndex === i ? "text-cream" : ""}`}>
                               {r.nickname || r.name.split(" ")[0] || `Rider ${i + 1}`}
                             </span>
-                            <span className={`${r.bikePreference ? "text-ink-muted" : "text-ink-muted/40 italic"}`}>
-                              {r.bikePreference
-                                ? r.bikePreference === "own"
-                                  ? t("booking.ownBikeShort")
-                                  : r.bikePreference
-                                : t("booking.notSet")}
+                            <span className={activeRiderIndex === i ? "text-cream/70" : r.bikePreference ? "text-ink-muted" : "text-ink-muted/40 italic"}>
+                              {r.clothingSize
+                                ? r.clothingSize
+                                : r.bikePreference
+                                  ? r.bikePreference === "own"
+                                    ? t("booking.ownBikeShort")
+                                    : r.bikePreference
+                                  : t("booking.notSet")}
                             </span>
-                          </span>
+                          </button>
                         ))}
                       </div>
                     </div>
