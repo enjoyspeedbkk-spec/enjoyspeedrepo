@@ -94,7 +94,7 @@
     },
     "bikeRental": "Bike rental available separately",
     "hybrid": "Hybrid 420 THB",
-    "road": "Road 700 THB",
+    "road": "Road 720 THB",
     "bringYourOwn": "Or bring your own at no extra cost",
     "photographyIncluded": "Photography included",
     "bookNow": "Book {name}",
@@ -198,7 +198,7 @@
     "everythingYouNeed": "Everything you need, nothing you don't",
     "subtitle": "Every ride includes Leaders, safety support, photography, starter kit, and post-ride recovery.",
     "starterKit": {
-      "title": "Starter Kit",
+      "title": "En-Joy Speed Pro-pack",
       "description": "Padded cycling liners (yours to keep), energy gel, and a reusable eco mesh bag — ready at check-in."
     },
     "photography": {
@@ -206,7 +206,7 @@
       "description": "Action shots and group photos from your ride, delivered digitally after the session."
     },
     "alsoIncluded": "Also included: Athlete Leaders, Hero support riders, safety briefing, post-ride recovery (cold towels & electrolytes), and weather monitoring.",
-    "rentalNote": "Bike rental available separately — Hybrid 420 THB · Road 700 THB · Or bring your own.",
+    "rentalNote": "Bike rental available separately — Hybrid 420 THB · Road 720 THB · Or bring your own.",
     "seeFullDetails": "See full ride details"
   },
   "faq": {
@@ -216,7 +216,7 @@
     "questions": [
       {
         "q": "Do I need to bring my own bike?",
-        "a": "You can! But we also offer bike rentals. Hybrid bikes are 420 THB and road bikes are 700 THB per session. Just select your preference when booking."
+        "a": "You can! But we also offer bike rentals. Hybrid bikes are 420 THB and road bikes are 720 THB per session. Just select your preference when booking."
       },
       {
         "q": "What fitness level do I need?",
@@ -244,7 +244,7 @@
       },
       {
         "q": "What should I bring?",
-        "a": "A helmet (required), comfortable cycling clothing, sunscreen, and water. If you're renting a bike, that's all you need. We provide everything else."
+        "a": "Just bring your sport shoes, comfortable cycling clothing, sunscreen, and a bidon (cycling water bottle). If you are renting a bike with us, a premium helmet is already included. We provide everything else you need for a frictionless ride."
       }
     ]
   },
@@ -324,7 +324,7 @@
     ],
     "afterTheRide": "After the ride",
     "afterItems": [
-      "Cold towels, electrolyte drinks, and recovery snack",
+      "Cold towels and electrolyte drinks",
       "Photos delivered digitally",
       "Weather updates via LINE if relevant for upcoming sessions"
     ],
@@ -344,12 +344,12 @@
       "description": "Action shots and group photos from your ride, delivered digitally after the session."
     },
     "starterKit": {
-      "title": "Starter Kit",
+      "title": "En-Joy Speed Pro-pack",
       "description": "Padded gel cycling liners (yours to keep), energy gel, and a reusable eco mesh bag."
     },
     "postRideRecovery": {
       "title": "Post-Ride Recovery",
-      "description": "Cold towels, electrolyte drinks, and a healthy recovery snack after every ride."
+      "description": "Cold towels and electrolyte drinks after every ride."
     },
     "safetyBriefing": {
       "title": "Safety Briefing",
@@ -365,7 +365,7 @@
     },
     "bikeRental": "Bike rental available separately",
     "hybrid": "Hybrid 420 THB",
-    "road": "Road 700 THB",
+    "road": "Road 720 THB",
     "bringYourOwn": "Or bring your own at no extra cost",
     "yourLeaders": "Your Leaders",
     "meetThePeople": "Meet the people who make every ride unforgettable",
@@ -487,7 +487,7 @@
     "regularCyclist": "Regular cyclist",
     "noRentalNeeded": "No rental needed",
     "hybrid": "Hybrid (420 THB)",
-    "road": "Road (700 THB)",
+    "road": "Road (720 THB)",
     "bookingCreated": "Booking created!",
     "completionMessage": "Hi {name}, complete payment to confirm your ride.",
     "bookingNumber": "Booking #{id}",
@@ -505,7 +505,7 @@
     "speedsUpConfirmation": "Speeds up confirmation — not required.",
     "bikeRentalPayment": "Bike rental: {amount} THB",
     "paidSeparatelyAtTrack": "Paid separately at the track to HHBL on ride day. No need to pay now.",
-    "yourStarterKitIsIncluded": "Your Starter Kit is included",
+    "yourStarterKitIsIncluded": "Your En-Joy Speed Pro-pack is included",
     "yoursToKeepAfterRide": "Yours to keep after the ride.",
     "whatHappensNext": "What happens next",
     "verifyPayment": "We verify your payment (usually within 15 min)",
@@ -566,7 +566,7 @@
     "leaderLabel": "Leader",
     "leaderPluralSuffix": "s",
     "heroSweepLabel": "Hero (sweep)",
-    "starterKitIncludedBadge": "Starter Kit included with every ride",
+    "starterKitIncludedBadge": "En-Joy Speed Pro-pack included with every ride",
     "starterKitFree": "Yours to keep — no extra charge.",
     "starterKitItems": [
       "Padded cycling liner shorts (gel-padded, hygiene-first)",
@@ -598,7 +598,7 @@
     "bikeSetupNote": "Height and gender help the rental shop prepare the right bike size for you.",
     "cyclingExperienceLabel": "Cycling Experience",
     "linerShortsSize": "Cycling Liner Shorts Size",
-    "linerShortsValue": "(from your Starter Kit — 640 THB value, included)",
+    "linerShortsValue": "(from your En-Joy Speed Pro-pack — 640 THB value, included)",
     "sizeGuide": "Size Guide",
     "linerShortsDesc": "Padded gel cycling liners — worn under your shorts for comfort. Size up if between sizes. Yours to keep.",
     "viewFullSizeChart": "View full size chart →",
@@ -625,7 +625,7 @@
     "timeSlotReviewLabel": "Time Slot",
     "rideTypeReviewLabel": "Ride Type",
     "ridersAndBikes": "Riders & Bikes",
-    "starterKitIncludedEach": "Starter Kit included for each rider",
+    "starterKitIncludedEach": "En-Joy Speed Pro-pack included for each rider",
     "rideBreakdown": "Ride ({n} × {price} THB)",
     "bikeRentalsAtTrack": "Bike rentals (paid at track)",
     "totalLabel": "Total",

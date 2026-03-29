@@ -143,14 +143,14 @@ async function handleEvent(event: LineEvent) {
         await replyMessage(event.replyToken, [
           {
             type: "text",
-            text: `🚴 Ready to ride?\n\nBook your guided cycling session here:\n👉 https://enjoyspeedbkk.com/booking\n\nChoose from:\n• Duo (2 riders) — ฿2,500/person\n• The Squad (3-5) — ฿2,100/person\n• The Peloton (6-8) — ฿2,000/person\n\nAll packages include a Starter Kit! 🎁`,
+            text: `🚴 Ready to ride?\n\nBook your guided cycling session here:\n👉 https://enjoyspeedbkk.com/booking\n\nChoose from:\n• Duo (2 riders) — ฿2,500/person\n• The Squad (3-5) — ฿2,100/person\n• The Peloton (6-8) — ฿2,000/person\n\nAll packages include a En-Joy Speed Pro-pack! 🎁`,
           },
         ]);
       } else if (text.includes("price") || text.includes("ราคา") || text.includes("cost")) {
         await replyMessage(event.replyToken, [
           {
             type: "text",
-            text: `💰 En-Joy Speed Pricing:\n\n🔹 Duo (2 riders): ฿2,500/person\n🔹 The Squad (3-5): ฿2,100/person\n🔹 The Peloton (6-8): ฿2,000/person\n\n🚲 Bike rental:\n• Hybrid: ฿420 (paid at track)\n• Road: ฿700 (paid at track)\n• Own bike: Free\n\n🎁 Every rider gets a Starter Kit (padded liner shorts, energy gel, eco mesh bag)\n\n👉 Book now: https://enjoyspeedbkk.com/booking`,
+            text: `💰 En-Joy Speed Pricing:\n\n🔹 Duo (2 riders): ฿2,500/person\n🔹 The Squad (3-5): ฿2,100/person\n🔹 The Peloton (6-8): ฿2,000/person\n\n🚲 Bike rental:\n• Hybrid: ฿420 (paid at track)\n• Road: ฿720 (paid at track)\n• Own bike: Free\n\n🎁 Every rider gets a En-Joy Speed Pro-pack (padded liner shorts, energy gel, eco mesh bag)\n\n👉 Book now: https://enjoyspeedbkk.com/booking`,
           },
         ]);
       } else if (text.includes("help") || text.includes("ช่วย")) {

@@ -61,7 +61,7 @@ export async function sendBookingConfirmation(
   await linePush(lineUserId, [
     {
       type: "text",
-      text: `${isTh ? "✅ การจองยืนยันแล้ว!" : "✅ Booking Confirmed!"}\n\n${isTh ? "สวัสดี" : "Hi"} ${booking.contactName}!\n\n📅 ${booking.date}\n🕐 ${booking.timeSlot}\n👥 ${booking.groupType} (${booking.riderCount} ${isTh ? "ผู้ปั่น" : "riders"})\n💰 ${booking.amount.toLocaleString()} THB\n\n${isTh ? "การจอง" : "Booking"} #${booking.bookingId.slice(0, 8).toUpperCase()}\n\n📋 ${isTh ? "สิ่งที่ต้องนำมา:" : "What to bring:"}\n• ${isTh ? "รองเท้าสปอร์ต (ปิดปลาย)" : "Sport shoes (closed-toe)"}\n• ${isTh ? "ถุงเท้า & เสื้อกีฬา" : "Athletic socks & top"}\n• ${isTh ? "ครีมกันแดด + แว่นกันแดด" : "Sunscreen + sunglasses"}\n• ${isTh ? "กระติกน้ำ" : "Water bottle"}\n\n🎁 ${isTh ? "เราจะเตรียมสตาร์ทเตอร์คิทให้พร้อม!" : "We'll have your Starter Kit ready!"}\n\n${isTh ? "ดูการจองของคุณ" : "See your booking"}: https://enjoyspeedbkk.com/bookings`,
+      text: `${isTh ? "✅ การจองยืนยันแล้ว!" : "✅ Booking Confirmed!"}\n\n${isTh ? "สวัสดี" : "Hi"} ${booking.contactName}!\n\n📅 ${booking.date}\n🕐 ${booking.timeSlot}\n👥 ${booking.groupType} (${booking.riderCount} ${isTh ? "ผู้ปั่น" : "riders"})\n💰 ${booking.amount.toLocaleString()} THB\n\n${isTh ? "การจอง" : "Booking"} #${booking.bookingId.slice(0, 8).toUpperCase()}\n\n📋 ${isTh ? "สิ่งที่ต้องนำมา:" : "What to bring:"}\n• ${isTh ? "รองเท้าสปอร์ต (ปิดปลาย)" : "Sport shoes (closed-toe)"}\n• ${isTh ? "ถุงเท้า & เสื้อกีฬา" : "Athletic socks & top"}\n• ${isTh ? "ครีมกันแดด + แว่นกันแดด" : "Sunscreen + sunglasses"}\n• ${isTh ? "กระติกน้ำ" : "Water bottle"}\n\n🎁 ${isTh ? "เราจะเตรียมสตาร์ทเตอร์คิทให้พร้อม!" : "We'll have your Pro-pack ready!"}\n\n${isTh ? "ดูการจองของคุณ" : "See your booking"}: https://enjoyspeedbkk.com/bookings`,
     },
   ]);
 }
@@ -84,7 +84,7 @@ export async function sendPreRideReminder(
   await linePush(lineUserId, [
     {
       type: "text",
-      text: `🚴 ${isTh ? "การปั่นพรุ่งนี้!" : "Ride Tomorrow!"}\n\n${isTh ? "สวัสดี" : "Hi"} ${booking.contactName}, ${isTh ? "การปั่นของคุณคือพรุ่งนี้!" : "your ride is tomorrow!"}\n\n📅 ${booking.date}\n🕐 ${booking.timeSlot}\n📍 ${booking.meetingPoint}\n\n✅ ${isTh ? "เช็คลิสต์ก่อนปั่น:" : "Ready-to-Ride Checklist:"}\n☐ ${isTh ? "รองเท้าสปอร์ต (ปิดปลาย)" : "Sport shoes (closed-toe)"}\n☐ ${isTh ? "ถุงเท้ากีฬา" : "Athletic socks"}\n☐ ${isTh ? "เสื้อกีฬาระบายอากาศ" : "Breathable athletic top"}\n☐ ${isTh ? "ครีมกันแดด + แว่นกันแดด" : "Sunscreen + sunglasses"}\n☐ ${isTh ? "กระติกน้ำ" : "Water bottle"}\n\n${isTh ? "เราจะเตรียมหมวก & สตาร์ทเตอร์คิทให้พร้อม" : "We'll have your helmet & Starter Kit ready."}\n\n${isTh ? "พบกันที่นั่น! 🌅" : "See you there! 🌅"}`,
+      text: `🚴 ${isTh ? "การปั่นพรุ่งนี้!" : "Ride Tomorrow!"}\n\n${isTh ? "สวัสดี" : "Hi"} ${booking.contactName}, ${isTh ? "การปั่นของคุณคือพรุ่งนี้!" : "your ride is tomorrow!"}\n\n📅 ${booking.date}\n🕐 ${booking.timeSlot}\n📍 ${booking.meetingPoint}\n\n✅ ${isTh ? "เช็คลิสต์ก่อนปั่น:" : "Ready-to-Ride Checklist:"}\n☐ ${isTh ? "รองเท้าสปอร์ต (ปิดปลาย)" : "Sport shoes (closed-toe)"}\n☐ ${isTh ? "ถุงเท้ากีฬา" : "Athletic socks"}\n☐ ${isTh ? "เสื้อกีฬาระบายอากาศ" : "Breathable athletic top"}\n☐ ${isTh ? "ครีมกันแดด + แว่นกันแดด" : "Sunscreen + sunglasses"}\n☐ ${isTh ? "กระติกน้ำ" : "Water bottle"}\n\n${isTh ? "เราจะเตรียมหมวก & สตาร์ทเตอร์คิทให้พร้อม" : "We'll have your helmet & Pro-pack ready."}\n\n${isTh ? "พบกันที่นั่น! 🌅" : "See you there! 🌅"}`,
     },
   ]);
 }

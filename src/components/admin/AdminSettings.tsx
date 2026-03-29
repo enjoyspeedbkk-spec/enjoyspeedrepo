@@ -58,7 +58,7 @@ const SECTIONS: SectionProps[] = [
   { id: "packages", label: "Ride Packages", icon: Package },
   { id: "slots", label: "Time Slots", icon: Clock },
   { id: "bikes", label: "Bike Rentals", icon: Bike },
-  { id: "kit", label: "Starter Kit", icon: Gift },
+  { id: "kit", label: "Pro-pack", icon: Gift },
   { id: "staff", label: "Staff Members", icon: UserCog },
   { id: "promos", label: "Promo Codes", icon: Tag },
   { id: "access", label: "Admin Access", icon: Shield },

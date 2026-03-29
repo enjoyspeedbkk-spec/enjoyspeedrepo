@@ -318,7 +318,7 @@ export function BookingDetailSheet({
               <Gift className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-ink">
-                  Starter Kit included
+                  En-Joy Speed Pro-pack included
                 </p>
                 <p className="text-xs text-ink-muted mt-0.5">
                   {STARTER_KIT.join(" · ")}

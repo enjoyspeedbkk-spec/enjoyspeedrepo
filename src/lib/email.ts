@@ -144,7 +144,7 @@ export function bookingConfirmationEmail(
     <div class="divider"></div>
 
     <div class="highlight">
-      <h2>🎁 ${isTh ? "สตาร์ทเตอร์คิทของคุณ" : "Your Starter Kit"}</h2>
+      <h2>🎁 ${isTh ? "Pro-packของคุณ" : "Your En-Joy Speed Pro-pack"}</h2>
       <p class="muted" style="margin-bottom: 0;">${isTh ? "ผู้ปั่นทุกคนจะได้รับ: กางเกงรองปั่นเจลเบาะ เจลพลังงาน และถุงตาข่ายรีไซเคิล เป็นของคุณเพื่อเก็บ!" : "Every rider receives: padded cycling liner shorts, energy gel, and a reusable eco mesh bag. Yours to keep!"}</p>
     </div>
 
@@ -242,7 +242,7 @@ export function preRideReminderEmail(
       ☐ ${isTh ? "ป้องกันแสงแดด (ครีมกันแดด + แว่น)" : "Sun protection (sunscreen + sunglasses)"}<br>
       ☐ ${isTh ? "กระติกน้ำ" : "Water bottle"}<br>
     </p>
-    <p class="muted">${isTh ? "เราจะเตรียมหมวก จักรยาน และสตาร์ทเตอร์คิทให้พร้อม" : "We'll have your helmet, bike, and Starter Kit ready when you arrive."}</p>
+    <p class="muted">${isTh ? "เราจะเตรียมหมวก จักรยาน และPro-packให้พร้อม" : "We'll have your helmet, bike, and Pro-pack ready when you arrive."}</p>
 
     <div style="text-align: center; margin-top: 24px;">
       <a href="https://enjoyspeedbkk.com/bookings" class="btn">${isTh ? "ดูรายละเอียดการปั่น" : "View Ride Details"}</a>
