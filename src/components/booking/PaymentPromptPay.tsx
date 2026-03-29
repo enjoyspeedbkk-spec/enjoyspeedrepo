@@ -32,7 +32,11 @@ interface PaymentPromptPayProps {
   rentalAmount: number;
   promptPayTarget: string; // Phone number or national ID registered with PromptPay
   contactName: string;
+  /** ISO timestamp of when the booking was created — used to calculate correct remaining time on reload */
+  createdAt?: string;
 }
+
+const PAYMENT_WINDOW_SECONDS = 30 * 60; // 30 minutes
 
 export function PaymentPromptPay({
   bookingId,
@@ -40,6 +44,7 @@ export function PaymentPromptPay({
   rentalAmount,
   promptPayTarget,
   contactName,
+  createdAt,
 }: PaymentPromptPayProps) {
   const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
@@ -47,11 +52,19 @@ export function PaymentPromptPay({
   const [slipUploaded, setSlipUploaded] = useState(false);
   const [slipUrl, setSlipUrl] = useState<string | null>(null);
 
-  // 30-minute countdown timer
-  const [secondsLeft, setSecondsLeft] = useState(30 * 60);
+  // 30-minute countdown timer — survives page reloads by calculating
+  // remaining time from the booking's creation timestamp
+  const [secondsLeft, setSecondsLeft] = useState(() => {
+    if (createdAt) {
+      const elapsed = Math.floor((Date.now() - new Date(createdAt).getTime()) / 1000);
+      return Math.max(0, PAYMENT_WINDOW_SECONDS - elapsed);
+    }
+    return PAYMENT_WINDOW_SECONDS;
+  });
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    if (secondsLeft <= 0) return; // already expired
     timerRef.current = setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
@@ -64,7 +77,7 @@ export function PaymentPromptPay({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, []);
+  }, [secondsLeft > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const timerMinutes = Math.floor(secondsLeft / 60);
   const timerSeconds = secondsLeft % 60;
@@ -161,47 +174,21 @@ export function PaymentPromptPay({
           <Badge variant="accent" className="mb-4">
             {t('payment.scanToPayQR')}
           </Badge>
-          <div className="bg-white rounded-2xl p-4 inline-block mx-auto mb-4 shadow-sm">
-            {qrUrl ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={qrUrl}
-                alt={t('payment.qrCodeLabel')}
-                width={280}
-                height={280}
-                className="mx-auto"
-              />
-            ) : qrError ? (
-              <div className="w-[280px] h-[280px] mx-auto flex flex-col items-center justify-center gap-3 px-6">
-                <AlertCircle className="h-10 w-10 text-error/60" />
-                <p className="text-sm font-medium text-ink text-center">
-                  QR code failed to load
-                </p>
-                <p className="text-xs text-ink-muted text-center">
-                  {t('booking.openYourBankingApp')}
-                </p>
-                <button
-                  onClick={() => {
-                    setQrError(false);
-                    setQrUrl("");
-                    getPromptPayQRDataUrl(payload, 400)
-                      .then(setQrUrl)
-                      .catch(() => setQrError(true));
-                  }}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-dark transition-colors"
-                >
-                  <RotateCcw className="h-3 w-3" />
-                  Try again
-                </button>
-              </div>
-            ) : (
-              <div className="w-[280px] h-[280px] mx-auto flex flex-col items-center justify-center gap-2">
-                <QrCode className="h-12 w-12 text-sand animate-pulse" />
-                <p className="text-xs text-ink-muted">Generating QR code...</p>
-              </div>
-            )}
+          <div className="bg-white rounded-2xl p-2 inline-block mx-auto mb-4 shadow-sm">
+            {/* Static bank QR — not dynamic; customer enters amount manually */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/payment-qr.jpeg"
+              alt={t('payment.qrCodeLabel')}
+              width={300}
+              height={437}
+              className="mx-auto rounded-xl"
+            />
           </div>
           <div className="space-y-2">
+            <p className="text-xs font-semibold text-ink-muted uppercase tracking-wide">
+              {t('payment.enterThisAmount') || 'Enter this amount'}
+            </p>
             <p className="text-3xl font-bold text-accent">
               {amount.toLocaleString()} THB
             </p>

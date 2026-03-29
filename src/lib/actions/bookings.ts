@@ -60,6 +60,7 @@ export async function getPendingBooking(): Promise<{
   paymentAmount: number;
   rentalAmount: number;
   contactName: string;
+  createdAt: string;
 } | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -87,6 +88,7 @@ export async function getPendingBooking(): Promise<{
     paymentAmount: booking.ride_total,
     rentalAmount: booking.rental_total || 0,
     contactName: booking.contact_name,
+    createdAt: booking.created_at,
   };
 }
 

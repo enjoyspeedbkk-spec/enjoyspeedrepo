@@ -650,6 +650,7 @@
   },
   "payment": {
     "scanToPayQR": "Scan to Pay",
+    "enterThisAmount": "Enter this amount",
     "qrCodeLabel": "PromptPay QR Code",
     "amount": "{amount} THB",
     "transferAccount": "Pailin — KBank (Kasikorn)",

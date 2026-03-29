@@ -646,6 +646,7 @@
   },
   "payment": {
     "scanToPayQR": "สแกนเพื่อจ่ายเงิน",
+    "enterThisAmount": "กรุณาใส่จำนวนเงินนี้",
     "qrCodeLabel": "รหัส QR PromptPay",
     "amount": "{amount} บาท",
     "transferAccount": "พัยลิน — KBank (Kasikorn)",

@@ -29,6 +29,7 @@ export default async function BookingPage() {
           rentalAmount={pending.rentalAmount}
           promptPayTarget={process.env.NEXT_PUBLIC_PROMPTPAY_ACCOUNT || "0000000000"}
           contactName={pending.contactName}
+          createdAt={pending.createdAt}
         />
       );
     }

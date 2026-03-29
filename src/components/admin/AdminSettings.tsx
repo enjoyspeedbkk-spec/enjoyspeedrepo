@@ -366,7 +366,7 @@ export function AdminSettings({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-sm">{pkg.name}</span>
-                        {pkg.name_th && <span className="text-xs text-ink-muted">({pkg.name_th})</span>}
+                        {/* Package names are English-only (Duo/Squad/Peloton) */}
                         {pkg.is_popular && <Badge variant="accent">Popular</Badge>}
                         {pkg.is_active === false && <Badge variant="default">Inactive</Badge>}
                         {saved === pkg.id && <CheckCircle2 className="h-4 w-4 text-success" />}

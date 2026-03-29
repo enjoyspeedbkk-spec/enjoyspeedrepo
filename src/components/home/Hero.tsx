@@ -433,18 +433,6 @@ export function Hero({ videos = [] }: HeroProps) {
                     exit={{ opacity: 0 }}
                     className="absolute bottom-4 left-4 right-4 z-30"
                   >
-                    <AnimatePresence mode="wait">
-                      <motion.p
-                        key={activeIndex}
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        className="text-xs text-white/80 font-medium mb-2 text-center"
-                      >
-                        {HERO_VIDEOS[activeIndex] && t(HERO_VIDEOS[activeIndex].label)} · {activeIndex + 1}/{HERO_VIDEOS.length}
-                      </motion.p>
-                    </AnimatePresence>
-
                     {/* Progress dots */}
                     <div className="flex justify-center gap-1.5 mb-3">
                       {HERO_VIDEOS.map((_, i) => (
