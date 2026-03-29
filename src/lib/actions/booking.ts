@@ -162,9 +162,11 @@ export async function createBooking(
         .single();
 
       if (sessionError || !newSession) {
+        console.error("Session creation error:", sessionError);
+        const detail = sessionError?.message || sessionError?.code || "unknown";
         return {
           success: false,
-          error: "Could not create ride session. Please try again.",
+          error: `Could not create ride session (${detail}). Please try again.`,
         };
       }
       rideSessionId = newSession.id;
@@ -210,33 +212,54 @@ export async function createBooking(
     }
 
     // 8. Create the booking
-    const { data: booking, error: bookingError } = await admin
+    // Build the insert payload — locale column may not exist if migration 012
+    // hasn't been applied yet, so we try with it first and fall back without.
+    const bookingPayload: Record<string, unknown> = {
+      user_id: resolvedUserId,
+      ride_session_id: rideSessionId,
+      group_type: input.groupType,
+      rider_count: input.riderCount,
+      price_per_person: pricePerPerson,
+      ride_total: rideTotal,
+      rental_total: rentalTotal,
+      total_price: totalPrice,
+      status: "pending",
+      contact_name: input.contactName,
+      contact_phone: input.contactPhone || null,
+      contact_email: input.contactEmail || null,
+      contact_line_id: input.contactLineId || null,
+      special_requests: input.specialRequests || null,
+      locale: input.locale || "en",
+    };
+
+    let { data: booking, error: bookingError } = await admin
       .from("bookings")
-      .insert({
-        user_id: resolvedUserId,
-        ride_session_id: rideSessionId,
-        group_type: input.groupType,
-        rider_count: input.riderCount,
-        price_per_person: pricePerPerson,
-        ride_total: rideTotal,
-        rental_total: rentalTotal,
-        total_price: totalPrice,
-        status: "pending",
-        contact_name: input.contactName,
-        contact_phone: input.contactPhone || null,
-        contact_email: input.contactEmail || null,
-        contact_line_id: input.contactLineId || null,
-        special_requests: input.specialRequests || null,
-        locale: input.locale || "en",
-      })
+      .insert(bookingPayload)
       .select("id")
       .single();
 
+    // If insert failed — likely because 'locale' column doesn't exist yet
+    // (migration 012 not applied). PostgREST returns "Could not find the
+    // 'locale' column" or error code 42703. Retry without locale.
+    if (bookingError) {
+      console.warn("Booking insert failed — retrying without locale column:", bookingError.message, bookingError.code);
+      delete bookingPayload.locale;
+      const retry = await admin
+        .from("bookings")
+        .insert(bookingPayload)
+        .select("id")
+        .single();
+      booking = retry.data;
+      bookingError = retry.error;
+    }
+
     if (bookingError || !booking) {
       console.error("Booking creation error:", bookingError);
+      // Surface the real DB error for debugging (will be removed once stable)
+      const detail = bookingError?.message || bookingError?.code || "unknown";
       return {
         success: false,
-        error: "Could not create booking. Please try again.",
+        error: `Could not create booking (${detail}). Please try again.`,
       };
     }
 
@@ -312,9 +335,10 @@ export async function createBooking(
     };
   } catch (err) {
     console.error("Unexpected booking error:", err);
+    const msg = err instanceof Error ? err.message : "unknown";
     return {
       success: false,
-      error: "Something went wrong. Please try again.",
+      error: `Something went wrong (${msg}). Please try again.`,
     };
   }
 }
