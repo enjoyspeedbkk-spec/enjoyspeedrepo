@@ -50,46 +50,73 @@ export interface PaymentSummary {
   rain_credit_expires_at: string | null;
 }
 
-/**
- * Check if the user has a recent pending (unpaid) booking.
- * Returns the booking ID and payment amount so the booking page
- * can redirect to payment instead of starting a new booking.
- */
-export async function getPendingBooking(): Promise<{
+export interface PendingBookingInfo {
   bookingId: string;
   paymentAmount: number;
   rentalAmount: number;
   contactName: string;
   createdAt: string;
-} | null> {
+  rideDate: string | null;
+  timeSlotId: string | null;
+  groupType: string;
+  riderCount: number;
+}
+
+/**
+ * Return all pending (unpaid) bookings created in the last 30 min.
+ * The booking page shows these so the user can resume payment or start fresh.
+ */
+export async function getPendingBookings(): Promise<PendingBookingInfo[]> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) return [];
 
   const admin = createAdminClient();
 
-  // Find the most recent pending booking (created within last 30 min)
   const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
 
-  const { data: booking } = await admin
+  const { data: bookings } = await admin
     .from("bookings")
-    .select("id, ride_total, rental_total, contact_name, created_at")
+    .select("id, ride_total, rental_total, contact_name, created_at, ride_session_id, group_type, rider_count")
     .eq("user_id", user.id)
     .eq("status", "pending")
     .gte("created_at", thirtyMinAgo)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
+    .order("created_at", { ascending: false });
 
-  if (!booking) return null;
+  if (!bookings || bookings.length === 0) return [];
 
-  return {
-    bookingId: booking.id,
-    paymentAmount: booking.ride_total,
-    rentalAmount: booking.rental_total || 0,
-    contactName: booking.contact_name,
-    createdAt: booking.created_at,
-  };
+  // Fetch ride session details for dates
+  const sessionIds = [...new Set(bookings.map((b) => b.ride_session_id).filter(Boolean))];
+  const sessionMap = new Map<string, { date: string; time_slot_id: string }>();
+
+  if (sessionIds.length > 0) {
+    const { data: sessions } = await admin
+      .from("ride_sessions")
+      .select("id, date, time_slot_id")
+      .in("id", sessionIds);
+    sessions?.forEach((s) => sessionMap.set(s.id, s));
+  }
+
+  return bookings.map((b) => {
+    const session = b.ride_session_id ? sessionMap.get(b.ride_session_id) : null;
+    return {
+      bookingId: b.id,
+      paymentAmount: b.ride_total,
+      rentalAmount: b.rental_total || 0,
+      contactName: b.contact_name,
+      createdAt: b.created_at,
+      rideDate: session?.date || null,
+      timeSlotId: session?.time_slot_id || null,
+      groupType: b.group_type,
+      riderCount: b.rider_count,
+    };
+  });
+}
+
+/** @deprecated Use getPendingBookings() instead */
+export async function getPendingBooking(): Promise<PendingBookingInfo | null> {
+  const all = await getPendingBookings();
+  return all.length > 0 ? all[0] : null;
 }
 
 export async function getUserBookings(): Promise<{

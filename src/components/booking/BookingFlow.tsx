@@ -91,22 +91,16 @@ function createEmptyRider(index: number): RiderInfo {
   };
 }
 
-interface PendingBookingInfo {
-  bookingId: string;
-  paymentAmount: number;
-  rentalAmount: number;
-  contactName: string;
-  createdAt: string;
-}
+import type { PendingBookingInfo } from "@/lib/actions/bookings";
 
 interface BookingFlowProps {
   userEmail?: string;
   userName?: string;
   userId?: string; // undefined = guest user (book-first flow)
-  pendingBooking?: PendingBookingInfo | null;
+  pendingBookings?: PendingBookingInfo[];
 }
 
-export function BookingFlow({ userEmail = "", userName = "", userId, pendingBooking }: BookingFlowProps) {
+export function BookingFlow({ userEmail = "", userName = "", userId, pendingBookings = [] }: BookingFlowProps) {
   const { t, locale } = useLanguage();
   const dict = messages[locale] as Record<string, Record<string, unknown>>;
   const translatedStarterKit = (dict.booking?.starterKitItems as string[]) ?? STARTER_KIT;
@@ -167,9 +161,9 @@ export function BookingFlow({ userEmail = "", userName = "", userId, pendingBook
   // Test mode state — set when admin email is verified
   const [isTestMode, setIsTestMode] = useState(false);
 
-  // Pending booking — user can choose to resume payment or start fresh
-  const [showPendingResume, setShowPendingResume] = useState(!!pendingBooking);
-  const [resumingPayment, setResumingPayment] = useState(false);
+  // Pending bookings — user can choose to resume payment or start fresh
+  const [showPendingResume, setShowPendingResume] = useState(pendingBookings.length > 0);
+  const [resumingBooking, setResumingBooking] = useState<PendingBookingInfo | null>(null);
 
   // Booking state persistence
   const BOOKING_DRAFT_KEY = "enjoyspeed_booking_draft";
@@ -555,16 +549,16 @@ export function BookingFlow({ userEmail = "", userName = "", userId, pendingBook
     );
   }
 
-  // If user chose to resume their pending booking payment
-  if (resumingPayment && pendingBooking) {
+  // If user chose to resume a specific pending booking
+  if (resumingBooking) {
     return (
       <PaymentPromptPay
-        bookingId={pendingBooking.bookingId}
-        amount={pendingBooking.paymentAmount}
-        rentalAmount={pendingBooking.rentalAmount}
+        bookingId={resumingBooking.bookingId}
+        amount={resumingBooking.paymentAmount}
+        rentalAmount={resumingBooking.rentalAmount}
         promptPayTarget={process.env.NEXT_PUBLIC_PROMPTPAY_ACCOUNT || "0000000000"}
-        contactName={pendingBooking.contactName}
-        createdAt={pendingBooking.createdAt}
+        contactName={resumingBooking.contactName}
+        createdAt={resumingBooking.createdAt}
       />
     );
   }
@@ -588,35 +582,77 @@ export function BookingFlow({ userEmail = "", userName = "", userId, pendingBook
           </motion.div>
         )}
 
-        {/* Pending Booking Banner — offer to resume payment or start new */}
-        {showPendingResume && pendingBooking && (
+        {/* Pending Bookings Banner — list all unpaid bookings or start new */}
+        {showPendingResume && pendingBookings.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-5 rounded-2xl bg-sky/10 border border-sky/30"
+            className="mb-6 rounded-2xl bg-sky/10 border border-sky/30 overflow-hidden"
           >
-            <div className="flex items-start gap-3 mb-4">
+            <div className="flex items-start gap-3 px-5 pt-5 pb-3">
               <QrCode className="h-5 w-5 text-sky-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="font-semibold text-ink text-sm">
-                  {t("booking.pendingBookingTitle")}
+                  {pendingBookings.length === 1
+                    ? t("booking.pendingBookingTitle")
+                    : t("booking.pendingBookingsTitle")}
                 </p>
                 <p className="text-xs text-ink-muted mt-1">
                   {t("booking.pendingBookingDesc")}
                 </p>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <button
-                onClick={() => setResumingPayment(true)}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-light transition-colors"
-              >
-                <CreditCard className="h-4 w-4" />
-                {t("booking.resumePayment")}
-              </button>
+
+            {/* List each pending booking */}
+            <div className="px-5 pb-3 space-y-2">
+              {pendingBookings.map((pb) => {
+                const slot = TIME_SLOTS.find((s) => s.id === pb.timeSlotId);
+                const pkg = RIDE_PACKAGES.find((p) => p.type === pb.groupType);
+                const dateLabel = pb.rideDate
+                  ? new Date(pb.rideDate).toLocaleDateString(locale === "th" ? "th-TH" : "en-US", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                    })
+                  : null;
+                return (
+                  <button
+                    key={pb.bookingId}
+                    onClick={() => setResumingBooking(pb)}
+                    className="w-full flex items-center justify-between gap-3 p-3 rounded-xl bg-white border border-sand/60 hover:border-accent/40 hover:bg-accent/5 transition-colors text-left group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+                        <CreditCard className="h-4 w-4 text-accent" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-ink truncate">
+                          {pkg?.name || pb.groupType} · {pb.riderCount} rider{pb.riderCount > 1 ? "s" : ""}
+                        </p>
+                        <p className="text-xs text-ink-muted mt-0.5">
+                          {dateLabel && <span>{dateLabel}</span>}
+                          {dateLabel && slot && <span> · </span>}
+                          {slot && <span>{slot.startTime}</span>}
+                          {!dateLabel && !slot && <span>#{pb.bookingId.slice(0, 8).toUpperCase()}</span>}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-sm font-bold text-accent">
+                        {pb.paymentAmount.toLocaleString()} <span className="text-xs font-normal">THB</span>
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-ink-muted group-hover:text-accent transition-colors" />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Start new booking button */}
+            <div className="px-5 pb-5">
               <button
                 onClick={() => setShowPendingResume(false)}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-white border border-sand/60 px-5 py-2.5 text-sm font-semibold text-ink hover:bg-cream transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-white border border-sand/60 px-5 py-2.5 text-sm font-semibold text-ink hover:bg-cream transition-colors"
               >
                 <CalendarDays className="h-4 w-4" />
                 {t("booking.startNewBooking")}

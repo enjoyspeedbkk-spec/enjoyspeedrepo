@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { SkylaneCarousel } from "@/components/about/SkylaneCarousel";
+import { getSkylanePhotos } from "@/lib/actions/places-photos";
 
 export const metadata = {
   title: "About | En-Joy Speed",
@@ -50,6 +51,7 @@ export default async function AboutPage() {
   const dict = messages[locale] as Record<string, Record<string, unknown>>;
 
   const embedUrl = getSkylaneEmbedUrl({ zoom: 15 });
+  const skylanePhotos = await getSkylanePhotos();
 
   const imageKeys = ["team-pailin-profile", "team-udorn-profile", "team-group-photo", "venue-meeting-point"];
   const imageBatch = await getSiteImageSettingsBatch(imageKeys);
@@ -279,9 +281,9 @@ export default async function AboutPage() {
             </div>
           </div>
 
-          {/* Skylane Photo Carousel */}
+          {/* Skylane Photo Carousel — Google Places (New) API with static fallback */}
           <div className="mt-8">
-            <SkylaneCarousel />
+            <SkylaneCarousel placePhotos={skylanePhotos} />
           </div>
 
           {/* Google Maps Embed API — interactive place view */}

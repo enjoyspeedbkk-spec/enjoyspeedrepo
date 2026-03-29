@@ -644,6 +644,7 @@
     "testModeActive": "โหมดทดสอบเปิดใช้งาน",
     "testModeExpiry": "การจองนี้จะหมดอายุใน 10 นาที",
     "pendingBookingTitle": "คุณมีการจองที่ยังไม่ได้ชำระเงิน",
+    "pendingBookingsTitle": "คุณมีการจองที่ยังไม่ได้ชำระเงินหลายรายการ",
     "pendingBookingDesc": "ชำระเงินต่อ หรือเริ่มจองใหม่",
     "resumePayment": "ชำระเงินต่อ",
     "startNewBooking": "จองใหม่"
