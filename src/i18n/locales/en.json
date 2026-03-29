@@ -130,7 +130,7 @@
     },
     "step6": {
       "title": "Recover & relax",
-      "description": "Cold towels, electrolyte drinks, and recovery refreshments. End the ride feeling taken care of."
+      "description": "Electrolyte drinks and recovery refreshments. End the ride feeling taken care of."
     }
   },
   "gallery": {
@@ -205,7 +205,7 @@
       "title": "Professional Photography",
       "description": "Action shots and group photos from your ride, delivered digitally after the session."
     },
-    "alsoIncluded": "Also included: Athlete Leaders, Hero support riders, safety briefing, post-ride recovery (cold towels & electrolytes), and weather monitoring.",
+    "alsoIncluded": "Also included: Athlete Leaders, Hero support riders, safety briefing, post-ride recovery (electrolytes), and weather monitoring.",
     "rentalNote": "Bike rental available separately — Hybrid 420 THB · Road 720 THB · Or bring your own.",
     "seeFullDetails": "See full ride details"
   },
@@ -236,7 +236,7 @@
       },
       {
         "q": "What's included in the price?",
-        "a": "Every ride includes Athlete Leader guidance, Hero support riders, professional photography, post-ride cold towels, electrolyte drinks, and recovery refreshments. Bike rental is the only additional cost."
+        "a": "Every ride includes Athlete Leader guidance, Hero support riders, professional photography, electrolyte drinks and recovery refreshments. Bike rental is the only additional cost."
       },
       {
         "q": "Can I cancel or reschedule?",
@@ -324,7 +324,7 @@
     ],
     "afterTheRide": "After the ride",
     "afterItems": [
-      "Cold towels and electrolyte drinks",
+      "Electrolyte drinks",
       "Photos delivered digitally",
       "Weather updates via LINE if relevant for upcoming sessions"
     ],
@@ -349,7 +349,7 @@
     },
     "postRideRecovery": {
       "title": "Post-Ride Recovery",
-      "description": "Cold towels and electrolyte drinks after every ride."
+      "description": "Electrolyte drinks after every ride."
     },
     "safetyBriefing": {
       "title": "Safety Briefing",

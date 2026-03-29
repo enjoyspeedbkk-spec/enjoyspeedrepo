@@ -8,6 +8,7 @@ import { ChevronRight, Play, Pause, Shield, Camera, Users, Volume2, VolumeX, Ski
 import { useSiteImage } from "@/lib/site-images-context";
 import { useToast } from "@/components/ui/Toast";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { HeroVideo } from "@/lib/actions/hero-videos";
 
 const stats = [
   { icon: Shield, i18nKey: "hero.athleteLed" },
@@ -15,39 +16,20 @@ const stats = [
   { icon: Users, i18nKey: "hero.smallGroupsOnly" },
 ];
 
-const SUPABASE_VIDEO_BASE =
-  "https://oqldbxkluuoyrmzehkpk.supabase.co/storage/v1/object/public/videos";
-
 const CLIP_DURATION = 3; // seconds per clip
 
-// All videos — each plays for 3 seconds then crossfades to next
-const HERO_VIDEOS = [
-  {
-    src: `${SUPABASE_VIDEO_BASE}/video%20of%20cycling%20golden%20hour%20morning%20vertical.mp4`,
-    i18nKey: "hero.videoLabels.goldenHourMorning",
-  },
-  {
-    src: `${SUPABASE_VIDEO_BASE}/front%20facing%20golden%20hour%20vertical.mp4`,
-    i18nKey: "hero.videoLabels.frontFacing",
-  },
-  {
-    src: `${SUPABASE_VIDEO_BASE}/Side%20view%20of%20sunrise%20golden%20hour%20cycling%20video%20vertical.mp4`,
-    i18nKey: "hero.videoLabels.sunriseSideView",
-  },
-  {
-    src: `${SUPABASE_VIDEO_BASE}/Video%20of%20cycling%20in%20the%20morning%20blue%20hour%20vertical.mp4`,
-    i18nKey: "hero.videoLabels.blueHour",
-  },
-  {
-    src: `${SUPABASE_VIDEO_BASE}/wide%20angle%20blue%20hour%20morning%20vertical.mp4`,
-    i18nKey: "hero.videoLabels.wideAngle",
-  },
-];
+interface HeroProps {
+  videos?: HeroVideo[];
+}
 
-export function Hero() {
+export function Hero({ videos = [] }: HeroProps) {
   const { t } = useLanguage();
   const heroStill = useSiteImage("hero-still", "/images/hero-golden-hour-still.jpg");
   const toast = useToast();
+
+  // Use passed videos or empty array (will handle gracefully)
+  const HERO_VIDEOS = videos && videos.length > 0 ? videos : [];
+
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -459,7 +441,7 @@ export function Hero() {
                         exit={{ opacity: 0, y: -4 }}
                         className="text-xs text-white/80 font-medium mb-2 text-center"
                       >
-                        {t(HERO_VIDEOS[activeIndex].i18nKey)} · {activeIndex + 1}/{HERO_VIDEOS.length}
+                        {HERO_VIDEOS[activeIndex] && t(HERO_VIDEOS[activeIndex].label)} · {activeIndex + 1}/{HERO_VIDEOS.length}
                       </motion.p>
                     </AnimatePresence>
 

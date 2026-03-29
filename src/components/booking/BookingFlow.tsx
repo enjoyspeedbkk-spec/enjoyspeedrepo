@@ -75,7 +75,7 @@ const packageIcons: Record<GroupType, typeof Star> = {
 };
 
 // Clothing size options
-const SIZES: ClothingSize[] = ["XS", "S", "M", "L", "XL", "XXL"];
+const SIZES: ClothingSize[] = ["S", "M", "L", "XL", "2XL", "3XL", "4XL"];
 
 function createEmptyRider(index: number): RiderInfo {
   return {
@@ -242,32 +242,39 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
     if (!selectedDate) return;
     let cancelled = false;
     setLoadingSlots(true);
-    getAvailableSlots(selectedDate, selectedDate).then((result) => {
-      if (cancelled) return;
-      // Slots that already have a booking → blocked
-      const booked = new Set<string>();
-      for (const s of result.sessions) {
-        if (s.hasBooking) booked.add(s.time_slot_id);
+    (async () => {
+      try {
+        const result = await getAvailableSlots(selectedDate, selectedDate);
+        if (cancelled) return;
+        // Slots that already have a booking → blocked
+        const booked = new Set<string>();
+        const sessions = result?.sessions ?? [];
+        for (const s of sessions) {
+          if (s.hasBooking) booked.add(s.time_slot_id);
+        }
+        // Also block overlapping periods: if any morning slot (A1/A2) is booked, block the other
+        // If any evening slot (B/C/D) is booked, block all evening slots
+        const morningIds = ["A1", "A2"];
+        const eveningIds = ["B", "C", "D"];
+        const hasMorningBooking = morningIds.some((id) => booked.has(id));
+        const hasEveningBooking = eveningIds.some((id) => booked.has(id));
+        if (hasMorningBooking) morningIds.forEach((id) => booked.add(id));
+        if (hasEveningBooking) eveningIds.forEach((id) => booked.add(id));
+        setBookedSlotIds(booked);
+        // If the currently selected slot is now blocked, deselect it
+        if (selectedSlot && booked.has(selectedSlot)) {
+          setSelectedSlot(null);
+        }
+      } catch (err) {
+        // Slot availability check failed — don't block the user from booking
+        console.warn("Slot availability check failed:", err);
+        if (!cancelled) setBookedSlotIds(new Set());
+      } finally {
+        if (!cancelled) setLoadingSlots(false);
       }
-      // Also block overlapping periods: if any morning slot (A1/A2) is booked, block the other
-      // If any evening slot (B/C/D) is booked, block all evening slots
-      const morningIds = ["A1", "A2"];
-      const eveningIds = ["B", "C", "D"];
-      const hasMorningBooking = morningIds.some((id) => booked.has(id));
-      const hasEveningBooking = eveningIds.some((id) => booked.has(id));
-      if (hasMorningBooking) morningIds.forEach((id) => booked.add(id));
-      if (hasEveningBooking) eveningIds.forEach((id) => booked.add(id));
-      setBookedSlotIds(booked);
-      setLoadingSlots(false);
-      // If the currently selected slot is now blocked, deselect it
-      if (selectedSlot && booked.has(selectedSlot)) {
-        setSelectedSlot(null);
-      }
-    }).catch(() => {
-      if (!cancelled) setLoadingSlots(false);
-    });
+    })();
     return () => { cancelled = true; };
-  }, [selectedDate]);
+  }, [selectedDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Generate next 30 days
   const availableDates = useMemo(() => {
@@ -1812,53 +1819,53 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                     </thead>
                     <tbody className="text-center text-xs">
                       <tr className="border-b border-sand/40">
-                        <td className="text-left px-3 py-2.5 font-medium text-ink">½ Waist</td>
+                        <td className="text-left px-3 py-2.5 font-medium text-ink">Waist (in)</td>
+                        <td className="px-2 py-2.5 text-ink-muted">26–28</td>
                         <td className="px-2 py-2.5 text-ink-muted">28–30</td>
                         <td className="px-2 py-2.5 text-ink-muted">30–32</td>
                         <td className="px-2 py-2.5 text-ink-muted">32–34</td>
                         <td className="px-2 py-2.5 text-ink-muted">34–36</td>
                         <td className="px-2 py-2.5 text-ink-muted">36–38</td>
                         <td className="px-2 py-2.5 text-ink-muted">38–40</td>
-                        <td className="px-2 py-2.5 text-ink-muted">40–42</td>
                       </tr>
                       <tr className="border-b border-sand/40 bg-sand/10">
-                        <td className="text-left px-3 py-2.5 font-medium text-ink">½ Hip</td>
+                        <td className="text-left px-3 py-2.5 font-medium text-ink">Hip (in)</td>
+                        <td className="px-2 py-2.5 text-ink-muted">32</td>
                         <td className="px-2 py-2.5 text-ink-muted">34</td>
                         <td className="px-2 py-2.5 text-ink-muted">36</td>
                         <td className="px-2 py-2.5 text-ink-muted">38</td>
                         <td className="px-2 py-2.5 text-ink-muted">40</td>
                         <td className="px-2 py-2.5 text-ink-muted">42</td>
                         <td className="px-2 py-2.5 text-ink-muted">44</td>
-                        <td className="px-2 py-2.5 text-ink-muted">46</td>
                       </tr>
                       <tr className="border-b border-sand/40">
-                        <td className="text-left px-3 py-2.5 font-medium text-ink">½ Leg Opening</td>
+                        <td className="text-left px-3 py-2.5 font-medium text-ink">Leg Opening (in)</td>
+                        <td className="px-2 py-2.5 text-ink-muted">16.75</td>
                         <td className="px-2 py-2.5 text-ink-muted">17.5</td>
                         <td className="px-2 py-2.5 text-ink-muted">18.25</td>
                         <td className="px-2 py-2.5 text-ink-muted">19</td>
                         <td className="px-2 py-2.5 text-ink-muted">19.75</td>
                         <td className="px-2 py-2.5 text-ink-muted">20.5</td>
                         <td className="px-2 py-2.5 text-ink-muted">21.5</td>
-                        <td className="px-2 py-2.5 text-ink-muted">22</td>
                       </tr>
                       <tr className="border-b border-sand/40 bg-sand/10">
                         <td className="text-left px-3 py-2.5 font-medium text-ink">Height (cm)</td>
+                        <td className="px-2 py-2.5 text-ink-muted">160–165</td>
                         <td className="px-2 py-2.5 text-ink-muted">165–170</td>
                         <td className="px-2 py-2.5 text-ink-muted">170–175</td>
                         <td className="px-2 py-2.5 text-ink-muted">175–180</td>
                         <td className="px-2 py-2.5 text-ink-muted">180–185</td>
                         <td className="px-2 py-2.5 text-ink-muted">185–190</td>
                         <td className="px-2 py-2.5 text-ink-muted">190–195</td>
-                        <td className="px-2 py-2.5 text-ink-muted">190–195</td>
                       </tr>
                       <tr>
                         <td className="text-left px-3 py-2.5 font-medium text-ink">Weight (kg)</td>
+                        <td className="px-2 py-2.5 text-ink-muted">55–60</td>
                         <td className="px-2 py-2.5 text-ink-muted">60–65</td>
                         <td className="px-2 py-2.5 text-ink-muted">65–70</td>
                         <td className="px-2 py-2.5 text-ink-muted">70–75</td>
                         <td className="px-2 py-2.5 text-ink-muted">75–80</td>
                         <td className="px-2 py-2.5 text-ink-muted">80–85</td>
-                        <td className="px-2 py-2.5 text-ink-muted">85–90</td>
                         <td className="px-2 py-2.5 text-ink-muted">90–95</td>
                       </tr>
                     </tbody>

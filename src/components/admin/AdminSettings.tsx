@@ -201,6 +201,7 @@ export function AdminSettings({
       const result = await updatePackage(pkg.id, {
         type: pkg.type,
         name: pkg.name,
+        name_th: pkg.name_th || null,
         description: pkg.description || null,
         price_per_person: pkg.price_per_person,
         min_riders: pkg.min_riders,
@@ -517,34 +518,39 @@ export function AdminSettings({
       <div className="space-y-3">
         {localBikes.map((bike) => {
           const isEditing = editingBikeId === bike.id;
+          const original = bikeRentals.find((b) => b.id === bike.id);
+          const hasChanges = original && JSON.stringify(original) !== JSON.stringify(bike);
           return (
             <Card key={bike.id} padding="sm">
               <div className="p-3">
                 {isEditing ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Bike className="h-5 w-5 text-ink-muted" />
-                      <span className="font-semibold text-sm">Editing: {bike.name}</span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="space-y-4">
+                    {/* Price — prominent at top */}
+                    <div className="p-3 rounded-xl bg-accent/5 border border-accent/15">
                       <Field
-                        label="Type"
-                        value={bike.type}
-                        onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, type: v } : b))}
-                      />
-                      <Field
-                        label="Name"
-                        value={bike.name}
-                        onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, name: v } : b))}
-                      />
-                      <Field
-                        label="Price (THB)"
+                        label="💰 Price (THB)"
                         type="number"
                         value={bike.price}
                         onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, price: Number(v) } : b))}
                       />
                     </div>
-                    <div className="flex gap-2">
+
+                    {/* Name & Type */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Field
+                        label="Display Name"
+                        value={bike.name}
+                        onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, name: v } : b))}
+                      />
+                      <Field
+                        label="Type Key"
+                        value={bike.type}
+                        onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, type: v } : b))}
+                      />
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 pt-1 border-t border-sand/30">
                       <Button
                         size="sm"
                         onClick={async () => {
@@ -560,18 +566,18 @@ export function AdminSettings({
                             toast.error("Failed to save bike rental. Please try again.");
                           }
                         }}
-                        disabled={saving === bike.id}
+                        disabled={saving === bike.id || !hasChanges}
                       >
                         <Save className="h-3 w-3" />
                         {saving === bike.id ? "Saving..." : "Save"}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => {
                         setEditingBikeId(null);
-                        const original = bikeRentals.find((b) => b.id === bike.id);
                         if (original) setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? original : b));
                       }}>
                         Cancel
                       </Button>
+                      {hasChanges && <span className="text-xs text-accent ml-1">Unsaved changes</span>}
                       <button
                         className="ml-auto p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                         title="Delete bike"
@@ -603,24 +609,30 @@ export function AdminSettings({
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between">
+                  <div
+                    className="flex items-center justify-between cursor-pointer group"
+                    onClick={() => setEditingBikeId(bike.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === "Enter" && setEditingBikeId(bike.id)}
+                  >
                     <div className="flex items-center gap-3">
-                      <Bike className="h-5 w-5 text-ink-muted flex-shrink-0" />
+                      <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-accent/8 border border-accent/10">
+                        <Bike className="h-4 w-4 text-accent" />
+                      </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm">{bike.name}</span>
                           <span className="text-xs text-ink-muted">({bike.type})</span>
                           {saved === bike.id && <CheckCircle2 className="h-4 w-4 text-success" />}
                         </div>
-                        <p className="text-xs text-ink-muted mt-0.5">{bike.price?.toLocaleString()} THB</p>
+                        <span className="text-sm font-bold text-accent">{bike.price?.toLocaleString()} THB</span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setEditingBikeId(bike.id)}
-                      className="p-2 rounded-lg hover:bg-sand/30 transition-colors"
-                    >
-                      <Edit3 className="h-4 w-4 text-ink-muted" aria-hidden="true" /><span className="sr-only">Edit</span>
-                    </button>
+                    <span className="flex items-center gap-1.5 text-xs font-medium text-ink-muted group-hover:text-accent transition-colors px-2 py-1 rounded-lg group-hover:bg-accent/5">
+                      <Edit3 className="h-3.5 w-3.5" />
+                      Edit
+                    </span>
                   </div>
                 )}
               </div>
@@ -1288,17 +1300,9 @@ export function AdminSettings({
   // =============================================
   // RENDER
   // =============================================
-  const sectionContent: Record<string, () => React.ReactElement> = {
-    packages: PackagesSection,
-    slots: TimeSlotsSection,
-    bikes: BikeRentalsSection,
-    kit: StarterKitSection,
-    staff: StaffSection,
-    promos: PromoCodesSection,
-    access: AdminAccessSection,
-  };
-
-  const ActiveContent = sectionContent[activeSection] || PackagesSection;
+  // NOTE: All sections are rendered as function calls (not <Component />)
+  // and kept mounted with display:none to prevent React from remounting
+  // them on parent re-render (which would destroy input focus & internal state).
 
   return (
     <div className="space-y-6">
@@ -1345,8 +1349,14 @@ export function AdminSettings({
         </div>
       )}
 
-      {/* Active section content */}
-      <ActiveContent />
+      {/* All sections rendered (hidden when inactive) to preserve internal state & focus */}
+      <div style={{ display: activeSection === "packages" ? undefined : "none" }}>{PackagesSection()}</div>
+      <div style={{ display: activeSection === "slots" ? undefined : "none" }}>{TimeSlotsSection()}</div>
+      <div style={{ display: activeSection === "bikes" ? undefined : "none" }}>{BikeRentalsSection()}</div>
+      <div style={{ display: activeSection === "kit" ? undefined : "none" }}>{StarterKitSection()}</div>
+      <div style={{ display: activeSection === "staff" ? undefined : "none" }}>{StaffSection()}</div>
+      <div style={{ display: activeSection === "promos" ? undefined : "none" }}>{PromoCodesSection()}</div>
+      <div style={{ display: activeSection === "access" ? undefined : "none" }}>{AdminAccessSection()}</div>
 
       {confirmDialog && (
         <ConfirmDialog

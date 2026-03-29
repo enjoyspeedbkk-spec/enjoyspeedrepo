@@ -22,7 +22,7 @@ export type PaymentStatus =
   | "partially_refunded"
   | "failed";
 export type CyclingExperience = "beginner" | "intermediate" | "experienced";
-export type ClothingSize = "XS" | "S" | "M" | "L" | "XL" | "XXL";
+export type ClothingSize = "S" | "M" | "L" | "XL" | "2XL" | "3XL" | "4XL";
 
 export interface TimeSlot {
   id: TimeSlotId;

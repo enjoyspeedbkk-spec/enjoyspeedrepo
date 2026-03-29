@@ -5,9 +5,12 @@ import { WhatsIncluded } from "@/components/home/WhatsIncluded";
 import { CTASection } from "@/components/home/CTASection";
 import { SiteImagesProvider } from "@/lib/site-images-context";
 import { getSiteImageSettings } from "@/lib/actions/site-images";
+import { getHeroVideoConfig } from "@/lib/actions/hero-videos";
 
 export default async function HomePage() {
   const images = await getSiteImageSettings();
+  const heroVideos = await getHeroVideoConfig();
+
   const imageMap = Object.fromEntries(
     images.map((img) => [
       img.image_key,
@@ -23,7 +26,7 @@ export default async function HomePage() {
 
   return (
     <SiteImagesProvider images={imageMap}>
-      <Hero />
+      <Hero videos={heroVideos} />
       <RidePackages />
       <TimeSlots />
       <WhatsIncluded />

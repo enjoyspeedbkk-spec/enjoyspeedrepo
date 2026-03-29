@@ -65,6 +65,7 @@ export function getSkylaneMapUrl(options: StaticMapOptions = {}): string | null 
 /**
  * Returns a set of pre-configured map URLs for the About page.
  * Satellite overview + road map with marker.
+ * @deprecated Use getSkylaneEmbedUrl instead for interactive Google Maps embed.
  */
 export function getVenueMapUrls(locale: "en" | "th" = "en") {
   return {
@@ -86,4 +87,35 @@ export function getVenueMapUrls(locale: "en" | "th" = "en") {
       language: locale,
     }),
   };
+}
+
+interface EmbedMapOptions {
+  /** Zoom level (1-20) */
+  zoom?: number;
+  /** Map type for embed: roadmap, satellite, terrain, hybrid */
+  maptype?: "roadmap" | "satellite" | "terrain" | "hybrid";
+}
+
+/**
+ * Builds a Google Maps Embed API URL for the Skylane venue (place mode).
+ * Returns null if no API key is configured.
+ * Interactive embed suitable for iframes.
+ */
+export function getSkylaneEmbedUrl(options: EmbedMapOptions = {}): string | null {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey) return null;
+
+  const { zoom = 15, maptype } = options;
+
+  const params = new URLSearchParams({
+    key: apiKey,
+    q: "Skylane+Happy+Healthy+Bike+Lane+Suvarnabhumi",
+    zoom: String(zoom),
+  });
+
+  if (maptype) {
+    params.set("maptype", maptype);
+  }
+
+  return `https://www.google.com/maps/embed/v1/place?${params.toString()}`;
 }

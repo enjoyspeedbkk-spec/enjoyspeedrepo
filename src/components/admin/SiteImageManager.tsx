@@ -27,8 +27,7 @@ const CATEGORIES = [
   { id: "branding", label: "Branding" },
 ];
 
-// Maps each category to the aspect ratio used on the actual site
-// so admins see how the image will actually be cropped
+// Default aspect ratios per category (can be overridden per image)
 const CATEGORY_ASPECT_RATIOS: Record<string, { ratio: string; label: string }> = {
   hero: { ratio: "aspect-[3/4]", label: "3:4 (Hero)" },
   team: { ratio: "aspect-[4/3]", label: "4:3 (Profile)" },
@@ -38,6 +37,19 @@ const CATEGORY_ASPECT_RATIOS: Record<string, { ratio: string; label: string }> =
   booking: { ratio: "aspect-[16/9]", label: "16:9 (Banner)" },
   branding: { ratio: "aspect-[16/9]", label: "16:9 (Banner)" },
 };
+
+// All available aspect ratios for the override selector
+const ALL_ASPECT_RATIOS = [
+  { value: "", label: "Default (category)" },
+  { value: "aspect-[3/4]", label: "3:4 — Portrait" },
+  { value: "aspect-[4/3]", label: "4:3 — Landscape" },
+  { value: "aspect-square", label: "1:1 — Square" },
+  { value: "aspect-[16/9]", label: "16:9 — Wide" },
+  { value: "aspect-[9/16]", label: "9:16 — Tall" },
+  { value: "aspect-[2/3]", label: "2:3 — Portrait Narrow" },
+  { value: "aspect-[3/2]", label: "3:2 — Landscape Classic" },
+  { value: "aspect-[21/9]", label: "21:9 — Ultra-Wide" },
+];
 
 export function SiteImageManager({ initialImages }: { initialImages: SiteImageSetting[] }) {
   const [images, setImages] = useState(initialImages);
@@ -131,7 +143,15 @@ function ImageCard({
   const [localBrightness, setLocalBrightness] = useState(image.brightness || 1);
   const [localContrast, setLocalContrast] = useState(image.contrast || 1);
   const [localSaturate, setLocalSaturate] = useState(image.saturate || 1);
+  // Aspect ratio override: empty string means use category default
+  const [localAspectRatio, setLocalAspectRatio] = useState(image.custom_css || "");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Resolve which aspect ratio to use: override → category default → 16:9
+  const effectiveAspectRatio = localAspectRatio || CATEGORY_ASPECT_RATIOS[image.category]?.ratio || "aspect-[16/9]";
+  const effectiveLabel = localAspectRatio
+    ? ALL_ASPECT_RATIOS.find((ar) => ar.value === localAspectRatio)?.label || localAspectRatio
+    : CATEGORY_ASPECT_RATIOS[image.category]?.label || "16:9";
 
   const handleSave = async () => {
     setSaving(true);
@@ -141,6 +161,7 @@ function ImageCard({
         brightness: localBrightness,
         contrast: localContrast,
         saturate: localSaturate,
+        custom_css: localAspectRatio || undefined,
       });
       if (result.success) {
         onUpdate(image.image_key, {
@@ -148,6 +169,7 @@ function ImageCard({
           brightness: localBrightness,
           contrast: localContrast,
           saturate: localSaturate,
+          custom_css: localAspectRatio || undefined,
         });
         toast.success("Image settings saved");
         setSaved(true);
@@ -204,6 +226,7 @@ function ImageCard({
     setLocalBrightness(1);
     setLocalContrast(1);
     setLocalSaturate(1);
+    setLocalAspectRatio("");
   };
 
   const filterStyle = {
@@ -233,7 +256,7 @@ function ImageCard({
           <p className="text-xs text-ink-muted truncate">
             {image.image_key}
             <span className="text-ink-muted/50 ml-1.5">
-              · {CATEGORY_ASPECT_RATIOS[image.category]?.label || "16:9"}
+              · {image.custom_css ? ALL_ASPECT_RATIOS.find((ar) => ar.value === image.custom_css)?.label || image.custom_css : CATEGORY_ASPECT_RATIOS[image.category]?.label || "16:9"}
             </span>
           </p>
         </div>
@@ -257,10 +280,24 @@ function ImageCard({
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs font-semibold text-ink-muted uppercase">Preview</p>
                 <span className="text-xs text-ink-muted bg-sand/30 px-2 py-0.5 rounded-full">
-                  {CATEGORY_ASPECT_RATIOS[image.category]?.label || "16:9"}
+                  {effectiveLabel}
                 </span>
               </div>
-              <div className={`relative ${CATEGORY_ASPECT_RATIOS[image.category]?.ratio || "aspect-[16/9]"} rounded-xl overflow-hidden bg-sand/20 border border-sand/40`}>
+              {/* Aspect ratio selector */}
+              <div className="mb-2">
+                <select
+                  value={localAspectRatio}
+                  onChange={(e) => setLocalAspectRatio(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border-2 border-sand/60 text-sm focus:border-ink focus:outline-none bg-surface"
+                >
+                  {ALL_ASPECT_RATIOS.map((ar) => (
+                    <option key={ar.value} value={ar.value}>
+                      {ar.value === "" ? `Default — ${CATEGORY_ASPECT_RATIOS[image.category]?.label || "16:9"}` : ar.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={`relative ${effectiveAspectRatio} rounded-xl overflow-hidden bg-sand/20 border border-sand/40`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={image.current_url}

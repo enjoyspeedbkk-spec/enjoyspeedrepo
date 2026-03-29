@@ -6,7 +6,7 @@ import { FAQ } from "@/components/home/FAQ";
 import { CTASection } from "@/components/home/CTASection";
 import Image from "next/image";
 import { getTranslation, type Locale, messages } from "@/lib/i18n";
-import { getVenueMapUrls } from "@/lib/google-maps";
+import { getSkylaneEmbedUrl } from "@/lib/google-maps";
 import { headers } from "next/headers";
 import {
   Shield,
@@ -48,7 +48,7 @@ export default async function AboutPage() {
   // For array values, access the locale dict directly (getTranslation only resolves strings)
   const dict = messages[locale] as Record<string, Record<string, unknown>>;
 
-  const venueMapUrls = getVenueMapUrls(locale);
+  const embedUrl = getSkylaneEmbedUrl({ zoom: 15 });
 
   const imageKeys = ["team-pailin-profile", "team-udorn-profile", "team-group-photo", "venue-meeting-point"];
   const imageBatch = await getSiteImageSettingsBatch(imageKeys);
@@ -278,54 +278,28 @@ export default async function AboutPage() {
             </div>
           </div>
 
-          {/* Google Maps Static API — satellite + area overview */}
-          {venueMapUrls.satellite && (
-            <div className="mt-8 grid md:grid-cols-2 gap-6">
-              {/* Satellite / hybrid view — shows the track from above */}
-              <a
-                href="https://maps.google.com/?q=Skylane+Happy+Healthy+Bike+Lane+Suvarnabhumi&t=k"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group block"
-              >
-                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-sand/40 group-hover:shadow-md transition-shadow">
-                  <Image
-                    src={venueMapUrls.satellite}
-                    alt={t('about.satelliteViewAlt')}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    unoptimized
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                    <p className="text-white text-sm font-semibold">{t('about.satelliteViewLabel')}</p>
-                  </div>
-                </div>
-              </a>
-
-              {/* Road map view — shows area context near Suvarnabhumi */}
-              {venueMapUrls.roadmap && (
-                <a
-                  href="https://maps.google.com/?q=Skylane+Happy+Healthy+Bike+Lane+Suvarnabhumi"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block"
-                >
-                  <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-sand/40 group-hover:shadow-md transition-shadow">
-                    <Image
-                      src={venueMapUrls.roadmap}
-                      alt={t('about.areaMapAlt')}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      unoptimized
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                      <p className="text-white text-sm font-semibold">{t('about.areaMapLabel')}</p>
-                    </div>
-                  </div>
+          {/* Google Maps Embed API — interactive place view */}
+          {embedUrl && (
+            <div className="mt-8">
+              <div className="relative aspect-[16/9] rounded-2xl overflow-hidden border border-sand/40">
+                <iframe
+                  src={embedUrl}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Skylane Cycling Track Location"
+                  className="absolute inset-0 w-full h-full"
+                />
+              </div>
+              <div className="mt-3 text-center">
+                <a href="https://maps.google.com/?q=Skylane+Happy+Healthy+Bike+Lane+Suvarnabhumi" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-semibold text-accent hover:text-accent-dark transition-colors">
+                  <MapPin className="h-4 w-4" />
+                  View Skylane on Google Maps
                 </a>
-              )}
+              </div>
             </div>
           )}
         </div>
