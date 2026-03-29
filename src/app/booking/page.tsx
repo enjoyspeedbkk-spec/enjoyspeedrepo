@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { BookingFlow } from "@/components/booking/BookingFlow";
+import { getPendingBooking } from "@/lib/actions/bookings";
+import { PaymentPromptPay } from "@/components/booking/PaymentPromptPay";
 
 export const metadata = {
   title: "Book a Ride | En-Joy Speed",
@@ -14,6 +16,23 @@ export default async function BookingPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // If logged in, check for an unpaid pending booking (created < 30 min ago)
+  // so reloading the page after booking resumes to the payment screen
+  if (user) {
+    const pending = await getPendingBooking();
+    if (pending) {
+      return (
+        <PaymentPromptPay
+          bookingId={pending.bookingId}
+          amount={pending.paymentAmount}
+          rentalAmount={pending.rentalAmount}
+          promptPayTarget={process.env.NEXT_PUBLIC_PROMPTPAY_ACCOUNT || "0000000000"}
+          contactName={pending.contactName}
+        />
+      );
+    }
+  }
 
   return (
     <BookingFlow

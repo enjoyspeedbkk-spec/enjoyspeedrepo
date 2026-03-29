@@ -158,9 +158,44 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
   // Test mode state — set when admin email is verified
   const [isTestMode, setIsTestMode] = useState(false);
 
+  // Booking state persistence
+  const BOOKING_DRAFT_KEY = "enjoyspeed_booking_draft";
+  const [draftRestored, setDraftRestored] = useState(false);
+
   // Slot availability for selected date
   const [bookedSlotIds, setBookedSlotIds] = useState<Set<string>>(new Set());
   const [loadingSlots, setLoadingSlots] = useState(false);
+
+  // Restore booking draft from sessionStorage on mount
+  useEffect(() => {
+    if (draftRestored) return;
+    setDraftRestored(true);
+
+    try {
+      const saved = sessionStorage.getItem(BOOKING_DRAFT_KEY);
+      if (!saved) return;
+
+      const draft = JSON.parse(saved);
+      // Expire drafts older than 2 hours
+      if (Date.now() - draft.savedAt > 2 * 60 * 60 * 1000) {
+        sessionStorage.removeItem(BOOKING_DRAFT_KEY);
+        return;
+      }
+
+      if (draft.selectedDate) setSelectedDate(draft.selectedDate);
+      if (draft.selectedSlot) setSelectedSlot(draft.selectedSlot);
+      if (draft.selectedPackage) setSelectedPackage(draft.selectedPackage);
+      if (draft.riderCount) setRiderCount(draft.riderCount);
+      if (draft.riders?.length) setRiders(draft.riders);
+      if (draft.contactName && !contactName) setContactName(draft.contactName);
+      if (draft.contactPhone) setContactPhone(draft.contactPhone);
+      if (draft.contactEmail && !contactEmail) setContactEmail(draft.contactEmail);
+      if (draft.waiverAccepted) setWaiverAccepted(draft.waiverAccepted);
+      if (draft.currentStep > 0) setCurrentStep(draft.currentStep);
+    } catch {
+      // Invalid draft — ignore
+    }
+  }, []); // empty deps — run once on mount
 
   // LINE LIFF integration — auto-populate if opened from LINE
   const liff = useLiff();
@@ -236,6 +271,45 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
     const stepLabel = stepKey ? t(stepKey) : "";
     document.title = `${stepLabel} — Book a Ride | En-Joy Speed`;
   }, [currentStep, t]);
+
+  // Save booking draft to sessionStorage whenever relevant state changes
+  useEffect(() => {
+    if (completedBooking) {
+      sessionStorage.removeItem(BOOKING_DRAFT_KEY);
+      return;
+    }
+    // Don't save if nothing selected yet or draft hasn't been restored
+    if (!draftRestored || (!selectedDate && !selectedPackage)) return;
+
+    const draft = {
+      selectedDate,
+      selectedSlot,
+      selectedPackage,
+      riderCount,
+      riders: riders.slice(0, riderCount),
+      contactName,
+      contactPhone,
+      contactEmail,
+      waiverAccepted,
+      currentStep,
+      savedAt: Date.now(),
+    };
+    sessionStorage.setItem(BOOKING_DRAFT_KEY, JSON.stringify(draft));
+  }, [
+    selectedDate,
+    selectedSlot,
+    selectedPackage,
+    riderCount,
+    riders,
+    contactName,
+    contactPhone,
+    contactEmail,
+    waiverAccepted,
+    currentStep,
+    completedBooking,
+    draftRestored,
+    BOOKING_DRAFT_KEY,
+  ]);
 
   // Fetch booked slots when selected date changes
   useEffect(() => {

@@ -181,7 +181,7 @@ export default function PrivacyPolicyPage() {
             <p>
               If you have questions about this privacy policy or your data,
               contact us through our LINE Official Account (@enjoyspeed) or by
-              email at support@enjoyspeed.com.
+              email at enjoyspeed.bkk@gmail.com.
             </p>
           </section>
         </div>

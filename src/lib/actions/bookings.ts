@@ -50,6 +50,46 @@ export interface PaymentSummary {
   rain_credit_expires_at: string | null;
 }
 
+/**
+ * Check if the user has a recent pending (unpaid) booking.
+ * Returns the booking ID and payment amount so the booking page
+ * can redirect to payment instead of starting a new booking.
+ */
+export async function getPendingBooking(): Promise<{
+  bookingId: string;
+  paymentAmount: number;
+  rentalAmount: number;
+  contactName: string;
+} | null> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const admin = createAdminClient();
+
+  // Find the most recent pending booking (created within last 30 min)
+  const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+
+  const { data: booking } = await admin
+    .from("bookings")
+    .select("id, ride_total, rental_total, contact_name, created_at")
+    .eq("user_id", user.id)
+    .eq("status", "pending")
+    .gte("created_at", thirtyMinAgo)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!booking) return null;
+
+  return {
+    bookingId: booking.id,
+    paymentAmount: booking.ride_total,
+    rentalAmount: booking.rental_total || 0,
+    contactName: booking.contact_name,
+  };
+}
+
 export async function getUserBookings(): Promise<{
   upcoming: BookingWithDetails[];
   completed: BookingWithDetails[];
