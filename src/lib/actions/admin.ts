@@ -476,6 +476,12 @@ export async function updateSiteConfig(
     })
     .eq("key", key);
 
+  if (!error) {
+    revalidatePath("/admin/settings");
+    revalidatePath("/");
+    revalidatePath("/booking");
+    revalidatePath("/about");
+  }
   return { success: !error };
 }
 
@@ -512,6 +518,10 @@ export async function createPackage(
 ): Promise<{ success: boolean }> {
   const { admin } = await requireAdmin();
   const { error } = await admin.from("ride_packages_config").insert(pkg);
+  if (!error) {
+    revalidatePath("/admin/settings");
+    revalidatePath("/booking");
+  }
   return { success: !error };
 }
 
@@ -582,6 +592,10 @@ export async function updateTimeSlot(
     .from("time_slots_config")
     .update(updates)
     .eq("id", id);
+  if (!error) {
+    revalidatePath("/admin/settings");
+    revalidatePath("/booking");
+  }
   return { success: !error };
 }
 
@@ -634,6 +648,10 @@ export async function updateStarterKitItem(
     .from("starter_kit_config")
     .update(updates)
     .eq("id", id);
+  if (!error) {
+    revalidatePath("/admin/settings");
+    revalidatePath("/about");
+  }
   return { success: !error };
 }
 
@@ -642,6 +660,10 @@ export async function createStarterKitItem(
 ): Promise<{ success: boolean }> {
   const { admin } = await requireAdmin();
   const { error } = await admin.from("starter_kit_config").insert(item);
+  if (!error) {
+    revalidatePath("/admin/settings");
+    revalidatePath("/about");
+  }
   return { success: !error };
 }
 
@@ -667,6 +689,10 @@ export async function updateStaffMember(
     .from("staff_members")
     .update(updates)
     .eq("id", id);
+  if (!error) {
+    revalidatePath("/admin/settings");
+    revalidatePath("/about");
+  }
   return { success: !error };
 }
 
@@ -675,6 +701,10 @@ export async function createStaffMember(
 ): Promise<{ success: boolean }> {
   const { admin } = await requireAdmin();
   const { error } = await admin.from("staff_members").insert(member);
+  if (!error) {
+    revalidatePath("/admin/settings");
+    revalidatePath("/about");
+  }
   return { success: !error };
 }
 
@@ -699,6 +729,10 @@ export async function updatePromoCode(
     .from("promo_codes")
     .update(updates)
     .eq("id", id);
+  if (!error) {
+    revalidatePath("/admin/settings");
+    revalidatePath("/booking");
+  }
   return { success: !error };
 }
 
@@ -707,6 +741,10 @@ export async function createPromoCode(
 ): Promise<{ success: boolean }> {
   const { admin } = await requireAdmin();
   const { error } = await admin.from("promo_codes").insert(code);
+  if (!error) {
+    revalidatePath("/admin/settings");
+    revalidatePath("/booking");
+  }
   return { success: !error };
 }
 
@@ -784,6 +822,10 @@ export async function deleteBlackoutDate(
     .from("blackout_dates")
     .delete()
     .eq("id", id);
+  if (!error) {
+    revalidatePath("/admin/slots");
+    revalidatePath("/booking");
+  }
   return { success: !error };
 }
 

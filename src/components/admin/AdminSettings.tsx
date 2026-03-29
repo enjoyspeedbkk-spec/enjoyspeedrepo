@@ -10,6 +10,7 @@ import {
   Gift,
   UserCog,
   Tag,
+  Megaphone,
   Save,
   Plus,
   Trash2,
@@ -47,6 +48,7 @@ import {
 import { Shield } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { AdminPromotions } from "@/components/admin/AdminPromotions";
 
 interface SectionProps {
   id: string;
@@ -61,6 +63,7 @@ const SECTIONS: SectionProps[] = [
   { id: "kit", label: "Pro-pack", icon: Gift },
   { id: "staff", label: "Staff Members", icon: UserCog },
   { id: "promos", label: "Promo Codes", icon: Tag },
+  { id: "promotions", label: "Promotions", icon: Megaphone },
   { id: "access", label: "Admin Access", icon: Shield },
 ];
 
@@ -512,127 +515,116 @@ export function AdminSettings({
   // BIKE RENTALS — each bike editable independently
   // =============================================
   const BikeRentalsSection = () => {
-    const [editingBikeId, setEditingBikeId] = useState<string | null>(null);
-
     return (
       <div className="space-y-3">
         {localBikes.map((bike) => {
-          const isEditing = editingBikeId === bike.id;
           const original = bikeRentals.find((b) => b.id === bike.id);
           const hasChanges = original && JSON.stringify(original) !== JSON.stringify(bike);
           return (
-            <Card key={bike.id} padding="sm">
-              <div className="p-3">
-                {isEditing ? (
-                  <div className="space-y-4">
-                    {/* Price — prominent at top */}
-                    <div className="p-3 rounded-xl bg-accent/5 border border-accent/15">
-                      <Field
-                        label="💰 Price (THB)"
-                        type="number"
-                        value={bike.price}
-                        onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, price: Number(v) } : b))}
-                      />
+            <Card key={bike.id} padding="sm" className={!bike.is_active ? "opacity-50" : ""}>
+              <div className="p-4 space-y-3">
+                {/* Header row: icon, name, price, active toggle, delete */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-accent/8 border border-accent/10">
+                      <Bike className="h-4 w-4 text-accent" />
                     </div>
-
-                    {/* Name & Type */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Field
-                        label="Display Name"
-                        value={bike.name}
-                        onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, name: v } : b))}
-                      />
-                      <Field
-                        label="Type Key"
-                        value={bike.type}
-                        onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, type: v } : b))}
-                      />
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 pt-1 border-t border-sand/30">
-                      <Button
-                        size="sm"
-                        onClick={async () => {
-                          setSaving(bike.id);
-                          setError(null);
-                          const result = await updateBikeRental(bike.id, { type: bike.type, name: bike.name, price: bike.price });
-                          setSaving(null);
-                          if (result.success) {
-                            showSaved(bike.id);
-                            setEditingBikeId(null);
-                            toast.success("Bike rental saved successfully");
-                          } else {
-                            toast.error("Failed to save bike rental. Please try again.");
-                          }
-                        }}
-                        disabled={saving === bike.id || !hasChanges}
-                      >
-                        <Save className="h-3 w-3" />
-                        {saving === bike.id ? "Saving..." : "Save"}
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => {
-                        setEditingBikeId(null);
-                        if (original) setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? original : b));
-                      }}>
-                        Cancel
-                      </Button>
-                      {hasChanges && <span className="text-xs text-accent ml-1">Unsaved changes</span>}
-                      <button
-                        className="ml-auto p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                        title="Delete bike"
-                        onClick={() => {
-                          setConfirmDialog({
-                            open: true,
-                            title: "Delete Bike Rental",
-                            description: `Delete "${bike.name}"?`,
-                            detail: "This cannot be undone.",
-                            variant: "danger",
-                            onConfirm: async () => {
-                              setSaving(bike.id);
-                              const result = await deleteBikeRental(bike.id);
-                              setSaving(null);
-                              if (result.success) {
-                                setLocalBikes((prev) => prev.filter((b) => b.id !== bike.id));
-                                setEditingBikeId(null);
-                                toast.success("Bike rental deleted successfully");
-                              } else {
-                                toast.error("Failed to delete bike rental. Please try again.");
-                              }
-                            },
-                          });
-                        }}
-                        disabled={saving === bike.id}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                    <div>
+                      <span className="font-semibold text-sm">{bike.name || bike.type}</span>
+                      <span className="text-xs text-ink-muted ml-2">({bike.type})</span>
+                      {saved === bike.id && <CheckCircle2 className="h-4 w-4 text-success inline ml-2" />}
                     </div>
                   </div>
-                ) : (
-                  <div
-                    className="flex items-center justify-between cursor-pointer group"
-                    onClick={() => setEditingBikeId(bike.id)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === "Enter" && setEditingBikeId(bike.id)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-accent/8 border border-accent/10">
-                        <Bike className="h-4 w-4 text-accent" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">{bike.name}</span>
-                          <span className="text-xs text-ink-muted">({bike.type})</span>
-                          {saved === bike.id && <CheckCircle2 className="h-4 w-4 text-success" />}
-                        </div>
-                        <span className="text-sm font-bold text-accent">{bike.price?.toLocaleString()} THB</span>
-                      </div>
-                    </div>
-                    <span className="flex items-center gap-1.5 text-xs font-medium text-ink-muted group-hover:text-accent transition-colors px-2 py-1 rounded-lg group-hover:bg-accent/5">
-                      <Edit3 className="h-3.5 w-3.5" />
-                      Edit
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, is_active: !b.is_active } : b))}
+                      className="text-xs text-ink-muted hover:text-ink transition-colors"
+                      title={bike.is_active ? "Disable" : "Enable"}
+                    >
+                      {bike.is_active ? "Active" : "Inactive"}
+                    </button>
+                    <button
+                      className="p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      title="Delete bike"
+                      onClick={() => {
+                        setConfirmDialog({
+                          open: true,
+                          title: "Delete Bike Rental",
+                          description: `Delete "${bike.name || bike.type}"?`,
+                          detail: "This cannot be undone.",
+                          variant: "danger",
+                          onConfirm: async () => {
+                            setSaving(bike.id);
+                            const result = await deleteBikeRental(bike.id);
+                            setSaving(null);
+                            if (result.success) {
+                              setLocalBikes((prev) => prev.filter((b) => b.id !== bike.id));
+                              toast.success("Bike rental deleted");
+                            } else {
+                              toast.error("Failed to delete");
+                            }
+                          },
+                        });
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Editable fields — always visible, no collapse */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Field
+                    label="Display Name"
+                    value={bike.name}
+                    onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, name: v } : b))}
+                  />
+                  <Field
+                    label="Type Key"
+                    value={bike.type}
+                    onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, type: v } : b))}
+                  />
+                  <Field
+                    label="Price (THB)"
+                    type="number"
+                    value={bike.price}
+                    onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, price: Number(v) } : b))}
+                  />
+                </div>
+                <Field
+                  label="Description"
+                  value={bike.description || ""}
+                  onChange={(v) => setLocalBikes((prev) => prev.map((b) => b.id === bike.id ? { ...b, description: v } : b))}
+                />
+
+                {/* Save button */}
+                {hasChanges && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        setSaving(bike.id);
+                        const result = await updateBikeRental(bike.id, {
+                          type: bike.type,
+                          name: bike.name,
+                          price: bike.price,
+                          description: bike.description,
+                          is_active: bike.is_active,
+                        });
+                        setSaving(null);
+                        if (result.success) {
+                          showSaved(bike.id);
+                          toast.success("Bike rental saved");
+                        } else {
+                          toast.error("Failed to save");
+                        }
+                      }}
+                      disabled={saving === bike.id}
+                    >
+                      <Save className="h-3 w-3" />
+                      {saving === bike.id ? "Saving..." : "Save Changes"}
+                    </Button>
+                    <span className="text-xs text-accent">Unsaved changes</span>
                   </div>
                 )}
               </div>
@@ -1356,6 +1348,7 @@ export function AdminSettings({
       <div style={{ display: activeSection === "kit" ? undefined : "none" }}>{StarterKitSection()}</div>
       <div style={{ display: activeSection === "staff" ? undefined : "none" }}>{StaffSection()}</div>
       <div style={{ display: activeSection === "promos" ? undefined : "none" }}>{PromoCodesSection()}</div>
+      <div style={{ display: activeSection === "promotions" ? undefined : "none" }}><AdminPromotions /></div>
       <div style={{ display: activeSection === "access" ? undefined : "none" }}>{AdminAccessSection()}</div>
 
       {confirmDialog && (

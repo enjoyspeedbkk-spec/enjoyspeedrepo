@@ -651,7 +651,9 @@
     "pendingBookingsTitle": "You have unpaid bookings",
     "pendingBookingDesc": "Complete your payment or start a new booking instead.",
     "resumePayment": "Resume Payment",
-    "startNewBooking": "Start New Booking"
+    "startNewBooking": "Start New Booking",
+    "promoOff": "off",
+    "promoApplied": "Promotion applied"
   },
   "payment": {
     "scanToPayQR": "Scan to Pay",

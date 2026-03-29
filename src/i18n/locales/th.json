@@ -647,7 +647,9 @@
     "pendingBookingsTitle": "คุณมีการจองที่ยังไม่ได้ชำระเงินหลายรายการ",
     "pendingBookingDesc": "ชำระเงินต่อ หรือเริ่มจองใหม่",
     "resumePayment": "ชำระเงินต่อ",
-    "startNewBooking": "จองใหม่"
+    "startNewBooking": "จองใหม่",
+    "promoOff": "ส่วนลด",
+    "promoApplied": "ใช้โปรโมชั่นแล้ว"
   },
   "payment": {
     "scanToPayQR": "สแกนเพื่อจ่ายเงิน",

@@ -92,6 +92,11 @@ function createEmptyRider(index: number): RiderInfo {
 }
 
 import type { PendingBookingInfo } from "@/lib/actions/bookings";
+import {
+  getActivePromotions,
+  calculatePromotionDiscount,
+  type ActivePromotion,
+} from "@/lib/actions/promotions";
 
 interface BookingFlowProps {
   userEmail?: string;
@@ -172,6 +177,9 @@ export function BookingFlow({ userEmail = "", userName = "", userId, pendingBook
   // Slot availability for selected date
   const [bookedSlotIds, setBookedSlotIds] = useState<Set<string>>(new Set());
   const [loadingSlots, setLoadingSlots] = useState(false);
+
+  // Active promotions for date range
+  const [promotions, setPromotions] = useState<ActivePromotion[]>([]);
 
   // Restore booking draft from sessionStorage on mount
   useEffect(() => {
@@ -369,18 +377,72 @@ export function BookingFlow({ userEmail = "", userName = "", userId, pendingBook
     return dates;
   }, []);
 
-  // Calculate total with per-rider bike preferences
+  // Fetch active promotions for the 30-day date range
+  useEffect(() => {
+    if (availableDates.length === 0) return;
+    const from = availableDates[0].toISOString().split("T")[0];
+    const to = availableDates[availableDates.length - 1].toISOString().split("T")[0];
+    getActivePromotions(from, to).then(setPromotions).catch(() => {});
+  }, [availableDates]);
+
+  // Helper: get promotions applicable to a specific date
+  const getPromosForDate = useCallback(
+    (dateStr: string) =>
+      promotions.filter((p) => p.starts_on <= dateStr && p.ends_on >= dateStr),
+    [promotions]
+  );
+
+  // Best applicable promotion for current selection
+  const activePromo = useMemo(() => {
+    if (!selectedDate || !selectedPackage || promotions.length === 0) return null;
+    const datePromos = getPromosForDate(selectedDate);
+    const pkg = RIDE_PACKAGES.find((p) => p.type === selectedPackage);
+    if (!pkg || datePromos.length === 0) return null;
+
+    // Filter by package + rider count
+    const applicable = datePromos.filter((p) => {
+      if (p.applicable_packages && !p.applicable_packages.includes(selectedPackage)) return false;
+      if (p.min_riders && riderCount < p.min_riders) return false;
+      return true;
+    });
+    if (applicable.length === 0) return null;
+
+    // Pick the one with the highest discount
+    return applicable.reduce((best, p) => {
+      const bestVal =
+        best.discount_type === "percentage"
+          ? pkg.pricePerPerson * (best.discount_value / 100)
+          : best.discount_value;
+      const pVal =
+        p.discount_type === "percentage"
+          ? pkg.pricePerPerson * (p.discount_value / 100)
+          : p.discount_value;
+      return pVal > bestVal ? p : best;
+    });
+  }, [selectedDate, selectedPackage, riderCount, promotions, getPromosForDate]);
+
+  // Discounted price per person (if promotion applies)
+  const promoDiscount = useMemo(() => {
+    if (!activePromo || !activePackage) return null;
+    return calculatePromotionDiscount(activePackage.pricePerPerson, activePromo);
+  }, [activePromo, activePackage]);
+
+  // Calculate total with per-rider bike preferences (promo-aware)
+  const effectivePricePerPerson = promoDiscount
+    ? promoDiscount.discountedPrice
+    : activePackage?.pricePerPerson ?? 0;
+
   const totalPrice = useMemo(() => {
     if (!activePackage) return 0;
-    const rideTotal = activePackage.pricePerPerson * riderCount;
+    const rideTotal = effectivePricePerPerson * riderCount;
     const rentalTotal = riders.slice(0, riderCount).reduce((sum, rider) => {
       return sum + BIKE_RENTAL_PRICES[rider.bikePreference || "hybrid"];
     }, 0);
     return rideTotal + rentalTotal;
-  }, [activePackage, riderCount, riders]);
+  }, [activePackage, effectivePricePerPerson, riderCount, riders]);
 
   const rideSubtotal = activePackage
-    ? activePackage.pricePerPerson * riderCount
+    ? effectivePricePerPerson * riderCount
     : 0;
   const rentalSubtotal = riders.slice(0, riderCount).reduce((sum, rider) => {
     return sum + BIKE_RENTAL_PRICES[rider.bikePreference || "hybrid"];
@@ -753,18 +815,31 @@ export function BookingFlow({ userEmail = "", userName = "", userId, pendingBook
                         const month = date.toLocaleDateString(dateLocale, {
                           month: "short",
                         });
+                        const datePromos = getPromosForDate(dateStr);
+                        const hasPromo = datePromos.length > 0;
+                        const topPromo = datePromos[0];
 
                         return (
                           <button
                             key={dateStr}
                             onClick={() => setSelectedDate(dateStr)}
-                            className={`flex flex-col items-center py-3 px-2 rounded-lg border-2 transition-all duration-200 flex-shrink-0 snap-start ${
+                            className={`relative flex flex-col items-center py-3 px-2 rounded-lg border-2 transition-all duration-200 flex-shrink-0 snap-start ${
                               isSelected
                                 ? "border-ink bg-ink text-cream shadow-md"
+                                : hasPromo
+                                ? "border-amber-300 bg-amber-50 hover:border-amber-400 hover:shadow-sm"
                                 : "border-sand/60 bg-surface hover:border-ink/20 hover:shadow-sm"
                             }`}
                             style={{ width: "70px" }}
                           >
+                            {hasPromo && (
+                              <span
+                                className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-px rounded-full text-[8px] font-bold text-white uppercase tracking-wide whitespace-nowrap"
+                                style={{ backgroundColor: topPromo.badge_color }}
+                              >
+                                {topPromo.badge_label}
+                              </span>
+                            )}
                             <span
                               className={`text-xs font-medium ${
                                 isSelected ? "text-cream/90" : "text-ink-muted"
@@ -801,17 +876,30 @@ export function BookingFlow({ userEmail = "", userName = "", userId, pendingBook
                       const month = date.toLocaleDateString(dateLocale, {
                         month: "short",
                       });
+                      const datePromos = getPromosForDate(dateStr);
+                      const hasPromo = datePromos.length > 0;
+                      const topPromo = datePromos[0];
 
                       return (
                         <button
                           key={dateStr}
                           onClick={() => setSelectedDate(dateStr)}
-                          className={`flex flex-col items-center py-4 px-3 rounded-xl border-2 transition-all duration-200 ${
+                          className={`relative flex flex-col items-center py-4 px-3 rounded-xl border-2 transition-all duration-200 ${
                             isSelected
                               ? "border-ink bg-ink text-cream shadow-md scale-[1.02]"
+                              : hasPromo
+                              ? "border-amber-300 bg-amber-50 hover:border-amber-400 hover:shadow-sm ring-1 ring-amber-200"
                               : "border-sand/60 bg-surface hover:border-ink/20 hover:shadow-sm"
                           }`}
                         >
+                          {hasPromo && (
+                            <span
+                              className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[9px] font-bold text-white uppercase tracking-wide whitespace-nowrap shadow-sm"
+                              style={{ backgroundColor: topPromo.badge_color }}
+                            >
+                              {topPromo.badge_label}
+                            </span>
+                          )}
                           <span
                             className={`text-xs font-medium ${
                               isSelected ? "text-cream/90" : "text-ink-muted"
@@ -836,6 +924,39 @@ export function BookingFlow({ userEmail = "", userName = "", userId, pendingBook
                   <p className="mt-3 text-xs text-ink-muted text-center">
                     {t("booking.availabilityNote")}
                   </p>
+
+                  {/* Promotion banner when a promoted date is selected */}
+                  {selectedDate && getPromosForDate(selectedDate).length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-4 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200"
+                    >
+                      {getPromosForDate(selectedDate).map((promo) => (
+                        <div key={promo.id} className="flex items-start gap-3">
+                          <span
+                            className="mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold text-white uppercase tracking-wide flex-shrink-0"
+                            style={{ backgroundColor: promo.badge_color }}
+                          >
+                            {promo.badge_label}
+                          </span>
+                          <div>
+                            <p className="text-sm font-semibold text-ink">
+                              {locale === "th" && promo.name_th ? promo.name_th : promo.name}
+                            </p>
+                            <p className="text-xs text-ink-muted mt-0.5">
+                              {locale === "th" && promo.description_th
+                                ? promo.description_th
+                                : promo.description ||
+                                  (promo.discount_type === "percentage"
+                                    ? `${promo.discount_value}% ${t("booking.promoOff")}`
+                                    : `${promo.discount_value.toLocaleString()} THB ${t("booking.promoOff")}`)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
                 </div>
               )}
 
@@ -1743,14 +1864,45 @@ export function BookingFlow({ userEmail = "", userName = "", userId, pendingBook
 
                         {/* Price breakdown */}
                         <div className="pt-2 space-y-2">
+                          {/* Original price line (with strikethrough if promo) */}
                           <div className="flex justify-between text-sm">
                             <span className="text-ink-muted">
                               {t("booking.rideBreakdown", { n: String(riderCount), price: activePackage.pricePerPerson.toLocaleString() })}
                             </span>
-                            <span className="font-medium">
-                              <AnimatedNumber value={rideSubtotal} format="currency" /> THB
+                            <span className={`font-medium ${promoDiscount ? "line-through text-ink-muted/50" : ""}`}>
+                              {promoDiscount
+                                ? <>{(activePackage.pricePerPerson * riderCount).toLocaleString()} THB</>
+                                : <><AnimatedNumber value={rideSubtotal} format="currency" /> THB</>
+                              }
                             </span>
                           </div>
+                          {/* Promo discount line */}
+                          {promoDiscount && activePromo && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-success font-medium flex items-center gap-1.5">
+                                <span
+                                  className="px-1.5 py-px rounded text-[9px] font-bold text-white uppercase"
+                                  style={{ backgroundColor: activePromo.badge_color }}
+                                >
+                                  {activePromo.badge_label}
+                                </span>
+                                {locale === "th" && activePromo.name_th ? activePromo.name_th : activePromo.name}
+                              </span>
+                              <span className="font-semibold text-success">
+                                −{(promoDiscount.savedAmount * riderCount).toLocaleString()} THB
+                              </span>
+                            </div>
+                          )}
+                          {promoDiscount && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-ink-muted">
+                                {t("booking.rideBreakdown", { n: String(riderCount), price: effectivePricePerPerson.toLocaleString() })}
+                              </span>
+                              <span className="font-bold text-success">
+                                <AnimatedNumber value={rideSubtotal} format="currency" /> THB
+                              </span>
+                            </div>
+                          )}
                           {rentalSubtotal > 0 && (
                             <div className="flex justify-between text-sm">
                               <span className="text-ink-muted">
