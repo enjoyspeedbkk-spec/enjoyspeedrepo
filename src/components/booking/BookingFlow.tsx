@@ -91,13 +91,22 @@ function createEmptyRider(index: number): RiderInfo {
   };
 }
 
+interface PendingBookingInfo {
+  bookingId: string;
+  paymentAmount: number;
+  rentalAmount: number;
+  contactName: string;
+  createdAt: string;
+}
+
 interface BookingFlowProps {
   userEmail?: string;
   userName?: string;
   userId?: string; // undefined = guest user (book-first flow)
+  pendingBooking?: PendingBookingInfo | null;
 }
 
-export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFlowProps) {
+export function BookingFlow({ userEmail = "", userName = "", userId, pendingBooking }: BookingFlowProps) {
   const { t, locale } = useLanguage();
   const dict = messages[locale] as Record<string, Record<string, unknown>>;
   const translatedStarterKit = (dict.booking?.starterKitItems as string[]) ?? STARTER_KIT;
@@ -157,6 +166,10 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
 
   // Test mode state — set when admin email is verified
   const [isTestMode, setIsTestMode] = useState(false);
+
+  // Pending booking — user can choose to resume payment or start fresh
+  const [showPendingResume, setShowPendingResume] = useState(!!pendingBooking);
+  const [resumingPayment, setResumingPayment] = useState(false);
 
   // Booking state persistence
   const BOOKING_DRAFT_KEY = "enjoyspeed_booking_draft";
@@ -542,6 +555,20 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
     );
   }
 
+  // If user chose to resume their pending booking payment
+  if (resumingPayment && pendingBooking) {
+    return (
+      <PaymentPromptPay
+        bookingId={pendingBooking.bookingId}
+        amount={pendingBooking.paymentAmount}
+        rentalAmount={pendingBooking.rentalAmount}
+        promptPayTarget={process.env.NEXT_PUBLIC_PROMPTPAY_ACCOUNT || "0000000000"}
+        contactName={pendingBooking.contactName}
+        createdAt={pendingBooking.createdAt}
+      />
+    );
+  }
+
   return (
     <section className="min-h-screen pt-24 pb-16 bg-cream">
       <div className="mx-auto max-w-4xl px-6 lg:px-8">
@@ -558,6 +585,43 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
               <p className="text-xs text-warning/80 mt-0.5">{t("booking.testModeExpiry")}</p>
             </div>
             <Badge variant="warning">TEST</Badge>
+          </motion.div>
+        )}
+
+        {/* Pending Booking Banner — offer to resume payment or start new */}
+        {showPendingResume && pendingBooking && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-5 rounded-2xl bg-sky/10 border border-sky/30"
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <QrCode className="h-5 w-5 text-sky-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-semibold text-ink text-sm">
+                  {t("booking.pendingBookingTitle")}
+                </p>
+                <p className="text-xs text-ink-muted mt-1">
+                  {t("booking.pendingBookingDesc")}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={() => setResumingPayment(true)}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-light transition-colors"
+              >
+                <CreditCard className="h-4 w-4" />
+                {t("booking.resumePayment")}
+              </button>
+              <button
+                onClick={() => setShowPendingResume(false)}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-white border border-sand/60 px-5 py-2.5 text-sm font-semibold text-ink hover:bg-cream transition-colors"
+              >
+                <CalendarDays className="h-4 w-4" />
+                {t("booking.startNewBooking")}
+              </button>
+            </div>
           </motion.div>
         )}
 

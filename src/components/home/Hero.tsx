@@ -85,13 +85,13 @@ export function Hero({ videos = [] }: HeroProps) {
             setVideoError(true);
           });
         }
-        // After fade completes (400ms), pause old video and clear prevIndex
+        // After fade completes (900ms), pause old video and clear prevIndex
         if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
         fadeTimerRef.current = setTimeout(() => {
           const oldVideo = videoRefs.current[prev];
           if (oldVideo) oldVideo.pause();
           setPrevIndex(null);
-        }, 400);
+        }, 900);
         // Preload the one after next so it's ready
         const upcoming = (next + 1) % HERO_VIDEOS.length;
         preloadVideo(upcoming);
@@ -363,13 +363,12 @@ export function Hero({ videos = [] }: HeroProps) {
                     key={clip.src}
                     ref={(el) => { videoRefs.current[i] = el; }}
                     src={clip.src}
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-                      isActive || isPoster
-                        ? "opacity-100 z-[2]"
-                        : isPrev
-                        ? "opacity-100 z-10"
-                        : "opacity-0 z-0"
-                    }${isActive ? " z-20" : ""}`}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{
+                      opacity: isActive || isPoster ? 1 : isPrev ? 1 : 0,
+                      zIndex: isActive ? 20 : isPrev ? 10 : isPoster ? 2 : 0,
+                      transition: "opacity 800ms ease-in-out",
+                    }}
                     playsInline
                     controls={false}
                     muted={muted}

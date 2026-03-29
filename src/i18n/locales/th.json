@@ -642,7 +642,11 @@
     "estimatedTotal": "ยอดโดยประมาณ",
     "bikeRentalExtra": "+{amount} บาท ค่าเช่าจักรยาน",
     "testModeActive": "โหมดทดสอบเปิดใช้งาน",
-    "testModeExpiry": "การจองนี้จะหมดอายุใน 10 นาที"
+    "testModeExpiry": "การจองนี้จะหมดอายุใน 10 นาที",
+    "pendingBookingTitle": "คุณมีการจองที่ยังไม่ได้ชำระเงิน",
+    "pendingBookingDesc": "ชำระเงินต่อ หรือเริ่มจองใหม่",
+    "resumePayment": "ชำระเงินต่อ",
+    "startNewBooking": "จองใหม่"
   },
   "payment": {
     "scanToPayQR": "สแกนเพื่อจ่ายเงิน",

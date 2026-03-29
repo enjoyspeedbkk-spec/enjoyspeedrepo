@@ -646,7 +646,11 @@
     "estimatedTotal": "Estimated total",
     "bikeRentalExtra": "+{amount} THB bike rental",
     "testModeActive": "TEST MODE ACTIVE",
-    "testModeExpiry": "This booking will expire in 10 minutes"
+    "testModeExpiry": "This booking will expire in 10 minutes",
+    "pendingBookingTitle": "You have an unpaid booking",
+    "pendingBookingDesc": "Complete your payment or start a new booking instead.",
+    "resumePayment": "Resume Payment",
+    "startNewBooking": "Start New Booking"
   },
   "payment": {
     "scanToPayQR": "Scan to Pay",

@@ -26,6 +26,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
+import { SkylaneCarousel } from "@/components/about/SkylaneCarousel";
 
 export const metadata = {
   title: "About | En-Joy Speed",
@@ -276,6 +277,11 @@ export default async function AboutPage() {
                 <ChevronRight className="h-4 w-4" />
               </a>
             </div>
+          </div>
+
+          {/* Skylane Photo Carousel */}
+          <div className="mt-8">
+            <SkylaneCarousel />
           </div>
 
           {/* Google Maps Embed API — interactive place view */}
