@@ -247,16 +247,29 @@ export function AdminSettings({
             <Card key={pkg.id} padding="sm">
               <div className="p-3">
                 {isEditing ? (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      <Field label="Name" value={pkg.name} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, name: v } : p))} />
+                  <div className="space-y-4">
+                    {/* Price — most common edit, top and prominent */}
+                    <div className="p-3 rounded-xl bg-accent/5 border border-accent/15">
+                      <Field label="💰 Price per Person (THB)" type="number" value={pkg.price_per_person} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, price_per_person: Number(v) } : p))} />
+                    </div>
+
+                    {/* Names */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <Field label="Display Name" value={pkg.name} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, name: v } : p))} />
                       <Field label="Thai Name" value={pkg.name_th || ""} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, name_th: v } : p))} />
                       <Field label="URL Key" value={pkg.type} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, type: v.toLowerCase().replace(/\s+/g, "_") } : p))} />
-                      <Field label="Price/Person (THB)" type="number" value={pkg.price_per_person} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, price_per_person: Number(v) } : p))} />
+                    </div>
+
+                    {/* Capacity & Staff */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <Field label="Min Riders" type="number" value={pkg.min_riders} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, min_riders: Number(v) } : p))} />
                       <Field label="Max Riders" type="number" value={pkg.max_riders} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, max_riders: Number(v) } : p))} />
                       <Field label="Leaders" type="number" value={pkg.leaders_count} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, leaders_count: Number(v) } : p))} />
                       <Field label="Heroes" type="number" value={pkg.heroes_count} onChange={(v) => setLocalPackages((prev) => prev.map((p) => p.id === pkg.id ? { ...p, heroes_count: Number(v) } : p))} />
+                    </div>
+
+                    {/* Display options */}
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="text-xs text-ink-muted mb-1 block">Icon</label>
                         <select
@@ -342,25 +355,31 @@ export function AdminSettings({
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
+                  <div
+                    className="flex items-center justify-between cursor-pointer group"
+                    onClick={() => setEditingId(pkg.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === "Enter" && setEditingId(pkg.id)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-sm">{pkg.name}</span>
-                        <span className="text-xs text-ink-muted capitalize">({pkg.type})</span>
+                        {pkg.name_th && <span className="text-xs text-ink-muted">({pkg.name_th})</span>}
                         {pkg.is_popular && <Badge variant="accent">Popular</Badge>}
                         {pkg.is_active === false && <Badge variant="default">Inactive</Badge>}
                         {saved === pkg.id && <CheckCircle2 className="h-4 w-4 text-success" />}
                       </div>
-                      <p className="text-xs text-ink-muted mt-1">
-                        {pkg.price_per_person?.toLocaleString()} THB/person · {pkg.min_riders}–{pkg.max_riders} riders · {pkg.leaders_count} leader{pkg.leaders_count > 1 ? "s" : ""}, {pkg.heroes_count} hero{pkg.heroes_count !== 1 ? "es" : ""}
-                      </p>
+                      <div className="flex items-center gap-3 mt-1.5">
+                        <span className="text-sm font-bold text-accent">{pkg.price_per_person?.toLocaleString()} THB</span>
+                        <span className="text-xs text-ink-muted">{pkg.min_riders}–{pkg.max_riders} riders</span>
+                        <span className="text-xs text-ink-muted">{pkg.leaders_count}L / {pkg.heroes_count}H</span>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => setEditingId(pkg.id)}
-                      className="p-2 rounded-lg hover:bg-sand/30 transition-colors"
-                    >
-                      <Edit3 className="h-4 w-4 text-ink-muted" aria-hidden="true" /><span className="sr-only">Edit</span>
-                    </button>
+                    <span className="flex items-center gap-1.5 text-xs font-medium text-ink-muted group-hover:text-accent transition-colors px-2 py-1 rounded-lg group-hover:bg-accent/5">
+                      <Edit3 className="h-3.5 w-3.5" />
+                      Edit
+                    </span>
                   </div>
                 )}
               </div>
