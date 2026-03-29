@@ -637,6 +637,7 @@
     "promptPayNote": "คุณจะเห็น QR Code PromptPay สำหรับสแกนด้วยแอปธนาคาร",
     "verifyEmailNote": "เราจะยืนยันอีเมลของคุณ จากนั้นแสดง QR Code PromptPay",
     "confirmationVieLine": "ส่งการยืนยันทาง LINE {line}",
+    "followOnLine": "ติดตาม {line} บน LINE",
     "payNowPromptPay": "จ่ายเดี๋ยวนี้ (PromptPay)",
     "estimatedTotal": "ยอดโดยประมาณ",
     "bikeRentalExtra": "+{amount} บาท ค่าเช่าจักรยาน",

@@ -641,6 +641,7 @@
     "promptPayNote": "You'll see a PromptPay QR code to scan with your banking app.",
     "verifyEmailNote": "We'll verify your email, then show you a PromptPay QR code.",
     "confirmationVieLine": "Confirmation sent via LINE {line}.",
+    "followOnLine": "Follow {line} on LINE",
     "payNowPromptPay": "Pay now (PromptPay)",
     "estimatedTotal": "Estimated total",
     "bikeRentalExtra": "+{amount} THB bike rental",

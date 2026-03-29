@@ -46,6 +46,9 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient();
 
+    // Pre-load package/slot/bike config for dynamic auto-replies (cached 5 min)
+    await loadConfig(admin).catch(() => {/* non-blocking — falls back to hardcoded */});
+
     for (const event of events) {
       const lineUserId = event.source?.userId;
       if (!lineUserId) continue;
@@ -158,19 +161,99 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// ── Auto-reply logic ──────────────────────────
-// NOTE: Exact button labels are matched first (before keyword matching)
-// so button taps always get the right response regardless of phrasing.
+// ── Auto-reply logic (DYNAMIC — pulls from DB) ──────────────────────
+//
+// Pricing, package names, bike rental costs, and time slots are fetched
+// from Supabase so that when the admin changes a price in the dashboard,
+// LINE auto-replies update automatically — no code change needed.
 
-// LIFF URL keeps the user inside LINE's browser with full LIFF context,
-// so their LINE account is automatically linked after email verification.
-// Falls back to the regular booking URL if LIFF_ID isn't configured.
 const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID;
 const BOOK_URL = LIFF_ID
   ? `https://liff.line.me/${LIFF_ID}`
   : "https://www.enjoyspeedbkk.com/booking";
 
-const PRICING_REPLY = `💰 En-Joy Speed Pricing:\n\n🔹 Duo (2 riders): 2,500 THB/person\n🔹 Squad (3–5 riders): 2,100 THB/person\n🔹 Peloton (6–8 riders): 2,000 THB/person\n\n🚲 Bike rental (paid at track):\n• Hybrid: 420 THB\n• Road: 720 THB\n• Own bike: Free\n\n🎁 Every rider gets a free En-Joy Speed Pro-pack (padded shorts, energy gel, eco bag)!\n\n👉 Book now: ${BOOK_URL}`;
+// ── DB config cache (refreshes every 5 min) ────────────────────────
+interface PackageRow {
+  name: string;
+  min_riders: number;
+  max_riders: number;
+  price_per_person: number;
+  is_active: boolean;
+  sort_order: number;
+}
+interface BikeRow { bike_type: string; price: number; is_active: boolean }
+interface SlotRow { label: string; start_time: string; end_time: string; period: string; is_active: boolean; sort_order: number }
+
+let cachedPackages: PackageRow[] | null = null;
+let cachedBikes: BikeRow[] | null = null;
+let cachedSlots: SlotRow[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function loadConfig(admin: ReturnType<typeof createAdminClient>) {
+  if (cachedPackages && Date.now() - cacheTimestamp < CACHE_TTL) return;
+
+  const [pkgRes, bikeRes, slotRes] = await Promise.all([
+    admin.from("ride_packages_config").select("name, min_riders, max_riders, price_per_person, is_active, sort_order").order("sort_order"),
+    admin.from("bike_rentals_config").select("bike_type, price, is_active").order("sort_order"),
+    admin.from("time_slots_config").select("label, start_time, end_time, period, is_active, sort_order").order("sort_order"),
+  ]);
+
+  cachedPackages = (pkgRes.data as PackageRow[] | null) || null;
+  cachedBikes = (bikeRes.data as BikeRow[] | null) || null;
+  cachedSlots = (slotRes.data as SlotRow[] | null) || null;
+  cacheTimestamp = Date.now();
+}
+
+// ── Build dynamic replies ───────────────────────────────────────────
+
+function buildPricingReply(): string {
+  const pkgs = (cachedPackages || []).filter(p => p.is_active);
+  const bikes = (cachedBikes || []).filter(b => b.is_active);
+
+  // Fall back to hardcoded if DB returned nothing
+  if (pkgs.length === 0) {
+    return `💰 En-Joy Speed Pricing:\n\n🔹 Duo (2 riders): 2,500 THB/person\n🔹 Squad (3–5): 2,100 THB/person\n🔹 Peloton (6–8): 2,000 THB/person\n\n🚲 Bike rental (paid at track):\n• Hybrid: 420 THB\n• Road: 720 THB\n• Own bike: Free\n\n🎁 Every rider gets a free Pro-pack!\n\n👉 Book now: ${BOOK_URL}`;
+  }
+
+  const pkgLines = pkgs.map(p => {
+    const riders = p.min_riders === p.max_riders
+      ? `${p.min_riders} rider${p.min_riders > 1 ? "s" : ""}`
+      : `${p.min_riders}–${p.max_riders} riders`;
+    return `🔹 ${p.name} (${riders}): ${p.price_per_person.toLocaleString()} THB/person`;
+  }).join("\n");
+
+  const bikeLines = bikes.map(b => {
+    if (b.price === 0) return `• ${capitalize(b.bike_type)}: Free`;
+    return `• ${capitalize(b.bike_type)}: ${b.price.toLocaleString()} THB`;
+  }).join("\n");
+
+  return `💰 En-Joy Speed Pricing:\n\n${pkgLines}\n\n🚲 Bike rental (paid at track):\n${bikeLines}\n• Own bike: Free\n\n🎁 Every rider gets a free En-Joy Speed Pro-pack (padded shorts, energy gel, eco bag)!\n\n👉 Book now: ${BOOK_URL}`;
+}
+
+function buildTimeSlotsReply(): string {
+  const slots = (cachedSlots || []).filter(s => s.is_active);
+
+  if (slots.length === 0) {
+    return `⏰ We ride 5 time slots:\n\n🌅 Morning:\n• Early Bird — 06:15–08:15\n• Energy Booster — 06:30–08:30\n\n🌇 Evening:\n• Light Chaser — 16:15–18:15\n• Golden Hour — 16:45–18:45\n• Twilight Finish — 17:15–19:15\n\n👉 Book: ${BOOK_URL}`;
+  }
+
+  const morning = slots.filter(s => s.period === "morning");
+  const evening = slots.filter(s => s.period === "evening");
+
+  const fmt = (s: SlotRow) => `• ${s.label} — ${s.start_time}–${s.end_time}`;
+
+  let msg = `⏰ Our ride times:\n\n`;
+  if (morning.length) msg += `🌅 Morning:\n${morning.map(fmt).join("\n")}\n\n`;
+  if (evening.length) msg += `🌇 Evening:\n${evening.map(fmt).join("\n")}\n\n`;
+  msg += `👉 Book: ${BOOK_URL}`;
+
+  return msg;
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
 const LOCATION_REPLY = `📍 Meeting point: Skylane (Happy & Healthy Bike Lane)\nNear Suvarnabhumi Airport, Bangkok.\n\nMap: https://maps.app.goo.gl/ZexMhiLu1BcSdCiJ9\n\nWe'll send you exact directions 24 hours before your ride. Look for our team in orange vests at the Skylane entrance!`;
 
@@ -180,9 +263,8 @@ const BOOKING_REPLY = `🚴 Ready to ride?\n\nBook here (takes 2 minutes):\n👉
 
 function getAutoReply(text: string): string | null {
   // ── Exact button label matches (highest priority) ──────────────────
-  // These match the text sent when users tap rich menu / card buttons.
   if (text === "pricing & packages" || text === "ราคาและแพ็กเกจ") {
-    return PRICING_REPLY;
+    return buildPricingReply();
   }
   if (text === "location" || text === "ที่ตั้ง") {
     return LOCATION_REPLY;
@@ -203,7 +285,7 @@ function getAutoReply(text: string): string | null {
 
   // Pricing
   if (text.includes("price") || text.includes("pricing") || text.includes("package") || text.includes("cost") || text.includes("how much") || text.includes("ราคา") || text.includes("แพ็ค")) {
-    return PRICING_REPLY;
+    return buildPricingReply();
   }
 
   // Location / meeting point
@@ -213,7 +295,7 @@ function getAutoReply(text: string): string | null {
 
   // Time / schedule
   if (text.includes("time") || text.includes("schedule") || text.includes("slot") || text.includes("เวลา")) {
-    return `⏰ We ride 5 time slots:\n\n🌅 Morning:\n• Early Bird — 06:15–08:15\n• Energy Booster — 06:30–08:30\n\n🌇 Evening:\n• Light Chaser — 16:15–18:15\n• Golden Hour — 16:45–18:45\n• Twilight Finish — 17:15–19:15\n\n👉 Book: https://enjoyspeedbkk.com/booking`;
+    return buildTimeSlotsReply();
   }
 
   // Weather / rain policy
@@ -228,7 +310,7 @@ function getAutoReply(text: string): string | null {
 
   // Hello / greeting
   if (text === "hi" || text === "hello" || text === "hey" || text.includes("สวัสดี")) {
-    return `Hi there! 👋 Welcome to En-Joy Speed!\n\nHow can we help?\n\n💰 Pricing → type "price"\n📍 Location → type "where"\n⏰ Time slots → type "time"\n📋 What to bring → type "bring"\n🚴 Book a ride → https://enjoyspeedbkk.com/booking`;
+    return `Hi there! 👋 Welcome to En-Joy Speed!\n\nHow can we help?\n\n💰 Pricing → type "price"\n📍 Location → type "where"\n⏰ Time slots → type "time"\n📋 What to bring → type "bring"\n🚴 Book a ride → ${BOOK_URL}`;
   }
 
   // Status check

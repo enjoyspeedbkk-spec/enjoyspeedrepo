@@ -8,6 +8,9 @@ const BREVO_API_KEY = process.env.BREVO_API_KEY || "";
 const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@enjoyspeedbkk.com";
 const FROM_NAME = "En-Joy Speed";
 
+// Clickable LINE link for email templates (extracted to avoid colon issues in template ternaries)
+const LINE_LINK = `<a href="https://line.me/R/ti/p/@enjoyspeed" style="color: #06C755; text-decoration: underline;">@enjoyspeed</a>`;
+
 interface SendEmailOptions {
   to: string;
   subject: string;
@@ -97,7 +100,7 @@ const emailWrapper = (content: string) => `
     </div>
     <div class="footer">
       <p>En-Joy Speed · Skylane (Happy and Healthy Bike Lane), Suvarnabhumi</p>
-      <p>LINE: @enjoyspeed · enjoyspeed.bkk@gmail.com</p>
+      <p>LINE: ${LINE_LINK} · enjoyspeed.bkk@gmail.com</p>
     </div>
   </div>
 </body>
@@ -161,7 +164,7 @@ export function bookingConfirmationEmail(
     </div>
 
     <div class="divider"></div>
-    <p class="muted">${isTh ? "มีคำถาม? ตอบกลับอีเมลนี้หรือส่งข้อความหาเราบน LINE (@enjoyspeed)" : "Questions? Reply to this email or message us on LINE (@enjoyspeed)."}</p>
+    <p class="muted">${isTh ? "มีคำถาม? ตอบกลับอีเมลนี้หรือส่งข้อความหาเราบน LINE (${LINE_LINK})" : "Questions? Reply to this email or message us on LINE (${LINE_LINK})."}</p>
   `;
 
   return {
@@ -197,7 +200,7 @@ export function paymentPendingEmail(
     </div>
 
     <div class="divider"></div>
-    <p class="muted">${isTh ? "มีปัญหา? ส่งข้อความหาเราบน LINE (@enjoyspeed) หรือตอบกลับอีเมลนี้" : "Having trouble? Message us on LINE (@enjoyspeed) or reply to this email."}</p>
+    <p class="muted">${isTh ? "มีปัญหา? ส่งข้อความหาเราบน LINE (${LINE_LINK}) หรือตอบกลับอีเมลนี้" : "Having trouble? Message us on LINE (${LINE_LINK}) or reply to this email."}</p>
   `;
 
   return {
@@ -249,7 +252,7 @@ export function preRideReminderEmail(
     </div>
 
     <div class="divider"></div>
-    <p class="muted">${isTh ? "สภาพอากาศไม่แน่นอน? เราจะแจ้งคุณหากมีเปลี่ยนแปลง ตรวจสอบ LINE (@enjoyspeed) เพื่อรับการอัปเดตแบบเรียลไทม์" : "Weather looking uncertain? We'll notify you if there are any changes. Check LINE (@enjoyspeed) for real-time updates."}</p>
+    <p class="muted">${isTh ? "สภาพอากาศไม่แน่นอน? เราจะแจ้งคุณหากมีเปลี่ยนแปลง ตรวจสอบ LINE (${LINE_LINK}) เพื่อรับการอัปเดตแบบเรียลไทม์" : "Weather looking uncertain? We'll notify you if there are any changes. Check LINE (${LINE_LINK}) for real-time updates."}</p>
   `;
 
   return {
@@ -429,7 +432,7 @@ export function paymentRejectionEmail(booking: {
     <div class="divider"></div>
 
     <h2>Need Help?</h2>
-    <p>Reply to this email or message us on LINE (@enjoyspeed). We're here to help!</p>
+    <p>Reply to this email or message us on LINE (${LINE_LINK}). We're here to help!</p>
 
     <div class="divider"></div>
     <p class="muted">Your booking expires if payment isn't verified within 30 minutes. Please re-submit as soon as possible.</p>

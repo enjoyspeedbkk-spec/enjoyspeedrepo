@@ -1708,7 +1708,15 @@ export function BookingFlow({ userEmail = "", userName = "", userId }: BookingFl
                           {emailVerified
                             ? t("booking.promptPayNote")
                             : t("booking.verifyEmailNote")}
-                          {" "}{t("booking.confirmationVieLine", { line: LINE_OA })}
+                          {" "}
+                          <a
+                            href={`https://line.me/R/ti/p/${LINE_OA}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-0.5 text-[#06C755] font-semibold hover:underline"
+                          >
+                            {t("booking.followOnLine", { line: LINE_OA })}
+                          </a>
                         </p>
                       </>
                     )}
