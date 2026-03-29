@@ -208,48 +208,76 @@ export async function verifyEmailOtp(
       .update({ verified: true })
       .eq("id", otpRecord.id);
 
-    // 3. Look up existing user by email in auth
-    const { data: authUsers } = await admin.auth.admin.listUsers();
-    const existingAuth = authUsers?.users?.find(
-      (u) => u.email?.toLowerCase() === cleanEmail
-    );
-
+    // 3. Find or create the user by email
+    //
+    // Strategy: Try to CREATE first. If the email already exists Supabase
+    // returns an error, so we fall back to a paginated lookup.  This avoids
+    // the old bug where listUsers() only checked page 1 (50 users) and
+    // missed existing accounts, triggering a duplicate-email error.
     let resolvedUserId: string;
 
-    if (existingAuth) {
-      // Existing user — ensure profile exists and email_verified
-      await admin.from("profiles").upsert({
-        id: existingAuth.id,
-        full_name: contactName || existingAuth.user_metadata?.full_name || "Guest",
-        email_verified: true,
-        email_verified_at: new Date().toISOString(),
-      });
-      resolvedUserId = existingAuth.id;
-    } else {
-      // 4. Create new user
-      const { data: newUser, error: createError } = await admin.auth.admin.createUser({
+    const { data: newUser, error: createError } = await admin.auth.admin.createUser({
+      email: cleanEmail,
+      email_confirm: true,
+      user_metadata: {
+        full_name: contactName || "Guest",
         email: cleanEmail,
-        email_confirm: true,
-        user_metadata: {
-          full_name: contactName || "Guest",
-          email: cleanEmail,
-          signup_method: "email_otp",
-        },
-      });
+        signup_method: "email_otp",
+      },
+    });
 
-      if (createError || !newUser.user) {
-        console.error("User creation error:", createError);
-        return { success: false, error: "Could not create account. Please try again." };
-      }
-
-      // 5. Create profile
+    if (newUser?.user) {
+      // Brand-new user created
+      resolvedUserId = newUser.user.id;
       await admin.from("profiles").upsert({
-        id: newUser.user.id,
+        id: resolvedUserId,
         full_name: contactName || "Guest",
         email_verified: true,
         email_verified_at: new Date().toISOString(),
       });
-      resolvedUserId = newUser.user.id;
+    } else {
+      // User already exists — find them with paginated search
+      let existingAuth: { id: string; email?: string; user_metadata?: Record<string, unknown> } | null = null;
+      let page = 1;
+      const perPage = 100;
+
+      while (!existingAuth) {
+        const { data: authPage, error: listError } = await admin.auth.admin.listUsers({
+          page,
+          perPage,
+        });
+
+        if (listError || !authPage?.users?.length) break;
+
+        const found = authPage.users.find(
+          (u) => u.email?.toLowerCase() === cleanEmail
+        );
+
+        if (found) {
+          existingAuth = found;
+          break;
+        }
+
+        // If we got fewer than perPage, we've exhausted the list
+        if (authPage.users.length < perPage) break;
+        page++;
+      }
+
+      if (!existingAuth) {
+        console.error("User creation failed and lookup failed:", createError);
+        return {
+          success: false,
+          error: "Could not create account. Please try again.",
+        };
+      }
+
+      resolvedUserId = existingAuth.id;
+      await admin.from("profiles").upsert({
+        id: resolvedUserId,
+        full_name: contactName || existingAuth.user_metadata?.full_name || "Guest",
+        email_verified: true,
+        email_verified_at: new Date().toISOString(),
+      });
     }
 
     // 6. Generate a magic link so the client can establish a real session

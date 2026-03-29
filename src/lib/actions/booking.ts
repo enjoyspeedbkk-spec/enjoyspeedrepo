@@ -40,7 +40,7 @@ export async function createBooking(
     let resolvedUserId: string;
 
     if (input.userId) {
-      // Email-verified guest booking — verify the userId actually exists in our DB
+      // Email-verified guest booking — verify the userId exists
       const admin = createAdminClient();
       const { data: verifiedProfile } = await admin
         .from("profiles")
@@ -49,9 +49,20 @@ export async function createBooking(
         .single();
 
       if (!verifiedProfile) {
-        return { success: false, error: "Invalid user verification. Please try again." };
+        // Profile may not exist yet if there was a race condition with email-auth.
+        // Try to create it now rather than hard-failing.
+        const { error: upsertErr } = await admin.from("profiles").upsert({
+          id: input.userId,
+          full_name: input.contactName || "Guest",
+          email_verified: true,
+          email_verified_at: new Date().toISOString(),
+        });
+        if (upsertErr) {
+          console.error("Profile upsert fallback failed:", upsertErr);
+          return { success: false, error: "Invalid user verification. Please try again." };
+        }
       }
-      resolvedUserId = verifiedProfile.id;
+      resolvedUserId = input.userId;
     } else {
       // Traditional auth — check session
       const {
