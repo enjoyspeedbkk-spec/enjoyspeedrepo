@@ -53,5 +53,5 @@ CREATE POLICY "Anyone can read active promotions"
 CREATE POLICY "Admins can manage promotions"
   ON promotions FOR ALL
   USING (
-    auth.uid() IN (SELECT user_id FROM admin_access WHERE is_active = true)
+    public.is_admin()
   );

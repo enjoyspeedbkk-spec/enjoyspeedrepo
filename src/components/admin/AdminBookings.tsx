@@ -2,44 +2,54 @@
 
 import { useState } from "react";
 import {
-  CalendarDays,
   Search,
-  Filter,
-  Users,
   ChevronDown,
   CheckCircle2,
   Clock,
-  XCircle,
-  AlertCircle,
-  CreditCard,
   Bike,
   Phone,
   Mail,
-  Sparkles,
   Loader2,
+  CreditCard,
+  UserCheck,
+  ClipboardCheck,
+  Flag,
+  Ban,
+  EyeOff,
+  PartyPopper,
+  ArrowRight,
+  Send,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { updateBookingStatus } from "@/lib/actions/admin";
 import { TIME_SLOTS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 
+// ── Status pipeline: the "happy path" a booking travels through ──
+const STATUS_PIPELINE = [
+  { value: "pending", label: "Pending", shortLabel: "Pending", icon: Clock, color: "text-amber-600", bg: "bg-amber-50", ring: "ring-amber-200", activeBg: "bg-amber-500" },
+  { value: "confirmed", label: "Confirmed", shortLabel: "Paid", icon: CreditCard, color: "text-emerald-600", bg: "bg-emerald-50", ring: "ring-emerald-200", activeBg: "bg-emerald-500" },
+  { value: "rider_details", label: "Rider Details", shortLabel: "Details", icon: UserCheck, color: "text-sky-600", bg: "bg-sky-50", ring: "ring-sky-200", activeBg: "bg-sky-500" },
+  { value: "ready", label: "Ready to Ride", shortLabel: "Ready", icon: ClipboardCheck, color: "text-emerald-600", bg: "bg-emerald-50", ring: "ring-emerald-200", activeBg: "bg-emerald-500" },
+  { value: "completed", label: "Completed", shortLabel: "Done", icon: Flag, color: "text-violet-600", bg: "bg-violet-50", ring: "ring-violet-200", activeBg: "bg-violet-500" },
+] as const;
+
+const TERMINAL_STATUSES = [
+  { value: "cancelled", label: "Cancelled", icon: Ban, color: "text-red-500" },
+  { value: "no_show", label: "No Show", icon: EyeOff, color: "text-zinc-500" },
+] as const;
+
 const STATUS_OPTIONS = [
   { value: "all", label: "All" },
-  { value: "pending", label: "Payment Pending" },
-  { value: "confirmed", label: "Confirmed" },
-  { value: "rider_details", label: "Rider Details" },
-  { value: "ready", label: "Ready" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
-  { value: "no_show", label: "No Show" },
+  ...STATUS_PIPELINE.map((s) => ({ value: s.value, label: s.label })),
+  ...TERMINAL_STATUSES.map((s) => ({ value: s.value, label: s.label })),
 ];
 
 const STATUS_BADGES: Record<string, { variant: "success" | "warning" | "accent" | "default" | "sky"; label: string }> = {
-  pending: { variant: "warning", label: "Payment Pending" },
+  pending: { variant: "warning", label: "Pending" },
   confirmed: { variant: "success", label: "Confirmed" },
   rider_details: { variant: "sky", label: "Rider Details" },
   ready: { variant: "success", label: "Ready" },
@@ -61,6 +71,7 @@ export function AdminBookings({ initialBookings }: { initialBookings: any[] }) {
     bookingId: string;
     newStatus: string;
     contactName: string;
+    isFinal?: boolean;
   } | null>(null);
 
   const filtered = bookings.filter((b) => {
@@ -289,53 +300,179 @@ export function AdminBookings({ initialBookings }: { initialBookings: any[] }) {
                       </div>
                     )}
 
-                    {/* Status change */}
+                    {/* Status pipeline stepper */}
                     <div>
-                      <p className="text-xs font-semibold text-ink-muted mb-2">
-                        Change Status
+                      <p className="text-xs font-semibold text-ink-muted mb-3">
+                        Progress
                       </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {[
-                          "confirmed",
-                          "rider_details",
-                          "ready",
-                          "completed",
-                          "cancelled",
-                          "no_show",
-                        ].map((s) => {
-                          const isDestructive = s === "cancelled" || s === "no_show";
-                          const isUpdating = updating === booking.id;
-                          return (
-                            <button
-                              key={s}
-                              disabled={
-                                booking.status === s || updating === booking.id
-                              }
-                              onClick={() => {
-                                if (isDestructive) {
-                                  setConfirmDialog({
-                                    open: true,
-                                    bookingId: booking.id,
-                                    newStatus: s,
-                                    contactName: booking.contact_name,
-                                  });
-                                } else {
-                                  handleStatusChange(booking.id, s);
-                                }
-                              }}
-                              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                booking.status === s
-                                  ? "bg-ink text-cream"
-                                  : isDestructive
-                                    ? "bg-surface border border-error/30 text-error hover:bg-error/5 disabled:opacity-30"
-                                    : "bg-surface border border-sand/60 text-ink-muted hover:bg-sand/20 disabled:opacity-30"
-                              }`}
-                            >
-                              {isUpdating ? <><Loader2 className="h-3 w-3 animate-spin inline mr-1" /> {s.replace("_", " ")}</> : s.replace("_", " ")}
-                            </button>
-                          );
-                        })}
-                      </div>
+
+                      {/* Pipeline: visual step indicator */}
+                      {booking.status !== "cancelled" && booking.status !== "no_show" ? (
+                        <>
+                          <div className="flex items-center gap-0 mb-3">
+                            {STATUS_PIPELINE.map((step, i) => {
+                              const currentIdx = STATUS_PIPELINE.findIndex(s => s.value === booking.status);
+                              const isActive = step.value === booking.status;
+                              const isPast = i < currentIdx;
+                              const isNext = i === currentIdx + 1;
+                              const StepIcon = step.icon;
+                              const isUpdating = updating === booking.id;
+
+                              return (
+                                <div key={step.value} className="flex items-center flex-1 min-w-0">
+                                  {/* Step circle */}
+                                  <button
+                                    disabled={isActive || isPast || !isNext || isUpdating}
+                                    onClick={() => {
+                                      if (step.value === "completed") {
+                                        setConfirmDialog({
+                                          open: true,
+                                          bookingId: booking.id,
+                                          newStatus: "completed",
+                                          contactName: booking.contact_name,
+                                          isFinal: true,
+                                        });
+                                      } else {
+                                        handleStatusChange(booking.id, step.value);
+                                      }
+                                    }}
+                                    title={isNext ? `Advance to ${step.label}` : step.label}
+                                    className={`relative flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                                      isActive
+                                        ? `${step.activeBg} text-white shadow-md ring-2 ${step.ring} scale-110`
+                                        : isPast
+                                          ? "bg-emerald-500 text-white"
+                                          : isNext
+                                            ? `${step.bg} ${step.color} ring-2 ${step.ring} cursor-pointer hover:scale-110 hover:shadow-md`
+                                            : "bg-sand/30 text-ink-muted/40"
+                                    } disabled:cursor-default`}
+                                  >
+                                    {isUpdating && isNext ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : isPast ? (
+                                      <CheckCircle2 className="h-4 w-4" />
+                                    ) : (
+                                      <StepIcon className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                  {/* Connector line */}
+                                  {i < STATUS_PIPELINE.length - 1 && (
+                                    <div className={`flex-1 h-0.5 mx-1 rounded-full transition-colors ${
+                                      i < currentIdx ? "bg-emerald-400" : "bg-sand/40"
+                                    }`} />
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {/* Step labels */}
+                          <div className="flex items-start gap-0 mb-4">
+                            {STATUS_PIPELINE.map((step, i) => {
+                              const currentIdx = STATUS_PIPELINE.findIndex(s => s.value === booking.status);
+                              const isActive = step.value === booking.status;
+                              const isNext = i === currentIdx + 1;
+                              return (
+                                <div key={step.value} className="flex-1 min-w-0 text-center">
+                                  <span className={`text-[10px] leading-tight ${
+                                    isActive ? "font-bold text-ink" : isNext ? `font-semibold ${step.color}` : "text-ink-muted/50"
+                                  }`}>
+                                    {step.shortLabel}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Next action button — prominent CTA */}
+                          {(() => {
+                            const currentIdx = STATUS_PIPELINE.findIndex(s => s.value === booking.status);
+                            const nextStep = STATUS_PIPELINE[currentIdx + 1];
+                            if (!nextStep || booking.status === "completed") return null;
+                            const NextIcon = nextStep.icon;
+                            return (
+                              <button
+                                disabled={updating === booking.id}
+                                onClick={() => {
+                                  if (nextStep.value === "completed") {
+                                    setConfirmDialog({
+                                      open: true,
+                                      bookingId: booking.id,
+                                      newStatus: "completed",
+                                      contactName: booking.contact_name,
+                                      isFinal: true,
+                                    });
+                                  } else {
+                                    handleStatusChange(booking.id, nextStep.value);
+                                  }
+                                }}
+                                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-md active:scale-[0.98] disabled:opacity-50 ${nextStep.activeBg}`}
+                              >
+                                {updating === booking.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <NextIcon className="h-4 w-4" />
+                                    Advance to {nextStep.label}
+                                    <ArrowRight className="h-3.5 w-3.5 ml-auto" />
+                                  </>
+                                )}
+                              </button>
+                            );
+                          })()}
+
+                          {/* Terminal actions — less prominent, at bottom */}
+                          <div className="flex gap-2 mt-3 pt-3 border-t border-sand/30">
+                            {TERMINAL_STATUSES.map((ts) => {
+                              const TsIcon = ts.icon;
+                              return (
+                                <button
+                                  key={ts.value}
+                                  disabled={updating === booking.id}
+                                  onClick={() =>
+                                    setConfirmDialog({
+                                      open: true,
+                                      bookingId: booking.id,
+                                      newStatus: ts.value,
+                                      contactName: booking.contact_name,
+                                    })
+                                  }
+                                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-sand/40 ${ts.color} hover:bg-sand/10 transition-colors disabled:opacity-30`}
+                                >
+                                  <TsIcon className="h-3 w-3" />
+                                  {ts.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </>
+                      ) : (
+                        /* Terminal state — show badge and no pipeline */
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-sand/20">
+                          {booking.status === "cancelled" ? (
+                            <Ban className="h-5 w-5 text-red-500" />
+                          ) : (
+                            <EyeOff className="h-5 w-5 text-zinc-500" />
+                          )}
+                          <div>
+                            <p className="text-sm font-semibold">
+                              {booking.status === "cancelled" ? "Booking Cancelled" : "No Show"}
+                            </p>
+                            <p className="text-xs text-ink-muted">
+                              This booking has been finalized.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Completed state — show survey info */}
+                      {booking.status === "completed" && (
+                        <div className="flex items-center gap-3 mt-3 p-3 rounded-xl bg-violet-50 border border-violet-200">
+                          <Send className="h-4 w-4 text-violet-600 flex-shrink-0" />
+                          <p className="text-xs text-violet-700">
+                            Survey link was sent to the rider via LINE / email.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {booking.special_requests && (
@@ -359,11 +496,31 @@ export function AdminBookings({ initialBookings }: { initialBookings: any[] }) {
       {confirmDialog && (
         <ConfirmDialog
           open={confirmDialog.open}
-          title={`Mark as ${confirmDialog.newStatus.replace("_", " ")}?`}
-          description={`This will change ${confirmDialog.contactName}'s booking status to "${confirmDialog.newStatus.replace("_", " ")}".`}
-          detail={confirmDialog.newStatus === "cancelled" ? "The customer will need to rebook if this is reversed." : undefined}
-          variant="danger"
-          confirmLabel={confirmDialog.newStatus === "cancelled" ? "Cancel Booking" : "Mark No Show"}
+          title={
+            confirmDialog.isFinal
+              ? "Complete this booking?"
+              : `Mark as ${confirmDialog.newStatus.replace("_", " ")}?`
+          }
+          description={
+            confirmDialog.isFinal
+              ? `${confirmDialog.contactName}'s ride will be marked as completed. A feedback survey will be sent to the rider automatically.`
+              : `This will change ${confirmDialog.contactName}'s booking status to "${confirmDialog.newStatus.replace("_", " ")}".`
+          }
+          detail={
+            confirmDialog.isFinal
+              ? "This action can't be undone."
+              : confirmDialog.newStatus === "cancelled"
+                ? "The customer will need to rebook if this is reversed."
+                : undefined
+          }
+          variant={confirmDialog.isFinal ? "warning" : "danger"}
+          confirmLabel={
+            confirmDialog.isFinal
+              ? "Yes, Complete & Send Survey"
+              : confirmDialog.newStatus === "cancelled"
+                ? "Cancel Booking"
+                : "Mark No Show"
+          }
           onConfirm={() => {
             handleStatusChange(confirmDialog.bookingId, confirmDialog.newStatus);
             setConfirmDialog(null);

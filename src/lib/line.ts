@@ -153,10 +153,12 @@ export async function sendPostRideThankYou(
 ) {
   const isTh = booking.locale === "th";
 
+  const surveyUrl = `https://enjoyspeedbkk.com/survey?booking=${booking.bookingId}&name=${encodeURIComponent(booking.contactName)}`;
+
   await linePush(lineUserId, [
     {
       type: "text",
-      text: `🎉 ${isTh ? "ปั่นสนุกมาก!" : "Great Ride!"}\n\n${isTh ? "ขอบคุณที่ปั่นกับ En-Joy Speed" : "Thanks for riding with En-Joy Speed"}, ${booking.contactName}!\n\n${isTh ? "เราอยากรู้ว่ามันเป็นอย่างไร:" : "We'd love to hear how it went:"}\n👉 https://enjoyspeedbkk.com/bookings\n\n${isTh ? "ให้คะแนนอย่างรวดเร็ว — ช่วยเราปรับปรุงและช่วยผู้ปั่นคนอื่นค้นพบเรา" : "Leave a quick review — it helps us improve and helps other riders discover us."}\n\n${isTh ? "พบกันในการปั่นครั้งต่อไป! 🚴‍♂️" : "See you on the next ride! 🚴‍♂️"}`,
+      text: `🎉 ${isTh ? "ปั่นสนุกมาก!" : "Great Ride!"}\n\n${isTh ? "ขอบคุณที่ปั่นกับ En-Joy Speed" : "Thanks for riding with En-Joy Speed"}, ${booking.contactName}!\n\n${isTh ? "เราอยากรู้ว่ามันเป็นอย่างไร:" : "We'd love to hear how it went:"}\n👉 ${surveyUrl}\n\n${isTh ? "ให้คะแนนอย่างรวดเร็ว — ช่วยเราปรับปรุงและช่วยผู้ปั่นคนอื่นค้นพบเรา" : "Leave a quick review — it helps us improve and helps other riders discover us."}\n\n${isTh ? "พบกันในการปั่นครั้งต่อไป! 🚴‍♂️" : "See you on the next ride! 🚴‍♂️"}`,
     },
   ]);
 }

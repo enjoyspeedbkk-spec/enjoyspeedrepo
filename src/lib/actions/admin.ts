@@ -369,6 +369,9 @@ export async function updateBookingStatus(
     update.cancelled_at = new Date().toISOString();
     update.cancellation_reason = notes || "Admin cancelled";
   }
+  if (status === "completed") {
+    update.completed_at = new Date().toISOString();
+  }
 
   const { error } = await admin
     .from("bookings")
@@ -379,6 +382,29 @@ export async function updateBookingStatus(
     return { success: false, error: "Could not update booking" };
   }
 
+  // On completion, fire off survey notification (fire-and-forget)
+  if (status === "completed") {
+    try {
+      const { notifyPostRide } = await import("@/lib/notifications");
+      const { data: booking } = await admin
+        .from("bookings")
+        .select("user_id, contact_name, contact_email, locale")
+        .eq("id", bookingId)
+        .single();
+      if (booking?.user_id) {
+        notifyPostRide(booking.user_id, {
+          bookingId,
+          contactName: booking.contact_name || "Rider",
+          contactEmail: booking.contact_email,
+          locale: booking.locale,
+        }).catch(() => {});
+      }
+    } catch {
+      // Don't block status change if notification fails
+    }
+  }
+
+  revalidatePath("/admin");
   return { success: true };
 }
 

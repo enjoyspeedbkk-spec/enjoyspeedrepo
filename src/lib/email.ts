@@ -284,7 +284,7 @@ export function postRideEmail(
     </div>
 
     <div style="text-align: center; margin-top: 24px;">
-      <a href="https://enjoyspeedbkk.com/bookings" class="btn">${isTh ? "ให้คะแนน" : "Leave a Review"}</a>
+      <a href="https://enjoyspeedbkk.com/survey?booking=${booking.bookingId}&name=${encodeURIComponent(booking.contactName)}" class="btn">${isTh ? "ให้คะแนน" : "Leave a Review"}</a>
     </div>
 
     <div class="divider"></div>
