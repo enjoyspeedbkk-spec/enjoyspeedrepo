@@ -34,13 +34,14 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import {
-  RIDE_PACKAGES,
-  TIME_SLOTS,
-  BIKE_RENTAL_PRICES,
+  RIDE_PACKAGES as FALLBACK_PACKAGES,
+  TIME_SLOTS as FALLBACK_SLOTS,
+  BIKE_RENTAL_PRICES as FALLBACK_BIKE_PRICES,
   STARTER_KIT,
   READY_TO_RIDE,
   LINE_OA,
 } from "@/lib/constants";
+import type { LiveConfig } from "@/lib/actions/config";
 import type {
   GroupType,
   TimeSlotId,
@@ -103,13 +104,53 @@ interface BookingFlowProps {
   userName?: string;
   userId?: string; // undefined = guest user (book-first flow)
   pendingBookings?: PendingBookingInfo[];
+  liveConfig?: LiveConfig;
 }
 
-export function BookingFlow({ userEmail = "", userName = "", userId, pendingBookings = [] }: BookingFlowProps) {
+export function BookingFlow({ userEmail = "", userName = "", userId, pendingBookings = [], liveConfig }: BookingFlowProps) {
   const { t, locale } = useLanguage();
   const dict = messages[locale] as Record<string, Record<string, unknown>>;
   const translatedStarterKit = (dict.booking?.starterKitItems as string[]) ?? STARTER_KIT;
   const translatedReadyToRide = (dict.booking?.readyToRideItems as string[]) ?? READY_TO_RIDE;
+
+  // ── Live config from DB (with fallback to hardcoded constants) ──
+  const RIDE_PACKAGES = useMemo(() => {
+    if (liveConfig?.packages?.length) {
+      return liveConfig.packages.map((p) => ({
+        type: p.type as GroupType,
+        name: p.name,
+        nameKey: `packages.${p.type}.name`,
+        minRiders: p.minRiders,
+        maxRiders: p.maxRiders,
+        pricePerPerson: p.pricePerPerson,
+        leadersCount: p.leadersCount,
+        heroesCount: p.heroesCount,
+      }));
+    }
+    return FALLBACK_PACKAGES;
+  }, [liveConfig]);
+
+  const BIKE_RENTAL_PRICES: Record<string, number> = useMemo(() => {
+    if (liveConfig?.bikeRentalPrices && Object.keys(liveConfig.bikeRentalPrices).length > 0) {
+      return liveConfig.bikeRentalPrices;
+    }
+    return FALLBACK_BIKE_PRICES;
+  }, [liveConfig]);
+
+  const TIME_SLOTS = useMemo(() => {
+    if (liveConfig?.timeSlots?.length) {
+      return liveConfig.timeSlots.map((s) => ({
+        id: s.id as import("@/types").TimeSlotId,
+        label: s.label,
+        labelKey: `timeSlots.${s.id}.label`,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        period: s.period as "morning" | "evening",
+        overlaps: s.overlaps as import("@/types").TimeSlotId[],
+      }));
+    }
+    return FALLBACK_SLOTS;
+  }, [liveConfig]);
   const experienceOptions: { value: CyclingExperience; label: string; desc: string }[] = [
     { value: "beginner", label: t("booking.beginner"), desc: t("booking.firstTimeOrVeryFewRides") },
     { value: "intermediate", label: t("booking.intermediate"), desc: t("booking.rideOccasionally") },
@@ -119,13 +160,13 @@ export function BookingFlow({ userEmail = "", userName = "", userId, pendingBook
     {
       value: "hybrid" as BikePreference,
       label: t("booking.bikeOptionHybrid"),
-      price: "420 THB",
+      price: `${(BIKE_RENTAL_PRICES.hybrid ?? 420).toLocaleString()} THB`,
       desc: t("booking.bikeOptionHybridDesc"),
     },
     {
       value: "road" as BikePreference,
       label: t("booking.bikeOptionRoad"),
-      price: "720 THB",
+      price: `${(BIKE_RENTAL_PRICES.road ?? 720).toLocaleString()} THB`,
       desc: t("booking.bikeOptionRoadDesc"),
     },
     {

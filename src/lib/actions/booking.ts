@@ -2,7 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BIKE_RENTAL_PRICES, RIDE_PACKAGES, TIME_SLOTS } from "@/lib/constants";
+import { BIKE_RENTAL_PRICES as FALLBACK_BIKE_PRICES, RIDE_PACKAGES as FALLBACK_PACKAGES, TIME_SLOTS } from "@/lib/constants";
+import { getLivePackages, getLiveBikeRentalPrices } from "@/lib/actions/config";
 import { notifyBookingConfirmation } from "@/lib/notifications";
 import { getTranslation } from "@/lib/i18n";
 import type { RiderInfo, GroupType, TimeSlotId } from "@/types";
@@ -79,8 +80,12 @@ export async function createBooking(
       resolvedUserId = user.id;
     }
 
-    // 2. Validate the package
-    const pkg = RIDE_PACKAGES.find((p) => p.type === input.groupType);
+    // 2. Validate the package — fetch LIVE prices from DB
+    const [livePackages, liveBikePrices] = await Promise.all([
+      getLivePackages(),
+      getLiveBikeRentalPrices(),
+    ]);
+    const pkg = livePackages.find((p) => p.type === input.groupType);
     if (!pkg) {
       return { success: false, error: "Invalid ride package." };
     }
@@ -102,12 +107,12 @@ export async function createBooking(
       };
     }
 
-    // 3. Calculate pricing
+    // 3. Calculate pricing — from live DB values
     const pricePerPerson = pkg.pricePerPerson;
     const rideTotal = pricePerPerson * input.riderCount;
     const rentalTotal = input.riders
       .slice(0, input.riderCount)
-      .reduce((sum, r) => sum + (r.bikePreference ? BIKE_RENTAL_PRICES[r.bikePreference] : 0), 0);
+      .reduce((sum, r) => sum + (r.bikePreference ? (liveBikePrices[r.bikePreference] ?? 0) : 0), 0);
     const totalPrice = rideTotal + rentalTotal;
 
     // Amount to pay now (ride cost only — rental paid at track)
@@ -270,7 +275,7 @@ export async function createBooking(
       nickname: r.nickname || null,
       height_cm: r.heightCm || null,
       bike_preference: r.bikePreference,
-      bike_rental_price: r.bikePreference ? BIKE_RENTAL_PRICES[r.bikePreference] : 0,
+      bike_rental_price: r.bikePreference ? (liveBikePrices[r.bikePreference] ?? 0) : 0,
       clothing_size: r.clothingSize || null,
       cycling_experience: r.cyclingExperience,
       emergency_contact_name: r.emergencyContactName || null,

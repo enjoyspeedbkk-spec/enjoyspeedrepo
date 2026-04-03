@@ -549,6 +549,7 @@ export async function updatePackage(
   if (!error) {
     revalidatePath("/admin/settings");
     revalidatePath("/booking");
+    revalidatePath("/");
   }
   return { success: !error };
 }
@@ -663,6 +664,7 @@ export async function updateBikeRental(
   if (!error) {
     revalidatePath("/admin/settings");
     revalidatePath("/booking");
+    revalidatePath("/");
   }
   return { success: !error };
 }
