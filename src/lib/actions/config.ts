@@ -110,12 +110,14 @@ export async function getLiveTimeSlots(): Promise<LiveTimeSlot[]> {
       .order("sort_order");
 
     if (data && data.length > 0) {
+      // Strip seconds from DB time format ("06:15:00" → "06:15")
+      const stripSec = (t: string) => t?.replace(/:\d{2}$/, "") || t;
       return data.map((s) => ({
         id: s.id,
         label: s.label,
         label_th: s.label_th,
-        startTime: s.start_time,
-        endTime: s.end_time,
+        startTime: stripSec(s.start_time),
+        endTime: stripSec(s.end_time),
         period: s.period,
         overlaps: s.overlaps || [],
         is_active: s.is_active,

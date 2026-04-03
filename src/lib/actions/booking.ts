@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { BIKE_RENTAL_PRICES as FALLBACK_BIKE_PRICES, RIDE_PACKAGES as FALLBACK_PACKAGES, TIME_SLOTS } from "@/lib/constants";
 import { getLivePackages, getLiveBikeRentalPrices } from "@/lib/actions/config";
 import { notifyBookingConfirmation } from "@/lib/notifications";
+import { notifyAdminNewBooking } from "@/lib/line";
 import { getTranslation } from "@/lib/i18n";
 import type { RiderInfo, GroupType, TimeSlotId } from "@/types";
 
@@ -332,6 +333,20 @@ export async function createBooking(
       // Notification failure should never block the booking
       console.error("Booking notification error:", notifyErr);
     }
+
+    // 12. Notify admin via LINE (fire-and-forget)
+    notifyAdminNewBooking({
+      bookingId: booking.id,
+      contactName: input.contactName,
+      contactEmail: input.contactEmail,
+      contactPhone: input.contactPhone,
+      date: input.date,
+      timeSlot: slotLabel,
+      groupType: pkg.name,
+      riderCount: input.riderCount,
+      rideTotal,
+      totalPrice,
+    }).catch((err) => console.error("Admin LINE notify error:", err));
 
     return {
       success: true,

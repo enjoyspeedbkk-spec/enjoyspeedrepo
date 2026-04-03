@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyPayment } from "@/lib/actions/admin";
+import { notifyAdminSlipUploaded } from "@/lib/line";
 
 interface UploadResult {
   success: boolean;
@@ -112,7 +113,7 @@ export async function uploadPaymentSlip(
     // 1. Verify the booking exists
     const { data: booking, error: bookingError } = await admin
       .from("bookings")
-      .select("id, status")
+      .select("id, status, contact_name")
       .eq("id", bookingId)
       .single();
 
@@ -193,10 +194,28 @@ export async function uploadPaymentSlip(
       const verifyResult = await verifyPayment(payment.id, bookingId, "easyslip_auto");
 
       if (verifyResult.success) {
+        // Notify admin — auto-verified
+        notifyAdminSlipUploaded({
+          bookingId,
+          contactName: booking.contact_name || "Unknown",
+          amount: expectedAmount,
+          slipUploaded: true,
+          autoVerified: true,
+        }).catch((err) => console.error("Admin slip notify error:", err));
+
         return { success: true, slipUrl, verification: "verified" };
       }
       // If verify action failed, fall through to pending
     }
+
+    // Notify admin — slip uploaded but needs manual review
+    notifyAdminSlipUploaded({
+      bookingId,
+      contactName: booking.contact_name || "Unknown",
+      amount: expectedAmount,
+      slipUploaded: true,
+      autoVerified: false,
+    }).catch((err) => console.error("Admin slip notify error:", err));
 
     // Not auto-verified — keep as pending for manual admin review
     return {

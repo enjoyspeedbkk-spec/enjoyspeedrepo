@@ -139,12 +139,14 @@ export function BookingFlow({ userEmail = "", userName = "", userId, pendingBook
 
   const TIME_SLOTS = useMemo(() => {
     if (liveConfig?.timeSlots?.length) {
+      // Strip seconds from DB times (e.g. "06:15:00" → "06:15")
+      const stripSec = (t: string) => t?.replace(/:\d{2}$/, "") || t;
       return liveConfig.timeSlots.map((s) => ({
         id: s.id as import("@/types").TimeSlotId,
         label: s.label,
-        labelKey: `timeSlots.${s.id}.label`,
-        startTime: s.startTime,
-        endTime: s.endTime,
+        labelKey: "", // DB provides the actual label — don't use i18n key
+        startTime: stripSec(s.startTime),
+        endTime: stripSec(s.endTime),
         period: s.period as "morning" | "evening",
         overlaps: s.overlaps as import("@/types").TimeSlotId[],
       }));

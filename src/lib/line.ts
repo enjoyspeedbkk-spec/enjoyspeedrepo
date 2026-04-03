@@ -163,6 +163,68 @@ export async function sendPostRideThankYou(
   ]);
 }
 
+// ── Admin Notifications ────────────────────────────────
+
+const ADMIN_LINE_USER_ID = process.env.ADMIN_LINE_USER_ID || "";
+
+/**
+ * Notify the admin via LINE when a new booking is created.
+ * Fires immediately — gives admin a heads-up that payment is pending.
+ */
+export async function notifyAdminNewBooking(booking: {
+  bookingId: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone?: string | null;
+  date: string;
+  timeSlot: string;
+  groupType: string;
+  riderCount: number;
+  rideTotal: number;
+  totalPrice: number;
+}) {
+  if (!ADMIN_LINE_USER_ID) {
+    console.warn("[AdminNotify] ADMIN_LINE_USER_ID not set — skipping");
+    return;
+  }
+
+  const shortId = booking.bookingId.slice(0, 8).toUpperCase();
+
+  await linePush(ADMIN_LINE_USER_ID, [
+    {
+      type: "text",
+      text: `🆕 New Booking!\n\n👤 ${booking.contactName}\n📧 ${booking.contactEmail}${booking.contactPhone ? `\n📱 ${booking.contactPhone}` : ""}\n\n📅 ${booking.date}\n🕐 ${booking.timeSlot}\n👥 ${booking.groupType} × ${booking.riderCount}\n💰 ฿${booking.rideTotal.toLocaleString()} ride + ฿${(booking.totalPrice - booking.rideTotal).toLocaleString()} rental\n\n🔖 #${shortId}\n⏳ Payment pending — slip not yet uploaded.\n\n🔗 https://enjoyspeedbkk.com/admin/bookings`,
+    },
+  ]);
+}
+
+/**
+ * Notify the admin when a payment slip is uploaded (or auto-verified).
+ */
+export async function notifyAdminSlipUploaded(booking: {
+  bookingId: string;
+  contactName: string;
+  amount: number;
+  slipUploaded: boolean;
+  autoVerified: boolean;
+}) {
+  if (!ADMIN_LINE_USER_ID) return;
+
+  const shortId = booking.bookingId.slice(0, 8).toUpperCase();
+  const status = booking.autoVerified
+    ? "✅ Auto-verified via EasySlip"
+    : booking.slipUploaded
+      ? "📎 Slip uploaded — needs manual review"
+      : "⚠️ No slip uploaded";
+
+  await linePush(ADMIN_LINE_USER_ID, [
+    {
+      type: "text",
+      text: `💳 Payment Update\n\n👤 ${booking.contactName}\n🔖 #${shortId}\n💰 ฿${booking.amount.toLocaleString()}\n\n${status}\n\n🔗 https://enjoyspeedbkk.com/admin/payments`,
+    },
+  ]);
+}
+
 /**
  * Send a payment issue notice with re-payment link
  */
