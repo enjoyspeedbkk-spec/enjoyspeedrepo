@@ -6,53 +6,41 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Card } from "@/components/ui/Card";
 import { SiteImage } from "@/lib/site-images-context";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import type { LiveConfig } from "@/lib/actions/config";
 
-const slots = [
-  {
-    id: "A1",
-    labelKey: "timeSlots.earlyBird.label",
-    time: "06:15 — 08:15",
-    period: "morning" as const,
-    moodKey: "timeSlots.earlyBird.mood",
-    vibeKey: "timeSlots.earlyBird.vibe",
-  },
-  {
-    id: "A2",
-    labelKey: "timeSlots.energyBooster.label",
-    time: "06:30 — 08:30",
-    period: "morning" as const,
-    moodKey: "timeSlots.energyBooster.mood",
-    vibeKey: "timeSlots.energyBooster.vibe",
-  },
-  {
-    id: "B",
-    labelKey: "timeSlots.lightChaser.label",
-    time: "16:15 — 18:15",
-    period: "evening" as const,
-    moodKey: "timeSlots.lightChaser.mood",
-    vibeKey: "timeSlots.lightChaser.vibe",
-  },
-  {
-    id: "C",
-    labelKey: "timeSlots.goldenHour.label",
-    time: "16:45 — 18:45",
-    period: "evening" as const,
-    moodKey: "timeSlots.goldenHour.mood",
-    vibeKey: "timeSlots.goldenHour.vibe",
-    staffPick: true,
-  },
-  {
-    id: "D",
-    labelKey: "timeSlots.twilightFinish.label",
-    time: "17:15 — 19:15",
-    period: "evening" as const,
-    moodKey: "timeSlots.twilightFinish.mood",
-    vibeKey: "timeSlots.twilightFinish.vibe",
-  },
+// Mood/vibe keys are display-only i18n — keyed by slot ID
+const SLOT_I18N: Record<string, { labelKey: string; moodKey: string; vibeKey: string }> = {
+  A1: { labelKey: "timeSlots.earlyBird.label", moodKey: "timeSlots.earlyBird.mood", vibeKey: "timeSlots.earlyBird.vibe" },
+  A2: { labelKey: "timeSlots.energyBooster.label", moodKey: "timeSlots.energyBooster.mood", vibeKey: "timeSlots.energyBooster.vibe" },
+  B: { labelKey: "timeSlots.lightChaser.label", moodKey: "timeSlots.lightChaser.mood", vibeKey: "timeSlots.lightChaser.vibe" },
+  C: { labelKey: "timeSlots.goldenHour.label", moodKey: "timeSlots.goldenHour.mood", vibeKey: "timeSlots.goldenHour.vibe" },
+  D: { labelKey: "timeSlots.twilightFinish.label", moodKey: "timeSlots.twilightFinish.mood", vibeKey: "timeSlots.twilightFinish.vibe" },
+};
+
+// Fallback if DB is empty
+const FALLBACK_SLOTS = [
+  { id: "A1", startTime: "06:15", endTime: "08:15", period: "morning" },
+  { id: "A2", startTime: "06:30", endTime: "08:30", period: "morning" },
+  { id: "B", startTime: "16:15", endTime: "18:15", period: "evening" },
+  { id: "C", startTime: "16:45", endTime: "18:45", period: "evening" },
+  { id: "D", startTime: "17:15", endTime: "19:15", period: "evening" },
 ];
 
-export function TimeSlots() {
+export function TimeSlots({ liveConfig }: { liveConfig?: LiveConfig }) {
   const { t } = useLanguage();
+
+  const rawSlots = liveConfig?.timeSlots?.length ? liveConfig.timeSlots : FALLBACK_SLOTS;
+  const slots = rawSlots.map((s) => {
+    const i18n = SLOT_I18N[s.id] || { labelKey: `timeSlots.${s.id}.label`, moodKey: `timeSlots.${s.id}.mood`, vibeKey: `timeSlots.${s.id}.vibe` };
+    return {
+      id: s.id,
+      time: `${s.startTime} — ${s.endTime}`,
+      period: s.period as "morning" | "evening",
+      staffPick: s.id === "C",
+      ...i18n,
+    };
+  });
+
   const morningSlots = slots.filter((s) => s.period === "morning");
   const eveningSlots = slots.filter((s) => s.period === "evening");
 

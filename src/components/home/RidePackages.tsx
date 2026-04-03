@@ -6,48 +6,14 @@ import { Users, Star, Zap, Crown } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import type { LiveConfig } from "@/lib/actions/config";
 
-const packages = [
-  {
-    nameKey: "packages.duo.name",
-    slug: "duo",
-    taglineKey: "packages.duo.tagline",
-    minRiders: 2,
-    maxRiders: 2,
-    icon: Star,
-    price: 2500,
-    supportKey: "packages.duo.support",
-    descriptionKey: "packages.duo.description",
-    color: "sky",
-    popular: false,
-  },
-  {
-    nameKey: "packages.squad.name",
-    slug: "squad",
-    taglineKey: "packages.squad.tagline",
-    minRiders: 3,
-    maxRiders: 5,
-    icon: Zap,
-    price: 2100,
-    supportKey: "packages.squad.support",
-    descriptionKey: "packages.squad.description",
-    color: "accent",
-    popular: true,
-  },
-  {
-    nameKey: "packages.peloton.name",
-    slug: "peloton",
-    taglineKey: "packages.peloton.tagline",
-    minRiders: 6,
-    maxRiders: 8,
-    icon: Crown,
-    price: 2000,
-    supportKey: "packages.peloton.support",
-    descriptionKey: "packages.peloton.description",
-    color: "leaf",
-    popular: false,
-  },
-];
+// Static display metadata — prices come from liveConfig prop
+const PACKAGE_META: Record<string, { nameKey: string; taglineKey: string; supportKey: string; descriptionKey: string; icon: typeof Star; color: string; popular: boolean }> = {
+  duo: { nameKey: "packages.duo.name", taglineKey: "packages.duo.tagline", supportKey: "packages.duo.support", descriptionKey: "packages.duo.description", icon: Star, color: "sky", popular: false },
+  squad: { nameKey: "packages.squad.name", taglineKey: "packages.squad.tagline", supportKey: "packages.squad.support", descriptionKey: "packages.squad.description", icon: Zap, color: "accent", popular: true },
+  peloton: { nameKey: "packages.peloton.name", taglineKey: "packages.peloton.tagline", supportKey: "packages.peloton.support", descriptionKey: "packages.peloton.description", icon: Crown, color: "leaf", popular: false },
+};
 
 const colorMap: Record<string, { bg: string; border: string; iconBg: string; text: string }> = {
   sky: {
@@ -70,8 +36,24 @@ const colorMap: Record<string, { bg: string; border: string; iconBg: string; tex
   },
 };
 
-export function RidePackages() {
+export function RidePackages({ liveConfig }: { liveConfig?: LiveConfig }) {
   const { t } = useLanguage();
+
+  // Build packages array from live DB data (with fallback)
+  const packages = (liveConfig?.packages ?? []).map((p) => {
+    const meta = PACKAGE_META[p.type] || PACKAGE_META.duo;
+    return { ...meta, slug: p.type, price: p.pricePerPerson, minRiders: p.minRiders, maxRiders: p.maxRiders };
+  });
+
+  // Fallback if no live data
+  if (packages.length === 0) {
+    packages.push(
+      { ...PACKAGE_META.duo, slug: "duo", price: 2500, minRiders: 2, maxRiders: 2 },
+      { ...PACKAGE_META.squad, slug: "squad", price: 2100, minRiders: 3, maxRiders: 5 },
+      { ...PACKAGE_META.peloton, slug: "peloton", price: 2000, minRiders: 6, maxRiders: 8 },
+    );
+  }
+
   return (
     <section className="py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">

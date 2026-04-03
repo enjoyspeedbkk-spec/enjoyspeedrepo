@@ -70,8 +70,7 @@
       "riders": "2 riders",
       "description": "An intimate ride for two. Perfect for couples, friends, or anyone who wants a more personal guided experience.",
       "support": "1 Athlete Leader",
-      "pricePerPerson": 2500,
-      "total": "5,000 THB total"
+      "popular": ""
     },
     "squad": {
       "name": "The Squad",
@@ -79,8 +78,6 @@
       "riders": "3–5 riders",
       "description": "Bring your friends for the perfect group ride. Our most popular format, with a Leader up front and a Hero rider keeping everyone safe.",
       "support": "1 Leader + 1 Hero",
-      "pricePerPerson": 2100,
-      "total": "6,300–10,500 THB",
       "popular": "Most Popular"
     },
     "peloton": {
@@ -89,12 +86,11 @@
       "riders": "6–8 riders",
       "description": "The full experience. A larger group ride with maximum support, energy, and an unforgettable atmosphere.",
       "support": "2 Leaders + 2 Heroes",
-      "pricePerPerson": 2000,
-      "total": "12,000–16,000 THB"
+      "popular": ""
     },
     "bikeRental": "Bike rental available separately",
-    "hybrid": "Hybrid 420 THB",
-    "road": "Road 720 THB",
+    "hybridBike": "Hybrid Bike",
+    "roadBike": "Road Bike",
     "bringYourOwn": "Or bring your own at no extra cost",
     "photographyIncluded": "Photography included",
     "bookNow": "Book {name}",

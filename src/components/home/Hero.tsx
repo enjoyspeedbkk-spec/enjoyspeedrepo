@@ -9,6 +9,7 @@ import { useSiteImage } from "@/lib/site-images-context";
 import { useToast } from "@/components/ui/Toast";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { HeroVideo } from "@/lib/actions/hero-videos";
+import type { LiveConfig } from "@/lib/actions/config";
 
 const stats = [
   { icon: Shield, i18nKey: "hero.athleteLed" },
@@ -20,9 +21,10 @@ const CLIP_DURATION = 3; // seconds per clip
 
 interface HeroProps {
   videos?: HeroVideo[];
+  liveConfig?: LiveConfig;
 }
 
-export function Hero({ videos = [] }: HeroProps) {
+export function Hero({ videos = [], liveConfig }: HeroProps) {
   const { t } = useLanguage();
   const heroStill = useSiteImage("hero-still", "/images/hero-golden-hour-still.jpg");
   const toast = useToast();
@@ -493,7 +495,7 @@ export function Hero({ videos = [] }: HeroProps) {
                           {t('hero.goldenHourRide')}
                         </p>
                         <p className="text-sm text-ink-muted">
-                          16:45 — 18:45 &middot; {t('hero.staffPick')}
+                          {(() => { const s = liveConfig?.timeSlots?.find(s => s.id === "C"); return s ? `${s.startTime} — ${s.endTime}` : "16:45 — 18:45"; })()} &middot; {t('hero.staffPick')}
                         </p>
                       </div>
                       <div className="flex flex-col items-end">
@@ -501,7 +503,7 @@ export function Hero({ videos = [] }: HeroProps) {
                           {t('hero.smallGroupsOnly')}
                         </span>
                         <span className="text-lg font-bold text-navy mt-1">
-                          {t('hero.from')} 2,000
+                          {t('hero.from')} {(() => { const prices = (liveConfig?.packages ?? []).map(p => p.pricePerPerson); return prices.length > 0 ? Math.min(...prices).toLocaleString() : "2,000"; })()}
                           <span className="text-xs font-normal text-ink-muted">
                             {" "}THB
                           </span>
@@ -531,7 +533,7 @@ export function Hero({ videos = [] }: HeroProps) {
                     {t('hero.from')}
                   </p>
                   <p className="text-lg sm:text-xl font-bold leading-tight">
-                    2,000
+                    {(() => { const prices = (liveConfig?.packages ?? []).map(p => p.pricePerPerson); return prices.length > 0 ? Math.min(...prices).toLocaleString() : "2,000"; })()}
                     <span className="text-xs sm:text-sm font-normal text-ink-muted opacity-80"> THB</span>
                   </p>
                   <p className="text-xs text-ink-muted">{t('hero.perPerson')}</p>

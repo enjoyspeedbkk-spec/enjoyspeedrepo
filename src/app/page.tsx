@@ -6,10 +6,16 @@ import { CTASection } from "@/components/home/CTASection";
 import { SiteImagesProvider } from "@/lib/site-images-context";
 import { getSiteImageSettings } from "@/lib/actions/site-images";
 import { getHeroVideoConfig } from "@/lib/actions/hero-videos";
+import { getLiveConfig } from "@/lib/actions/config";
+
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const images = await getSiteImageSettings();
-  const heroVideos = await getHeroVideoConfig();
+  const [images, heroVideos, liveConfig] = await Promise.all([
+    getSiteImageSettings(),
+    getHeroVideoConfig(),
+    getLiveConfig(),
+  ]);
 
   const imageMap = Object.fromEntries(
     images.map((img) => [
@@ -26,9 +32,9 @@ export default async function HomePage() {
 
   return (
     <SiteImagesProvider images={imageMap}>
-      <Hero videos={heroVideos} />
-      <RidePackages />
-      <TimeSlots />
+      <Hero videos={heroVideos} liveConfig={liveConfig} />
+      <RidePackages liveConfig={liveConfig} />
+      <TimeSlots liveConfig={liveConfig} />
       <WhatsIncluded />
       <CTASection />
     </SiteImagesProvider>
