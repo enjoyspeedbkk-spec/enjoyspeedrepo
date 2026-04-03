@@ -9,7 +9,7 @@ import { useSiteImage } from "@/lib/site-images-context";
 import { useToast } from "@/components/ui/Toast";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { HeroVideo } from "@/lib/actions/hero-videos";
-import type { LiveConfig } from "@/lib/actions/config";
+import type { LiveConfig } from "@/lib/config-types";
 
 const stats = [
   { icon: Shield, i18nKey: "hero.athleteLed" },

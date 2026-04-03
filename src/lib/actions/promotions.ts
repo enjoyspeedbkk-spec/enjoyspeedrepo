@@ -2,6 +2,10 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { ActivePromotion } from "@/lib/promotions-utils";
+
+// Re-export types and utils from shared file (safe for client import)
+export type { ActivePromotion } from "@/lib/promotions-utils";
 
 // ========================================
 // EN-JOY SPEED — Promotions Actions
@@ -27,23 +31,6 @@ export interface Promotion {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-}
-
-/** Lightweight promotion info for the booking calendar */
-export interface ActivePromotion {
-  id: string;
-  name: string;
-  name_th: string | null;
-  description: string | null;
-  description_th: string | null;
-  badge_label: string;
-  badge_color: string;
-  discount_type: "percentage" | "fixed_per_person";
-  discount_value: number;
-  starts_on: string;
-  ends_on: string;
-  applicable_packages: string[] | null;
-  min_riders: number | null;
 }
 
 // ---- Public actions (no auth required) ----
@@ -111,27 +98,6 @@ export async function getBestPromotion(
         : p.discount_value;
     return pDiscount > bestDiscount ? p : best;
   });
-}
-
-/**
- * Calculate the discounted price per person.
- */
-export function calculatePromotionDiscount(
-  pricePerPerson: number,
-  promotion: ActivePromotion
-): { discountedPrice: number; savedAmount: number } {
-  let savedAmount: number;
-
-  if (promotion.discount_type === "percentage") {
-    savedAmount = Math.round(pricePerPerson * (promotion.discount_value / 100));
-  } else {
-    savedAmount = Math.min(promotion.discount_value, pricePerPerson);
-  }
-
-  return {
-    discountedPrice: pricePerPerson - savedAmount,
-    savedAmount,
-  };
 }
 
 // ---- Admin actions (auth required) ----

@@ -6,7 +6,7 @@ import { Users, Star, Zap, Crown } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import type { LiveConfig } from "@/lib/actions/config";
+import type { LiveConfig } from "@/lib/config-types";
 
 // Static display metadata — prices come from liveConfig prop
 const PACKAGE_META: Record<string, { nameKey: string; taglineKey: string; supportKey: string; descriptionKey: string; icon: typeof Star; color: string; popular: boolean }> = {

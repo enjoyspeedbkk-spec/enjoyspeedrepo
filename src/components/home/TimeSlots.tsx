@@ -6,7 +6,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Card } from "@/components/ui/Card";
 import { SiteImage } from "@/lib/site-images-context";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import type { LiveConfig } from "@/lib/actions/config";
+import type { LiveConfig } from "@/lib/config-types";
 
 // Mood/vibe keys are display-only i18n — keyed by slot ID
 const SLOT_I18N: Record<string, { labelKey: string; moodKey: string; vibeKey: string }> = {

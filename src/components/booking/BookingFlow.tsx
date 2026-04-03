@@ -41,7 +41,7 @@ import {
   READY_TO_RIDE,
   LINE_OA,
 } from "@/lib/constants";
-import type { LiveConfig } from "@/lib/actions/config";
+import type { LiveConfig } from "@/lib/config-types";
 import type {
   GroupType,
   TimeSlotId,
@@ -93,11 +93,11 @@ function createEmptyRider(index: number): RiderInfo {
 }
 
 import type { PendingBookingInfo } from "@/lib/actions/bookings";
+import { getActivePromotions } from "@/lib/actions/promotions";
 import {
-  getActivePromotions,
   calculatePromotionDiscount,
   type ActivePromotion,
-} from "@/lib/actions/promotions";
+} from "@/lib/promotions-utils";
 
 interface BookingFlowProps {
   userEmail?: string;
